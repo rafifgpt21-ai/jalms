@@ -153,7 +153,7 @@ export default function TaskWorkspacePage() {
                     <div className="space-y-1">
                         <h3 className="text-xl font-semibold leading-none tracking-tight">{assignment.title}</h3>
                         <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                            {assignment.dueDate && (
+                            {assignment.dueDate && assignment.type !== "NON_SUBMISSION" && (
                                 <span>
                                     Due: {format(new Date(assignment.dueDate), "PPP p")}
                                 </span>

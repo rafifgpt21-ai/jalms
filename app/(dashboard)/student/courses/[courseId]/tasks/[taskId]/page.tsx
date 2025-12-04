@@ -26,7 +26,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
 
     const isSubmitted = !!submission
     const isGraded = submission?.grade !== null && submission?.grade !== undefined
-    const isLate = assignment.dueDate && new Date() > new Date(assignment.dueDate) && !isSubmitted
+    const isLate = assignment.type !== 'NON_SUBMISSION' && assignment.dueDate && new Date() > new Date(assignment.dueDate) && !isSubmitted
 
     // If submitted, check if it was late
     const wasLate = submission && assignment.dueDate && submission.submittedAt > assignment.dueDate
@@ -39,9 +39,11 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                     <div className="text-gray-500 mt-1">{assignment.course.name}</div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                    <div className="text-sm font-medium">
-                        Due: {format(new Date(assignment.dueDate), "MMM d, h:mm a")}
-                    </div>
+                    {assignment.type !== 'NON_SUBMISSION' && (
+                        <div className="text-sm font-medium">
+                            Due: {format(new Date(assignment.dueDate), "MMM d, h:mm a")}
+                        </div>
+                    )}
                     <Badge variant={
                         isGraded ? 'default' :
                             isSubmitted ? 'secondary' :
