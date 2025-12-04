@@ -66,8 +66,8 @@ export function CourseStudentList({ students, courseId }: CourseStudentListProps
                         <TableRow>
                             <TableHead className="w-[80px]">Image</TableHead>
                             <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Official ID</TableHead>
+                            <TableHead className="max-md:hidden">Email</TableHead>
+                            <TableHead className="max-md:hidden">Official ID</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -81,8 +81,8 @@ export function CourseStudentList({ students, courseId }: CourseStudentListProps
                                     </Avatar>
                                 </TableCell>
                                 <TableCell className="font-medium">{student.name}</TableCell>
-                                <TableCell>{student.email}</TableCell>
-                                <TableCell>{student.officialId || "-"}</TableCell>
+                                <TableCell className="max-md:hidden">{student.email}</TableCell>
+                                <TableCell className="max-md:hidden">{student.officialId || "-"}</TableCell>
                                 <TableCell className="text-right">
                                     <Button
                                         variant="ghost"
