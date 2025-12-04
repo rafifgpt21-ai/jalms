@@ -14,6 +14,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Search, Filter, ArrowUpDown, X } from "lucide-react"
 import { useState, useEffect } from "react"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function UserToolbar() {
     const router = useRouter()
@@ -76,6 +87,17 @@ export function UserToolbar() {
     const currentRole = searchParams.get("role") || "ALL"
     const currentStatus = searchParams.get("status") || "ALL"
     const currentSort = searchParams.get("sort") || "newest"
+    const showAll = searchParams.get("showAll") === "true"
+
+    const handleShowAll = () => {
+        const params = new URLSearchParams(searchParams)
+        if (showAll) {
+            params.delete("showAll")
+        } else {
+            params.set("showAll", "true")
+        }
+        router.replace(`${pathname}?${params.toString()}`)
+    }
 
     return (
         <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-lg border shadow-sm flex-wrap">
@@ -95,6 +117,33 @@ export function UserToolbar() {
             </div>
 
             <div className="flex items-center gap-2">
+                {/* Show All Toggle */}
+                {showAll ? (
+                    <Button variant="outline" size="sm" onClick={handleShowAll} className="h-9">
+                        Hide All Users
+                    </Button>
+                ) : (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9">
+                                Show All Users
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Show all users?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will load all users in the database. This might take a while depending on the number of users.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleShowAll}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
+
                 {/* Filter Button */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -197,7 +246,7 @@ export function UserToolbar() {
                 </DropdownMenu>
 
                 {/* Clear Filters */}
-                {(currentRole !== "ALL" || currentStatus !== "ALL" || search || currentSort !== "newest") && (
+                {(currentRole !== "ALL" || currentStatus !== "ALL" || search || currentSort !== "newest" || showAll) && (
                     <Button
                         variant="ghost"
                         size="sm"

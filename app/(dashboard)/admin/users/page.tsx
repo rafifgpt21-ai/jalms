@@ -17,6 +17,7 @@ export default async function UsersPage({
         role?: string
         status?: string
         sort?: string
+        showAll?: string
     }>
 }) {
     const params = await searchParams
@@ -25,8 +26,9 @@ export default async function UsersPage({
     const role = params.role || "ALL"
     const status = params.status || "ALL"
     const sort = params.sort || "newest"
+    const showAll = params.showAll === "true"
 
-    const isFiltered = query !== "" || role !== "ALL" || status !== "ALL"
+    const isFiltered = query !== "" || role !== "ALL" || status !== "ALL" || showAll
 
     let users: any[] = []
     let metadata = {
