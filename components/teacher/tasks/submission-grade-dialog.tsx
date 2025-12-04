@@ -165,9 +165,7 @@ export function SubmissionGradeDialog({
                                 <Label htmlFor="score">Score (0-100)</Label>
                                 <Input
                                     id="score"
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
+                                    type="number"
                                     value={score}
                                     onChange={(e) => {
                                         const value = e.target.value
@@ -175,18 +173,14 @@ export function SubmissionGradeDialog({
                                             setScore("")
                                             return
                                         }
-                                        // Allow only integers
-                                        if (!/^\d+$/.test(value)) return
-
-                                        const num = parseInt(value, 10)
+                                        const num = parseFloat(value)
                                         if (!isNaN(num) && num >= 0 && num <= 100) {
-                                            // Remove leading zeros unless it's just "0"
-                                            setScore(num.toString())
+                                            setScore(value)
                                         }
                                     }}
                                     placeholder="Enter score..."
                                     className={cn(
-                                        "text-lg",
+                                        "text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
                                         assignment.isExtraCredit ? "border-green-500 focus-visible:ring-green-500" : ""
                                     )}
                                 />

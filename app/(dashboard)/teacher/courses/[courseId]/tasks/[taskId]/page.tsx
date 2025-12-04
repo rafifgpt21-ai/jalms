@@ -76,14 +76,22 @@ export default function TaskWorkspacePage() {
     }
 
     const handleScoreChange = (studentId: string, value: string) => {
+        if (value === "") {
+            setScores(prev => {
+                const newScores = { ...prev }
+                delete newScores[studentId]
+                return newScores
+            })
+            setDirty(prev => ({ ...prev, [studentId]: true }))
+            return
+        }
+
         const numValue = parseFloat(value)
         if (!isNaN(numValue)) {
             if (numValue >= 0 && numValue <= 100) {
                 setScores(prev => ({ ...prev, [studentId]: numValue }))
                 setDirty(prev => ({ ...prev, [studentId]: true }))
             }
-        } else if (value === "") {
-            // Handle empty input if needed
         }
     }
 
@@ -259,7 +267,13 @@ export default function TaskWorkspacePage() {
                                                     </div>
                                                 )}
                                                 {assignment.type === "NON_SUBMISSION" && (
-                                                    <Badge variant="outline">No Submission Required</Badge>
+                                                    scores[student.id] !== undefined ? (
+                                                        <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
+                                                            Graded
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline">No Submission Required</Badge>
+                                                    )
                                                 )}
                                             </TableCell>
                                             <TableCell>
@@ -293,7 +307,7 @@ export default function TaskWorkspacePage() {
                                                         value={scores[student.id] ?? ""}
                                                         onChange={(e) => handleScoreChange(student.id, e.target.value)}
                                                         className={cn(
-                                                            "w-20",
+                                                            "w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
                                                             isExtraCredit ? "border-green-500 focus-visible:ring-green-500" : ""
                                                         )}
                                                         placeholder="0-100"
@@ -386,7 +400,13 @@ export default function TaskWorkspacePage() {
                                                 </div>
                                             )}
                                             {assignment.type === "NON_SUBMISSION" && (
-                                                <Badge variant="outline">No Submission Required</Badge>
+                                                scores[student.id] !== undefined ? (
+                                                    <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
+                                                        Graded
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline">No Submission Required</Badge>
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -420,7 +440,7 @@ export default function TaskWorkspacePage() {
                                                 value={scores[student.id] ?? ""}
                                                 onChange={(e) => handleScoreChange(student.id, e.target.value)}
                                                 className={cn(
-                                                    "h-10 text-lg w-24",
+                                                    "h-10 text-lg w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
                                                     isExtraCredit ? "border-green-500 focus-visible:ring-green-500" : ""
                                                 )}
                                                 placeholder="0-100"
