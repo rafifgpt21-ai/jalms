@@ -18,153 +18,253 @@ enum Role {
 enum AttendanceStatus {
   PRESENT
   ABSENT
-  LATE
   EXCUSED
+  SKIPPED
+  PENDING
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String   @unique
-  password  String?
-  image     String?
-  roles     Role[]   @default([STUDENT])
-  
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  email    String  @unique
+  password String?
+  image    String?
+  roles    Role[]  @default([STUDENT])
+
+  isActive Boolean @default(true)
+
+  officialId     String? // NIS or NIP
+  creationSource String  @default("manual") // "manual" or "excel_import"
+
+  // Parent-Child Relation
+  parents     User[]   @relation("ParentChildren", fields: [parentIds], references: [id])
+  parentIds   String[] @db.ObjectId
+  children    User[]   @relation("ParentChildren", fields: [childrenIds], references: [id])
+  childrenIds String[] @db.ObjectId
+
   // Relations
   taughtCourses     Course[]     @relation("SubjectTeacher")
+  enrolledCourses   Course[]     @relation("CourseStudents", fields: [enrolledCourseIds], references: [id])
+  enrolledCourseIds String[]     @db.ObjectId
   homeroomClasses   Class[]      @relation("HomeroomTeacher")
   enrollments       Enrollment[]
   submissions       Submission[]
   attendances       Attendance[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+
+  materials Material[] @relation("TeacherMaterials")
 }
 
 model AcademicYear {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String   // "2024/2025"
+  name      String // "2024/2025"
   startDate DateTime
   endDate   DateTime
   isActive  Boolean  @default(false)
-  
-  terms     Term[]
-  classes   Class[]
-  
+
+  terms Term[]
+
   deletedAt DateTime?
 }
 
+enum SemesterType {
+  ODD
+  EVEN
+}
+
 model Term {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  name           String       // "Semester 1"
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  type      SemesterType // ODD or EVEN
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean      @default(false)
+
   academicYearId String       @db.ObjectId
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
-  
-  courses        Course[]
-  
-  deletedAt      DateTime?
+
+  courses Course[]
+  classes Class[]
+
+  deletedAt DateTime?
 }
 
 model Class {
-  id                String       @id @default(auto()) @map("_id") @db.ObjectId
-  name              String       // "10 Science A"
-  academicYearId    String       @db.ObjectId
-  academicYear      AcademicYear @relation(fields: [academicYearId], references: [id])
-  
-  homeroomTeacherId String?      @db.ObjectId
-  homeroomTeacher   User?        @relation("HomeroomTeacher", fields: [homeroomTeacherId], references: [id])
-  
-  students          Enrollment[]
-  courses           Course[]
-  
-  deletedAt         DateTime?
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  name   String // "10 Science A"
+  termId String @db.ObjectId
+  term   Term   @relation(fields: [termId], references: [id])
+
+  homeroomTeacherId String? @db.ObjectId
+  homeroomTeacher   User?   @relation("HomeroomTeacher", fields: [homeroomTeacherId], references: [id])
+
+  students Enrollment[]
+  courses  Course[]
+
+  deletedAt DateTime?
 }
 
 model Subject {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   // "Biology"
-  code        String   // "BIO"
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String // "Biology"
+  code        String // "BIO"
   description String?
-  
-  courses     Course[]
-  
-  deletedAt   DateTime?
+
+  courses Course[]
+
+  deletedAt DateTime?
 }
 
 model Course {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  subjectId String   @db.ObjectId
-  subject   Subject  @relation(fields: [subjectId], references: [id])
-  
-  classId   String   @db.ObjectId
-  class     Class    @relation(fields: [classId], references: [id])
-  
-  termId    String   @db.ObjectId
-  term      Term     @relation(fields: [termId], references: [id])
-  
-  teacherId String   @db.ObjectId
-  teacher   User     @relation("SubjectTeacher", fields: [teacherId], references: [id])
-  
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  reportName String? // Name to show in student reports
+
+  // Optional link to Subject if needed later, but user wants simple name input
+  subjectId String?  @db.ObjectId
+  subject   Subject? @relation(fields: [subjectId], references: [id])
+
+  // Optional link to Class if needed
+  classId String? @db.ObjectId
+  class   Class?  @relation(fields: [classId], references: [id])
+
+  termId String @db.ObjectId
+  term   Term   @relation(fields: [termId], references: [id])
+
+  teacherId String @db.ObjectId
+  teacher   User   @relation("SubjectTeacher", fields: [teacherId], references: [id])
+
+  // Direct student enrollment
+  students   User[]   @relation("CourseStudents", fields: [studentIds], references: [id])
+  studentIds String[] @db.ObjectId
+
   assignments Assignment[]
   attendances Attendance[]
-  
+
+  attendancePoolScore Int @default(0)
+
+  deletedAt DateTime?
+
+  schedules Schedule[]
+  materials Material[] // Keep this for backward compatibility or direct access if needed, but assignments are preferred
+  materialAssignments MaterialAssignment[]
+}
+
+model Material {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  description String?
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+
+  // Owner of the material
+  teacherId String @db.ObjectId
+  teacher   User   @relation("TeacherMaterials", fields: [teacherId], references: [id])
+
+  // Optional link to Course (deprecated or for specific single-use)
+  courseId String? @db.ObjectId
+  course   Course? @relation(fields: [courseId], references: [id])
+
+  assignments MaterialAssignment[]
+
+  deletedAt DateTime?
+}
+
+model MaterialAssignment {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  materialId String @db.ObjectId
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@unique([materialId, courseId])
+}
+
+model Schedule {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  dayOfWeek Int // 0=Sunday, 1=Monday, ... 6=Saturday
+  period    Int // 1-6
+
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
+
   deletedAt DateTime?
 }
 
 model Enrollment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  studentId String   @db.ObjectId
-  student   User     @relation(fields: [studentId], references: [id])
-  
-  classId   String   @db.ObjectId
-  class     Class    @relation(fields: [classId], references: [id])
-  
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  studentId String @db.ObjectId
+  student   User   @relation(fields: [studentId], references: [id])
+
+  classId String @db.ObjectId
+  class   Class  @relation(fields: [classId], references: [id])
+
   deletedAt DateTime?
 }
 
+enum AssignmentType {
+  SUBMISSION
+  NON_SUBMISSION
+}
+
 model Assignment {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String?
-  dueDate     DateTime
-  
-  courseId    String   @db.ObjectId
-  course      Course   @relation(fields: [courseId], references: [id])
-  
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String?
+  dueDate       DateTime
+  type          AssignmentType @default(SUBMISSION)
+  maxPoints     Int            @default(100)
+  isExtraCredit Boolean        @default(false)
+  latePenalty   Int            @default(0) // Percentage 0-100
+
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
+
   submissions Submission[]
-  
-  deletedAt   DateTime?
+
+  deletedAt DateTime?
 }
 
 model Submission {
   id           String     @id @default(auto()) @map("_id") @db.ObjectId
   assignmentId String     @db.ObjectId
   assignment   Assignment @relation(fields: [assignmentId], references: [id])
-  
-  studentId    String     @db.ObjectId
-  student      User       @relation(fields: [studentId], references: [id])
-  
-  grade        Float?
-  feedback     String?
-  submittedAt  DateTime   @default(now())
-  
-  deletedAt    DateTime?
+
+  studentId String @db.ObjectId
+  student   User   @relation(fields: [studentId], references: [id])
+
+  grade         Float?
+  feedback      String?
+  submissionUrl String?
+  attachmentUrl String?
+  link          String?
+  submittedAt   DateTime @default(now())
+
+  deletedAt DateTime?
 }
 
 model Attendance {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  date      DateTime
-  status    AttendanceStatus
-  
-  courseId  String   @db.ObjectId
-  course    Course   @relation(fields: [courseId], references: [id])
-  
-  studentId String   @db.ObjectId
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
+  date         DateTime
+  status       AttendanceStatus
+  topic        String?
+  excuseReason String?
+  period       Int              @default(1)
+
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
+
+  studentId String @db.ObjectId
   // No direct relation to User to keep it lightweight, but can be added if needed.
   // Actually, for integrity, let's add it.
-  student   User     @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction) 
+  student   User   @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   // Added NoAction to avoid cycles or complexity with MongoDB, though Prisma handles it well.
-  
+
   deletedAt DateTime?
 }

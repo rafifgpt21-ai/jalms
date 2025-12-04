@@ -1,0 +1,272 @@
+"use client"
+
+import { useState, useEffect, Fragment, memo, useCallback } from "react"
+import { Button } from "@/components/ui/button"
+import { Loader2, Plus, X, ArrowLeft, AlertCircle } from "lucide-react"
+import { saveTeacherSchedule, getTeacherSchedule } from "@/lib/actions/schedule.actions"
+import { Course, Schedule, Class, Subject, Term, AcademicYear } from "@prisma/client"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useRouter } from "next/navigation"
+
+type CourseWithDetails = Course & {
+    schedules: Schedule[];
+    class: Class | null;
+    subject: Subject | null;
+    term: Term & { academicYear: AcademicYear };
+}
+
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+const PERIODS = [1, 2, 3, 4, 5, 6]
+
+interface ScheduleGridProps {
+    teacherId: string
+    initialCourses: CourseWithDetails[]
+}
+
+export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
+    const router = useRouter()
+    const [courses, setCourses] = useState<CourseWithDetails[]>(initialCourses)
+    // assignments: key `${day}-${period}` -> courseId
+    const [assignments, setAssignments] = useState<Record<string, string>>({})
+    const [saving, setSaving] = useState(false)
+    const [hasChanges, setHasChanges] = useState(false)
+    const [conflictDialogOpen, setConflictDialogOpen] = useState(false)
+    const [conflictDetails, setConflictDetails] = useState<string[]>([])
+
+    // Initialize assignments from initialCourses
+    useEffect(() => {
+        const initialAssignments: Record<string, string> = {}
+        initialCourses.forEach(course => {
+            course.schedules.forEach(schedule => {
+                if (!schedule.deletedAt) {
+                    // Map DB day (1-7) to index (0-6)
+                    initialAssignments[`${schedule.dayOfWeek}-${schedule.period}`] = course.id
+                }
+            })
+        })
+        setAssignments(initialAssignments)
+        setCourses(initialCourses)
+        setHasChanges(false)
+    }, [initialCourses])
+
+    // Helper to find course at a specific slot
+    const getCourseIdAtSlot = (dayIndex: number, period: number) => {
+        const dbDay = dayIndex === 6 ? 0 : dayIndex + 1
+        return assignments[`${dbDay}-${period}`]
+    }
+
+    const getCourseDetails = (courseId: string) => {
+        return courses.find(c => c.id === courseId)
+    }
+
+    const handleAssign = useCallback((courseId: string | null, dayIndex: number, period: number) => {
+        const dbDay = dayIndex === 6 ? 0 : dayIndex + 1
+        const key = `${dbDay}-${period}`
+
+        setAssignments(prev => {
+            const next = { ...prev }
+            if (courseId) {
+                next[key] = courseId
+            } else {
+                delete next[key]
+            }
+            return next
+        })
+        setHasChanges(true)
+        toast.success(courseId ? "Slot updated (unsaved)" : "Slot cleared (unsaved)")
+    }, [])
+
+    async function handleSave() {
+        setSaving(true)
+        const schedules = Object.entries(assignments).map(([key, courseId]) => {
+            const [day, period] = key.split('-').map(Number)
+            return { day, period, courseId }
+        })
+
+        const result = await saveTeacherSchedule(teacherId, schedules)
+
+        if (result.success) {
+            toast.success("Schedule saved successfully")
+            setHasChanges(false)
+            router.refresh()
+        } else if (result.conflictDetails) {
+            setConflictDetails(result.conflictDetails)
+            setConflictDialogOpen(true)
+        } else {
+            toast.error(result.error)
+        }
+        setSaving(false)
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-end">
+                <Button onClick={handleSave} disabled={!hasChanges || saving}>
+                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                </Button>
+            </div>
+
+            <div className="grid grid-cols-8 gap-2 min-w-[800px] border rounded-lg p-4 bg-white shadow-sm">
+                {/* Header Row */}
+                <div className="font-bold text-center p-2 flex items-center justify-center bg-gray-100 rounded">Period</div>
+                {DAYS.map(day => (
+                    <div key={day} className="font-bold text-center p-2 bg-gray-100 rounded flex items-center justify-center">
+                        {day}
+                    </div>
+                ))}
+
+                {/* Grid */}
+                {PERIODS.map(period => (
+                    <Fragment key={period}>
+                        <div className="font-bold flex items-center justify-center bg-gray-50 rounded min-h-[100px]">
+                            {period}
+                        </div>
+                        {DAYS.map((day, dayIndex) => {
+                            const courseId = getCourseIdAtSlot(dayIndex, period)
+                            const assignedCourse = courseId ? getCourseDetails(courseId) : null
+
+                            return (
+                                <ScheduleSlot
+                                    key={`${day}-${period}`}
+                                    dayIndex={dayIndex}
+                                    period={period}
+                                    assignedCourse={assignedCourse || null}
+                                    courses={courses}
+                                    hasChanges={hasChanges}
+                                    onAssign={handleAssign}
+                                />
+                            )
+                        })}
+                    </Fragment>
+                ))}
+            </div>
+
+            <AlertDialog open={conflictDialogOpen} onOpenChange={setConflictDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                            <AlertCircle className="h-5 w-5" />
+                            Schedule Conflicts Detected
+                        </AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="text-muted-foreground text-sm">
+                                The following conflicts prevent saving the schedule:
+                                <ul className="mt-2 list-disc list-inside space-y-1 text-gray-700 max-h-[200px] overflow-y-auto">
+                                    {conflictDetails.map((detail, index) => (
+                                        <li key={index}>{detail}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setConflictDialogOpen(false)}>OK</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
+    )
+}
+
+interface ScheduleSlotProps {
+    dayIndex: number
+    period: number
+    assignedCourse: CourseWithDetails | null
+    courses: CourseWithDetails[]
+    hasChanges: boolean
+    onAssign: (courseId: string | null, dayIndex: number, period: number) => void
+}
+
+const ScheduleSlot = memo(function ScheduleSlot({
+    dayIndex,
+    period,
+    assignedCourse,
+    courses,
+    hasChanges,
+    onAssign
+}: ScheduleSlotProps) {
+    const [open, setOpen] = useState(false)
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <div
+                    className={cn(
+                        "min-h-[100px] p-2 border rounded cursor-pointer hover:bg-gray-50 transition-colors flex flex-col justify-center items-center text-center text-xs relative group",
+                        assignedCourse ? "bg-blue-50 border-blue-200" : "border-dashed",
+                        hasChanges && "border-yellow-200"
+                    )}
+                >
+                    {assignedCourse ? (
+                        <>
+                            <span className="font-semibold line-clamp-2 text-sm">{assignedCourse.name}</span>
+                            <span className="text-gray-500 mt-1">{assignedCourse.class?.name}</span>
+                        </>
+                    ) : (
+                        <Plus className="h-6 w-6 text-gray-300 group-hover:text-gray-500" />
+                    )}
+                </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0">
+                <Command>
+                    <CommandInput placeholder="Select course..." />
+                    <CommandList>
+                        <CommandEmpty>No courses found.</CommandEmpty>
+                        <CommandGroup>
+                            <CommandItem
+                                onSelect={() => {
+                                    onAssign(null, dayIndex, period)
+                                    setOpen(false)
+                                }}
+                                className="text-red-500 cursor-pointer"
+                            >
+                                <X className="mr-2 h-4 w-4" />
+                                Clear Slot
+                            </CommandItem>
+                            {courses.map(course => (
+                                <CommandItem
+                                    key={course.id}
+                                    onSelect={() => {
+                                        onAssign(course.id, dayIndex, period)
+                                        setOpen(false)
+                                    }}
+                                    className="cursor-pointer"
+                                >
+                                    <div className="flex flex-col">
+                                        <span>{course.name}</span>
+                                        <span className="text-xs text-gray-500">{course.class?.name}</span>
+                                    </div>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    )
+})

@@ -1,0 +1,45 @@
+import { getClasses, getHomeroomTeachers, getActiveTerms } from "@/lib/actions/class.actions"
+import { ClassList } from "@/components/admin/classes/class-list"
+import { ClassModal } from "@/components/admin/classes/class-modal"
+
+export const dynamic = "force-dynamic"
+
+export default async function ClassesPage() {
+    const [classesData, teachersData, termsData] = await Promise.all([
+        getClasses(),
+        getHomeroomTeachers(),
+        getActiveTerms()
+    ])
+
+    const classes = classesData.classes || []
+    const teachers = teachersData.teachers || []
+    const terms = termsData.terms || []
+
+    console.log("ClassesPage Fetched:", {
+        classesCount: classes.length,
+        teachersCount: teachers.length,
+        termsCount: terms.length,
+        firstTerm: terms[0],
+        firstTeacher: teachers[0]
+    })
+
+    const error = classesData.error || teachersData.error || termsData.error
+
+    if (error) {
+        return <div className="p-6 text-red-500">Error loading data: {error}</div>
+    }
+
+    return (
+        <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold">Classrooms</h1>
+                    <p className="text-gray-500">Manage classes and assign homeroom teachers for the active semester.</p>
+                </div>
+                <ClassModal teachers={teachers} terms={terms} />
+            </div>
+
+            <ClassList classes={classes} teachers={teachers} terms={terms} />
+        </div>
+    )
+}

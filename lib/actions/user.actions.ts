@@ -1,0 +1,222 @@
+"use server"
+
+import { db as prisma } from "@/lib/db"
+import { Role, Prisma } from "@prisma/client"
+import { revalidatePath } from "next/cache"
+import bcrypt from "bcryptjs"
+import { auth } from "@/auth"
+
+export async function getUser() {
+    const session = await auth()
+    return session?.user
+}
+
+export type UserFilter = {
+    page?: number
+    limit?: number
+    search?: string
+    role?: Role | "ALL"
+    status?: "ACTIVE" | "ARCHIVED" | "ALL"
+    sort?: "newest" | "oldest" | "name_asc" | "name_desc"
+}
+
+export async function getUsers({
+    page = 1,
+    limit = 10,
+    search = "",
+    role = "ALL",
+    status = "ALL",
+    sort = "newest",
+}: UserFilter) {
+    const skip = (page - 1) * limit
+
+    const where: Prisma.UserWhereInput = {
+        AND: [
+            search
+                ? {
+                    OR: [
+                        { name: { contains: search, mode: "insensitive" } },
+                        { email: { contains: search, mode: "insensitive" } },
+                    ],
+                }
+                : {},
+            role !== "ALL" ? { roles: { has: role } } : {},
+            status !== "ALL"
+                ? { isActive: status === "ACTIVE" }
+                : {},
+        ],
+    }
+
+    let orderBy: Prisma.UserOrderByWithRelationInput = { createdAt: "desc" }
+
+    switch (sort) {
+        case "oldest":
+            orderBy = { createdAt: "asc" }
+            break
+        case "name_asc":
+            orderBy = { name: "asc" }
+            break
+        case "name_desc":
+            orderBy = { name: "desc" }
+            break
+        case "newest":
+        default:
+            orderBy = { createdAt: "desc" }
+            break
+    }
+
+    try {
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy,
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    roles: true,
+                    isActive: true,
+                    image: true,
+                    createdAt: true,
+                    officialId: true,
+                },
+            }),
+            prisma.user.count({ where }),
+        ])
+
+        return {
+            users,
+            metadata: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        }
+    } catch (error) {
+        console.error("Error fetching users:", error)
+        throw new Error("Failed to fetch users")
+    }
+}
+
+export async function createUser(data: any) {
+    // Basic validation
+    if (!data.email || !data.name || !data.password) {
+        return { error: "Missing required fields" }
+    }
+
+    try {
+        const hashedPassword = await bcrypt.hash(data.password, 10)
+
+        const user = await prisma.user.create({
+            data: {
+                ...data,
+                password: hashedPassword,
+                roles: data.roles || [Role.STUDENT],
+            }
+        })
+
+        revalidatePath("/admin/users")
+        return { success: true, user }
+    } catch (error: any) {
+        if (error.code === 'P2002') {
+            return { error: "Email or ID already exists" }
+        }
+        console.error("Error creating user:", error)
+        return { error: "Failed to create user" }
+    }
+}
+
+export async function updateUser(id: string, data: any) {
+    try {
+        const updateData: any = {
+            name: data.name,
+            email: data.email,
+            roles: data.roles,
+            officialId: data.officialId,
+            isActive: data.isActive,
+        }
+
+        // Only hash and update password if provided
+        if (data.password && data.password.trim() !== "") {
+            updateData.password = await bcrypt.hash(data.password, 10)
+        }
+
+        await prisma.user.update({
+            where: { id },
+            data: updateData,
+        })
+
+        revalidatePath("/admin/users")
+        return { success: true }
+    } catch (error: any) {
+        if (error.code === 'P2002') {
+            return { error: "Email or ID already exists" }
+        }
+        console.error("Error updating user:", error)
+        return { error: "Failed to update user" }
+    }
+}
+
+export async function deleteUser(id: string) {
+    try {
+        await prisma.user.delete({
+            where: { id },
+        })
+        revalidatePath("/admin/users")
+        return { success: true }
+    } catch (error) {
+        console.error("Error deleting user:", error)
+        return { error: "Failed to delete user" }
+    }
+}
+
+export async function toggleUserStatus(id: string, isActive: boolean) {
+    try {
+        await prisma.user.update({
+            where: { id },
+            data: { isActive }
+        })
+        revalidatePath("/admin/users")
+        return { success: true }
+    } catch (error) {
+        return { error: "Failed to update status" }
+    }
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) {
+            return { error: "Unauthorized" }
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id }
+        })
+
+        if (!user || !user.password) {
+            return { error: "User not found" }
+        }
+
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password)
+
+        if (!isPasswordValid) {
+            return { error: "Invalid current password" }
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { password: hashedPassword }
+        })
+
+        return { success: true }
+    } catch (error) {
+        console.error("Error changing password:", error)
+        return { error: "Failed to change password" }
+    }
+}
