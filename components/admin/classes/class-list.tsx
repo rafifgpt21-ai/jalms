@@ -96,9 +96,9 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Class Name</TableHead>
-                            <TableHead>Semester</TableHead>
-                            <TableHead>Homeroom Teacher</TableHead>
-                            <TableHead>Students</TableHead>
+                            <TableHead className="max-lg:hidden">Semester</TableHead>
+                            <TableHead className="max-md:hidden">Homeroom Teacher</TableHead>
+                            <TableHead className="max-sm:hidden">Students</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -113,17 +113,17 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                             filteredClasses.map((cls) => (
                                 <TableRow key={cls.id}>
                                     <TableCell className="font-medium">{cls.name}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="max-lg:hidden">
                                         {cls.term.academicYear.name} - {cls.term.type === "ODD" ? "Odd" : "Even"}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="max-md:hidden">
                                         {cls.homeroomTeacher ? (
                                             cls.homeroomTeacher.name
                                         ) : (
                                             <span className="text-gray-400 italic">Unassigned</span>
                                         )}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="max-sm:hidden">
                                         <Badge variant="secondary">
                                             {cls._count.students} Students
                                         </Badge>

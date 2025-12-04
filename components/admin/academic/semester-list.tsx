@@ -89,8 +89,8 @@ export function SemesterList({ terms }: SemesterListProps) {
                     <TableRow>
                         <TableHead>Academic Year</TableHead>
                         <TableHead>Semester</TableHead>
-                        <TableHead>Start Date</TableHead>
-                        <TableHead>End Date</TableHead>
+                        <TableHead className="max-md:hidden">Start Date</TableHead>
+                        <TableHead className="max-lg:hidden">End Date</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -111,8 +111,8 @@ export function SemesterList({ terms }: SemesterListProps) {
                                         {(term as any).type === "ODD" ? "Odd Semester" : "Even Semester"}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>{format(new Date((term as any).startDate), "PPP")}</TableCell>
-                                <TableCell>{format(new Date((term as any).endDate), "PPP")}</TableCell>
+                                <TableCell className="max-md:hidden">{format(new Date((term as any).startDate), "PPP")}</TableCell>
+                                <TableCell className="max-lg:hidden">{format(new Date((term as any).endDate), "PPP")}</TableCell>
                                 <TableCell>
                                     {(term as any).isActive ? (
                                         <Badge className="bg-green-600 hover:bg-green-700">Active</Badge>

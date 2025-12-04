@@ -55,6 +55,9 @@ export const columns: ColumnDef<UserColumn>[] = [
     {
         accessorKey: "officialId",
         header: "ID",
+        meta: {
+            className: "max-md:hidden",
+        },
         cell: ({ row }) => {
             return <span className="text-sm font-mono">{row.getValue("officialId") || "-"}</span>
         },
@@ -62,6 +65,9 @@ export const columns: ColumnDef<UserColumn>[] = [
     {
         accessorKey: "roles",
         header: "Roles",
+        meta: {
+            className: "max-lg:hidden",
+        },
         cell: ({ row }) => {
             const roles = row.getValue("roles") as Role[]
             return (

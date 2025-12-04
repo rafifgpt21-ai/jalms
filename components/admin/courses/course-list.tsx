@@ -79,9 +79,9 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Course Name</TableHead>
-                        <TableHead>Teacher</TableHead>
-                        <TableHead>Semester</TableHead>
-                        <TableHead>Students</TableHead>
+                        <TableHead className="max-md:hidden">Teacher</TableHead>
+                        <TableHead className="max-lg:hidden">Semester</TableHead>
+                        <TableHead className="max-sm:hidden">Students</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -91,11 +91,11 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
                             <TableCell className="font-medium">
                                 {course.name}
                             </TableCell>
-                            <TableCell>{course.teacher.name}</TableCell>
-                            <TableCell>
+                            <TableCell className="max-md:hidden">{course.teacher.name}</TableCell>
+                            <TableCell className="max-lg:hidden">
                                 {course.term.academicYear.name} - {course.term.type === "ODD" ? "Odd" : "Even"}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="max-sm:hidden">
                                 {course._count.students}
                             </TableCell>
                             <TableCell className="text-right">
