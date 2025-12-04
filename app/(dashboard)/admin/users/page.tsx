@@ -26,14 +26,28 @@ export default async function UsersPage({
     const status = params.status || "ALL"
     const sort = params.sort || "newest"
 
-    const { users, metadata } = await getUsers({
+    const isFiltered = query !== "" || role !== "ALL" || status !== "ALL"
+
+    let users: any[] = []
+    let metadata = {
+        total: 0,
         page: currentPage,
-        limit: 1000, // Show all users for scrollable list
-        search: query,
-        role: role as any,
-        status: status as any,
-        sort: sort as any,
-    })
+        limit: 1000,
+        totalPages: 0,
+    }
+
+    if (isFiltered) {
+        const result = await getUsers({
+            page: currentPage,
+            limit: 1000, // Show all users for scrollable list
+            search: query,
+            role: role as any,
+            status: status as any,
+            sort: sort as any,
+        })
+        users = result.users
+        metadata = result.metadata
+    }
 
     return (
         <div className="space-y-6">
