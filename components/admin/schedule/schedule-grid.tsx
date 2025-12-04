@@ -56,6 +56,7 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
     const [hasChanges, setHasChanges] = useState(false)
     const [conflictDialogOpen, setConflictDialogOpen] = useState(false)
     const [conflictDetails, setConflictDetails] = useState<string[]>([])
+    const [selectedDay, setSelectedDay] = useState(0)
 
     // Initialize assignments from initialCourses
     useEffect(() => {
@@ -131,39 +132,87 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
                 </Button>
             </div>
 
-            <div className="grid grid-cols-8 gap-2 min-w-[800px] border rounded-lg p-4 bg-white shadow-sm">
-                {/* Header Row */}
-                <div className="font-bold text-center p-2 flex items-center justify-center bg-gray-100 rounded">Period</div>
-                {DAYS.map(day => (
-                    <div key={day} className="font-bold text-center p-2 bg-gray-100 rounded flex items-center justify-center">
-                        {day}
-                    </div>
-                ))}
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+                <div className="flex items-center justify-between bg-white p-2 rounded-lg border shadow-sm">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedDay(prev => prev === 0 ? 6 : prev - 1)}
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="font-bold text-lg">{DAYS[selectedDay]}</span>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedDay(prev => prev === 6 ? 0 : prev + 1)}
+                    >
+                        <ArrowLeft className="h-4 w-4 rotate-180" />
+                    </Button>
+                </div>
 
-                {/* Grid */}
-                {PERIODS.map(period => (
-                    <Fragment key={period}>
-                        <div className="font-bold flex items-center justify-center bg-gray-50 rounded min-h-[100px]">
-                            {period}
+                <div className="space-y-3">
+                    {PERIODS.map(period => {
+                        const courseId = getCourseIdAtSlot(selectedDay, period)
+                        const assignedCourse = courseId ? getCourseDetails(courseId) : null
+
+                        return (
+                            <div key={period} className="bg-white p-3 rounded-lg border shadow-sm flex items-center gap-4">
+                                <div className="font-bold text-lg text-gray-500 w-8 text-center">{period}</div>
+                                <div className="flex-1">
+                                    <ScheduleSlot
+                                        dayIndex={selectedDay}
+                                        period={period}
+                                        assignedCourse={assignedCourse || null}
+                                        courses={courses}
+                                        hasChanges={hasChanges}
+                                        onAssign={handleAssign}
+                                    />
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+
+            {/* Desktop View */}
+            {/* Desktop View */}
+            <div className="max-md:hidden border rounded-lg p-4 bg-white shadow-sm overflow-x-auto">
+                <div className="grid grid-cols-8 gap-2 min-w-[800px]">
+                    {/* Header Row */}
+                    <div className="font-bold text-center p-2 flex items-center justify-center bg-gray-100 rounded">Period</div>
+                    {DAYS.map(day => (
+                        <div key={day} className="font-bold text-center p-2 bg-gray-100 rounded flex items-center justify-center">
+                            {day}
                         </div>
-                        {DAYS.map((day, dayIndex) => {
-                            const courseId = getCourseIdAtSlot(dayIndex, period)
-                            const assignedCourse = courseId ? getCourseDetails(courseId) : null
+                    ))}
 
-                            return (
-                                <ScheduleSlot
-                                    key={`${day}-${period}`}
-                                    dayIndex={dayIndex}
-                                    period={period}
-                                    assignedCourse={assignedCourse || null}
-                                    courses={courses}
-                                    hasChanges={hasChanges}
-                                    onAssign={handleAssign}
-                                />
-                            )
-                        })}
-                    </Fragment>
-                ))}
+                    {/* Grid */}
+                    {PERIODS.map(period => (
+                        <Fragment key={period}>
+                            <div className="font-bold flex items-center justify-center bg-gray-50 rounded min-h-[100px]">
+                                {period}
+                            </div>
+                            {DAYS.map((day, dayIndex) => {
+                                const courseId = getCourseIdAtSlot(dayIndex, period)
+                                const assignedCourse = courseId ? getCourseDetails(courseId) : null
+
+                                return (
+                                    <ScheduleSlot
+                                        key={`${day}-${period}`}
+                                        dayIndex={dayIndex}
+                                        period={period}
+                                        assignedCourse={assignedCourse || null}
+                                        courses={courses}
+                                        hasChanges={hasChanges}
+                                        onAssign={handleAssign}
+                                    />
+                                )
+                            })}
+                        </Fragment>
+                    ))}
+                </div>
             </div>
 
             <AlertDialog open={conflictDialogOpen} onOpenChange={setConflictDialogOpen}>
