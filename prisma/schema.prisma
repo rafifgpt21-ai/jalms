@@ -1,0 +1,170 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  SUBJECT_TEACHER
+  HOMEROOM_TEACHER
+  STUDENT
+  PARENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String   @unique
+  password  String?
+  image     String?
+  roles     Role[]   @default([STUDENT])
+  
+  // Relations
+  taughtCourses     Course[]     @relation("SubjectTeacher")
+  homeroomClasses   Class[]      @relation("HomeroomTeacher")
+  enrollments       Enrollment[]
+  submissions       Submission[]
+  attendances       Attendance[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
+
+model AcademicYear {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   // "2024/2025"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  
+  terms     Term[]
+  classes   Class[]
+  
+  deletedAt DateTime?
+}
+
+model Term {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  name           String       // "Semester 1"
+  academicYearId String       @db.ObjectId
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  
+  courses        Course[]
+  
+  deletedAt      DateTime?
+}
+
+model Class {
+  id                String       @id @default(auto()) @map("_id") @db.ObjectId
+  name              String       // "10 Science A"
+  academicYearId    String       @db.ObjectId
+  academicYear      AcademicYear @relation(fields: [academicYearId], references: [id])
+  
+  homeroomTeacherId String?      @db.ObjectId
+  homeroomTeacher   User?        @relation("HomeroomTeacher", fields: [homeroomTeacherId], references: [id])
+  
+  students          Enrollment[]
+  courses           Course[]
+  
+  deletedAt         DateTime?
+}
+
+model Subject {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   // "Biology"
+  code        String   // "BIO"
+  description String?
+  
+  courses     Course[]
+  
+  deletedAt   DateTime?
+}
+
+model Course {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  subjectId String   @db.ObjectId
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  
+  classId   String   @db.ObjectId
+  class     Class    @relation(fields: [classId], references: [id])
+  
+  termId    String   @db.ObjectId
+  term      Term     @relation(fields: [termId], references: [id])
+  
+  teacherId String   @db.ObjectId
+  teacher   User     @relation("SubjectTeacher", fields: [teacherId], references: [id])
+  
+  assignments Assignment[]
+  attendances Attendance[]
+  
+  deletedAt DateTime?
+}
+
+model Enrollment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId String   @db.ObjectId
+  student   User     @relation(fields: [studentId], references: [id])
+  
+  classId   String   @db.ObjectId
+  class     Class    @relation(fields: [classId], references: [id])
+  
+  deletedAt DateTime?
+}
+
+model Assignment {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  dueDate     DateTime
+  
+  courseId    String   @db.ObjectId
+  course      Course   @relation(fields: [courseId], references: [id])
+  
+  submissions Submission[]
+  
+  deletedAt   DateTime?
+}
+
+model Submission {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  assignmentId String     @db.ObjectId
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  
+  studentId    String     @db.ObjectId
+  student      User       @relation(fields: [studentId], references: [id])
+  
+  grade        Float?
+  feedback     String?
+  submittedAt  DateTime   @default(now())
+  
+  deletedAt    DateTime?
+}
+
+model Attendance {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  date      DateTime
+  status    AttendanceStatus
+  
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id])
+  
+  studentId String   @db.ObjectId
+  // No direct relation to User to keep it lightweight, but can be added if needed.
+  // Actually, for integrity, let's add it.
+  student   User     @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction) 
+  // Added NoAction to avoid cycles or complexity with MongoDB, though Prisma handles it well.
+  
+  deletedAt DateTime?
+}
