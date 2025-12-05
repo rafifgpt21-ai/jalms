@@ -40,6 +40,14 @@ import {
 import { getCourseAssignments } from "@/lib/actions/teacher.actions"
 import { AddTaskModal } from "@/components/teacher/add-task-modal"
 import { ChatSidebar } from "@/components/chat/chat-sidebar"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface SidebarNavProps {
     userRoles: Role[]
@@ -182,7 +190,30 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                         <NavItem href="/socials" icon={MessageSquare} label="Socials" active={pathname.startsWith("/socials")} />
                     </div>
 
-                    {!isCollapsed && (
+                    {isCollapsed ? (
+                        <div className="px-2 flex justify-center">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-gray-400 hover:text-white hover:bg-gray-800">
+                                        <BookOpen className="h-5 w-5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent side="right" className="w-56 bg-gray-900 border-gray-800 text-white">
+                                    <DropdownMenuLabel>Select Course</DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-gray-800" />
+                                    {courses.map(course => (
+                                        <DropdownMenuItem
+                                            key={course.id}
+                                            onClick={() => setSelectedCourseId(course.id)}
+                                            className="hover:bg-gray-800 cursor-pointer focus:bg-gray-800 focus:text-white"
+                                        >
+                                            {course.name}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    ) : (
                         <div className="px-2">
                             <Select
                                 value={selectedCourseId || ""}
@@ -210,48 +241,88 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                         <div className="space-y-1">
                             {/* Tasks Menu */}
                             <div className="space-y-1">
-                                <button
-                                    onClick={() => setTasksExpanded(!tasksExpanded)}
-                                    className={cn(
-                                        "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-800 transition-colors text-sm text-gray-300",
-                                        tasksExpanded && "text-white"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <ListTodo className="h-4 w-4" />
-                                        {!isCollapsed && <span>Tasks</span>}
+                                {isCollapsed ? (
+                                    <div className="flex justify-center">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 hover:bg-gray-800", tasksExpanded ? "text-white" : "text-gray-400")}>
+                                                    <ListTodo className="h-5 w-5" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent side="right" className="w-56 bg-gray-900 border-gray-800 text-white">
+                                                <DropdownMenuLabel>Tasks</DropdownMenuLabel>
+                                                <DropdownMenuSeparator className="bg-gray-800" />
+                                                {assignments.map(assignment => (
+                                                    <DropdownMenuItem key={assignment.id} asChild>
+                                                        <Link
+                                                            href={`/teacher/courses/${selectedCourseId}/tasks/${assignment.id}`}
+                                                            className={cn(
+                                                                "w-full cursor-pointer hover:bg-gray-800 focus:bg-gray-800 focus:text-white",
+                                                                pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
+                                                            )}
+                                                        >
+                                                            {assignment.title}
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                ))}
+                                                <div className="p-2 border-t border-gray-800">
+                                                    <AddTaskModal
+                                                        courseId={selectedCourseId}
+                                                        onSuccess={() => {
+                                                            // Refresh assignments
+                                                            getCourseAssignments(selectedCourseId).then(res => {
+                                                                if (res.assignments) setAssignments(res.assignments)
+                                                            })
+                                                        }}
+                                                    />
+                                                </div>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
-                                    {!isCollapsed && (
-                                        <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
-                                    )}
-                                </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => setTasksExpanded(!tasksExpanded)}
+                                            className={cn(
+                                                "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-800 transition-colors text-sm text-gray-300",
+                                                tasksExpanded && "text-white"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <ListTodo className="h-4 w-4" />
+                                                <span>Tasks</span>
+                                            </div>
+                                            <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
+                                        </button>
 
-                                {tasksExpanded && !isCollapsed && (
-                                    <div className="pl-9 space-y-1">
-                                        {assignments.map(assignment => (
-                                            <Link
-                                                key={assignment.id}
-                                                href={`/teacher/courses/${selectedCourseId}/tasks/${assignment.id}`}
-                                                className={cn(
-                                                    "block px-2 py-1.5 text-sm rounded-md hover:bg-gray-800 hover:text-white transition-colors truncate",
-                                                    pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
-                                                )}
-                                            >
-                                                {assignment.title}
-                                            </Link>
-                                        ))}
-                                        <div className="pt-1">
-                                            <AddTaskModal
-                                                courseId={selectedCourseId}
-                                                onSuccess={() => {
-                                                    // Refresh assignments
-                                                    getCourseAssignments(selectedCourseId).then(res => {
-                                                        if (res.assignments) setAssignments(res.assignments)
-                                                    })
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
+                                        {tasksExpanded && (
+                                            <div className="pl-9 space-y-1">
+                                                {assignments.map(assignment => (
+                                                    <Link
+                                                        key={assignment.id}
+                                                        href={`/teacher/courses/${selectedCourseId}/tasks/${assignment.id}`}
+                                                        className={cn(
+                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-gray-800 hover:text-white transition-colors truncate",
+                                                            pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
+                                                        )}
+                                                    >
+                                                        {assignment.title}
+                                                    </Link>
+                                                ))}
+                                                <div className="pt-1">
+                                                    <AddTaskModal
+                                                        courseId={selectedCourseId}
+                                                        onSuccess={() => {
+                                                            // Refresh assignments
+                                                            getCourseAssignments(selectedCourseId).then(res => {
+                                                                if (res.assignments) setAssignments(res.assignments)
+                                                            })
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
 
@@ -280,7 +351,30 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                         <NavItem href="/socials" icon={MessageSquare} label="Socials" active={pathname.startsWith("/socials")} />
                     </div>
 
-                    {!isCollapsed && (
+                    {isCollapsed ? (
+                        <div className="px-2 flex justify-center">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-gray-400 hover:text-white hover:bg-gray-800">
+                                        <BookOpen className="h-5 w-5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent side="right" className="w-56 bg-gray-900 border-gray-800 text-white">
+                                    <DropdownMenuLabel>Select Course</DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-gray-800" />
+                                    {courses.map(course => (
+                                        <DropdownMenuItem
+                                            key={course.id}
+                                            onClick={() => setSelectedCourseId(course.id)}
+                                            className="hover:bg-gray-800 cursor-pointer focus:bg-gray-800 focus:text-white"
+                                        >
+                                            {course.name}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    ) : (
                         <div className="px-2">
                             <Select
                                 value={selectedCourseId || ""}
@@ -306,37 +400,66 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                         <div className="space-y-1">
                             {/* Tasks Menu */}
                             <div className="space-y-1">
-                                <button
-                                    onClick={() => setTasksExpanded(!tasksExpanded)}
-                                    className={cn(
-                                        "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-800 transition-colors text-sm text-gray-300",
-                                        tasksExpanded && "text-white"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <ListTodo className="h-4 w-4" />
-                                        {!isCollapsed && <span>Tasks</span>}
+                                {isCollapsed ? (
+                                    <div className="flex justify-center">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 hover:bg-gray-800", tasksExpanded ? "text-white" : "text-gray-400")}>
+                                                    <ListTodo className="h-5 w-5" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent side="right" className="w-56 bg-gray-900 border-gray-800 text-white">
+                                                <DropdownMenuLabel>Tasks</DropdownMenuLabel>
+                                                <DropdownMenuSeparator className="bg-gray-800" />
+                                                {assignments.map(assignment => (
+                                                    <DropdownMenuItem key={assignment.id} asChild>
+                                                        <Link
+                                                            href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
+                                                            className={cn(
+                                                                "w-full cursor-pointer hover:bg-gray-800 focus:bg-gray-800 focus:text-white",
+                                                                pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
+                                                            )}
+                                                        >
+                                                            {assignment.title}
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
-                                    {!isCollapsed && (
-                                        <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
-                                    )}
-                                </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => setTasksExpanded(!tasksExpanded)}
+                                            className={cn(
+                                                "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-800 transition-colors text-sm text-gray-300",
+                                                tasksExpanded && "text-white"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <ListTodo className="h-4 w-4" />
+                                                <span>Tasks</span>
+                                            </div>
+                                            <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
+                                        </button>
 
-                                {tasksExpanded && !isCollapsed && (
-                                    <div className="pl-9 space-y-1">
-                                        {assignments.map(assignment => (
-                                            <Link
-                                                key={assignment.id}
-                                                href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
-                                                className={cn(
-                                                    "block px-2 py-1.5 text-sm rounded-md hover:bg-gray-800 hover:text-white transition-colors truncate",
-                                                    pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
-                                                )}
-                                            >
-                                                {assignment.title}
-                                            </Link>
-                                        ))}
-                                    </div>
+                                        {tasksExpanded && (
+                                            <div className="pl-9 space-y-1">
+                                                {assignments.map(assignment => (
+                                                    <Link
+                                                        key={assignment.id}
+                                                        href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
+                                                        className={cn(
+                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-gray-800 hover:text-white transition-colors truncate",
+                                                            pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
+                                                        )}
+                                                    >
+                                                        {assignment.title}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
 
