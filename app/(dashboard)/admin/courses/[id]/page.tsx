@@ -24,7 +24,7 @@ export default async function CourseWorkspacePage({ params }: CourseWorkspacePag
     const students = course.students
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-6">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" asChild>
                     <Link href="/admin/courses">
@@ -32,7 +32,7 @@ export default async function CourseWorkspacePage({ params }: CourseWorkspacePag
                     </Link>
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold">{course.name}</h1>
+                    <h1 className="text-xl md:text-2xl font-bold">{course.name}</h1>
                     <p className="text-muted-foreground">
                         {course.teacher.name}
                     </p>
@@ -42,9 +42,9 @@ export default async function CourseWorkspacePage({ params }: CourseWorkspacePag
                 </div>
             </div>
 
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Enrolled Students ({students.length})</h2>
-                <div className="flex gap-2">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
+                <h2 className="text-lg md:text-xl font-semibold">Enrolled Students ({students.length})</h2>
+                <div className="flex gap-2 w-full md:w-auto">
                     <AddClassToCourseModal courseId={id} />
                     <AddCourseStudentModal courseId={id} />
                 </div>
