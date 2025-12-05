@@ -63,15 +63,7 @@ export function MobileNav({ userRoles, courses, userEmail, userName }: MobileNav
         },
     ]
 
-    const [isMounted, setIsMounted] = useState(false)
 
-    useEffect(() => {
-        setIsMounted(true)
-    }, [])
-
-    if (!isMounted) {
-        return null
-    }
 
     const visibleTabs = tabs.filter((tab) => userRoles.includes(tab.role))
     const currentTab = visibleTabs.find(tab => tab.isActive) || visibleTabs[0]
