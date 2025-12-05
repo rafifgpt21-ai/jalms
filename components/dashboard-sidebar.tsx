@@ -369,11 +369,12 @@ export function DashboardSidebar({ userRoles, courses, conversations = [], userI
             )}
         >
             <div className="flex-1 overflow-y-auto">
-                {isSocials && !isCollapsed && userId ? (
+                {isSocials && userId ? (
                     <ChatSidebar
                         initialConversations={conversations}
                         userId={userId}
                         variant="sidebar"
+                        isCollapsed={isCollapsed}
                     />
                 ) : (
                     <div className="p-4">
