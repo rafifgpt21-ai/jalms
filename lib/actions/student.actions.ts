@@ -82,13 +82,16 @@ export async function getStudentDashboardStats() {
                     },
                     deletedAt: { isSet: false }
                 },
-                select: { topic: true }
+                select: { topic: true, status: true }
             })
             return {
                 ...slot,
-                topic: attendance?.topic || null
+                topic: attendance?.topic || null,
+                isSkipped: attendance?.status === "SKIPPED"
             }
         }))
+
+        const filteredSchedule = scheduleWithTopics.filter(slot => !slot.isSkipped)
 
         // 2. Get Upcoming Deadlines (Next 5)
         const upcomingDeadlines = await prisma.assignment.findMany({
@@ -139,7 +142,7 @@ export async function getStudentDashboardStats() {
 
 
         return {
-            schedule: scheduleWithTopics,
+            schedule: filteredSchedule,
             upcomingDeadlines,
             recentGrades
         }
