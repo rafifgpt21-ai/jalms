@@ -150,19 +150,58 @@ export async function getStudentDashboardStats() {
     }
 }
 
-export async function getStudentGrades() {
+export async function getStudentSemesters() {
+    try {
+        const user = await getUser()
+        if (!user) return { error: "Unauthorized" }
+
+        const terms = await prisma.term.findMany({
+            where: {
+                courses: {
+                    some: {
+                        studentIds: { has: user.id },
+                        deletedAt: { isSet: false }
+                    }
+                },
+                deletedAt: { isSet: false }
+            },
+            include: {
+                academicYear: true
+            },
+            orderBy: {
+                startDate: 'desc'
+            }
+        })
+
+        return { semesters: terms }
+    } catch (error) {
+        console.error("Error fetching student semesters:", error)
+        return { error: "Failed to fetch semesters" }
+    }
+}
+
+export async function getStudentGrades(termId?: string) {
     try {
         const user = await getUser()
         if (!user) return { error: "Unauthorized" }
 
         const studentId = user.id
 
+        const whereClause: any = {
+            studentIds: { has: studentId },
+            deletedAt: { isSet: false }
+        }
+
+        if (termId && termId !== 'all') {
+            whereClause.termId = termId
+        } else if (termId === 'all') {
+            // No term filter, fetch all
+        } else {
+            whereClause.term = { isActive: true }
+        }
+
         const courses = await prisma.course.findMany({
-            where: {
-                studentIds: { has: studentId },
-                deletedAt: { isSet: false },
-                term: { isActive: true }
-            },
+            where: whereClause,
             include: {
                 teacher: true,
                 assignments: {
@@ -260,12 +299,98 @@ export async function getStudentGrades() {
 
         return { grades }
 
-
-
-
     } catch (error) {
         console.error("Error fetching student grades:", error)
         return { error: "Failed to fetch grades" }
+    }
+}
+
+export async function getStudentGradeHistory() {
+    try {
+        const user = await getUser()
+        if (!user) return { error: "Unauthorized" }
+
+        const courses = await prisma.course.findMany({
+            where: {
+                studentIds: { has: user.id },
+                deletedAt: { isSet: false }
+            },
+            include: {
+                term: {
+                    include: { academicYear: true }
+                },
+                assignments: {
+                    where: { deletedAt: { isSet: false } },
+                    include: {
+                        submissions: {
+                            where: { studentId: user.id, deletedAt: { isSet: false } }
+                        }
+                    }
+                },
+                attendances: {
+                    where: { studentId: user.id, deletedAt: { isSet: false } }
+                }
+            },
+            orderBy: {
+                term: { startDate: 'asc' }
+            }
+        })
+
+        const termGroups = new Map<string, { term: any, grades: number[] }>()
+
+        for (const course of courses) {
+            // Calculate Grade (Logic duplicated from getStudentGrades for now)
+            const totalSessions = course.attendances.filter(a => a.status !== "SKIPPED").length
+            const attendedCount = course.attendances.filter(a =>
+                a.status === "PRESENT" || a.status === "EXCUSED"
+            ).length
+            const attendancePercentage = totalSessions > 0 ? (attendedCount / totalSessions) : 1
+
+            let studentPoints = 0
+            let maxPointsPossible = 0
+            let extraCreditPoints = 0
+
+            course.assignments.forEach(assignment => {
+                const submission = assignment.submissions[0]
+                if (!assignment.isExtraCredit) maxPointsPossible += assignment.maxPoints
+                if (submission && submission.grade !== null) {
+                    let actualPoints = (submission.grade / 100) * assignment.maxPoints
+                    const isLate = assignment.dueDate && submission.submittedAt > assignment.dueDate
+                    if (isLate && assignment.latePenalty > 0) {
+                        actualPoints -= actualPoints * (assignment.latePenalty / 100)
+                    }
+                    if (assignment.isExtraCredit) extraCreditPoints += actualPoints
+                    else studentPoints += actualPoints
+                }
+            })
+
+            const attendancePool = course.attendancePoolScore || 0
+            const attendanceScore = attendancePercentage * attendancePool
+            const numerator = studentPoints + extraCreditPoints + attendanceScore
+            const denominator = maxPointsPossible + attendancePool
+            let totalScore = denominator > 0 ? (numerator / denominator) * 100 : 100
+            totalScore = Math.min(totalScore, 100)
+
+            if (!termGroups.has(course.termId)) {
+                termGroups.set(course.termId, { term: course.term, grades: [] })
+            }
+            termGroups.get(course.termId)?.grades.push(totalScore)
+        }
+
+        const history = Array.from(termGroups.values()).map(({ term, grades }) => {
+            const average = grades.reduce((a, b) => a + b, 0) / grades.length
+            const name = `${term.academicYear.name} ${term.type}`
+            return {
+                termId: term.id,
+                name: name,
+                average: Math.round(average * 10) / 10
+            }
+        })
+
+        return { history }
+    } catch (error) {
+        console.error("Error fetching student grade history:", error)
+        return { error: "Failed to fetch grade history" }
     }
 }
 
