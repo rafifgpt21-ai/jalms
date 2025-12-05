@@ -10,7 +10,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, MoreHorizontal } from "lucide-react"
+import { Edit, Trash2, MoreHorizontal, Search } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -25,6 +25,7 @@ import { ClassModal } from "./class-modal"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -51,10 +52,13 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [showActiveOnly, setShowActiveOnly] = useState(true)
     const [deleteId, setDeleteId] = useState<string | null>(null)
+    const [searchQuery, setSearchQuery] = useState("")
 
-    const filteredClasses = showActiveOnly
-        ? classes.filter(cls => cls.term.isActive)
-        : classes
+    const filteredClasses = classes.filter(cls => {
+        const matchesActive = showActiveOnly ? cls.term.isActive : true
+        const matchesSearch = cls.name.toLowerCase().includes(searchQuery.toLowerCase())
+        return matchesActive && matchesSearch
+    })
 
     async function handleDelete(id: string) {
         setDeleteId(id)
@@ -82,13 +86,33 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
 
     return (
         <>
-            <div className="flex items-center space-x-2 mb-4">
-                <Switch
-                    id="active-filter"
-                    checked={showActiveOnly}
-                    onCheckedChange={setShowActiveOnly}
-                />
-                <Label htmlFor="active-filter">Show Active Semester Only</Label>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 w-full">
+                <div className="flex-shrink-0">
+                    <ClassModal teachers={teachers} terms={terms} />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center space-x-2 whitespace-nowrap">
+                        <Switch
+                            id="active-filter"
+                            checked={showActiveOnly}
+                            onCheckedChange={setShowActiveOnly}
+                        />
+                        <Label htmlFor="active-filter">Active Classes</Label>
+                    </div>
+                    <div className="flex w-full sm:w-auto items-center space-x-2">
+                        <div className="relative flex-1 sm:flex-initial">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search classes..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9 w-full sm:w-[300px]"
+                            />
+                        </div>
+                        <Button variant="secondary">Search</Button>
+                    </div>
+                </div>
             </div>
 
             <div className="border rounded-lg">

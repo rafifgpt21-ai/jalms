@@ -1,5 +1,7 @@
 "use client"
 
+import { useRouter, useSearchParams } from "next/navigation"
+
 import { Course, User, Term, AcademicYear } from "@prisma/client"
 import {
     Table,
@@ -22,6 +24,8 @@ import { useState } from "react"
 import { deleteCourse } from "@/lib/actions/course.actions"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -51,6 +55,20 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [filterValue, setFilterValue] = useState("")
+
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const showAll = searchParams.get("showAll") === "true"
+
+    function handleToggle(checked: boolean) {
+        const params = new URLSearchParams(searchParams.toString())
+        if (checked) {
+            params.set("showAll", "true")
+        } else {
+            params.delete("showAll")
+        }
+        router.push(`?${params.toString()}`)
+    }
 
     const filteredCourses = courses.filter(course =>
         course.name.toLowerCase().includes(filterValue.toLowerCase())
@@ -84,19 +102,33 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 w-full">
-                <div className="flex w-full sm:w-auto sm:ml-auto items-center space-x-2">
-                    <div className="relative flex-1 sm:flex-initial">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search courses..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            className="pl-9 w-full sm:w-[300px]"
+            <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+                <div className="flex-shrink-0">
+                    <CourseModal teachers={teachers} terms={terms} />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center space-x-2 whitespace-nowrap">
+                        <Switch
+                            id="show-all"
+                            checked={!showAll}
+                            onCheckedChange={(checked) => handleToggle(!checked)}
                         />
+                        <Label htmlFor="show-all">Active Courses</Label>
                     </div>
-                    <Button onClick={handleSearch}>Search</Button>
+                    <div className="flex w-full sm:w-auto items-center space-x-2">
+                        <div className="relative flex-1 sm:flex-initial">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search courses..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                className="pl-9 w-full sm:w-[300px]"
+                            />
+                        </div>
+                        <Button onClick={handleSearch} variant="secondary">Search</Button>
+                    </div>
                 </div>
             </div>
 

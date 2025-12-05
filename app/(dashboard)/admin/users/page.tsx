@@ -52,20 +52,12 @@ export default async function UsersPage({
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-                    <p className="text-muted-foreground">
-                        Manage students, teachers, and staff accounts.
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button asChild variant="outline">
-                        <Link href="/admin/users/import">Import via Excel</Link>
-                    </Button>
-                    <UserModal />
-                </div>
+        <div className="space-y-6 w-full">
+            <div className="flex items-center gap-2 w-full justify-end">
+                <Button asChild variant="outline" className="flex-1 md:flex-none">
+                    <Link href="/admin/users/import">Import via Excel</Link>
+                </Button>
+                <UserModal />
             </div>
 
             <UserToolbar />

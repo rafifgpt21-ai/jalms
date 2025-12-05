@@ -31,13 +31,7 @@ export default async function ClassesPage() {
 
     return (
         <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold">Classrooms</h1>
-                    <p className="text-gray-500">Manage classes and assign homeroom teachers for the active semester.</p>
-                </div>
-                <ClassModal teachers={teachers} terms={terms} />
-            </div>
+
 
             <ClassList classes={classes} teachers={teachers} terms={terms} />
         </div>

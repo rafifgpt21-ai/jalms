@@ -19,11 +19,7 @@ export default async function SchedulePage({
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold">Schedule Manager</h1>
-                    <p className="text-gray-500">View all teachers and their assigned courses.</p>
-                </div>
+            <div className="flex items-center gap-2">
                 <ScheduleSearch />
             </div>
 

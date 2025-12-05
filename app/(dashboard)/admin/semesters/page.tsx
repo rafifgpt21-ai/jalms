@@ -17,13 +17,7 @@ export default async function SemestersPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Semesters</h1>
-                    <p className="text-muted-foreground">
-                        Manage academic terms and set the active semester.
-                    </p>
-                </div>
+            <div className="flex items-center gap-2">
                 <SemesterModal />
             </div>
 
