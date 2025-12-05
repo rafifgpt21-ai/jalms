@@ -69,11 +69,11 @@ export function MobileNav({ userRoles, courses, userEmail, userName }: MobileNav
     const currentTab = visibleTabs.find(tab => tab.isActive) || visibleTabs[0]
 
     return (
-        <div className="md:hidden p-4 bg-gray-900 text-white flex items-center justify-between sticky top-0 z-50 border-b border-gray-800">
+        <div className="md:hidden px-4 py-2 bg-white/80 backdrop-blur-md text-gray-900 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200">
             <div className="flex items-center gap-2">
                 <Sheet open={open} onOpenChange={setOpen}>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-white hover:bg-gray-800 -ml-2">
+                        <Button variant="ghost" size="icon" className="text-gray-900 hover:bg-gray-100 -ml-2">
                             <Menu className="h-6 w-6" />
                         </Button>
                     </SheetTrigger>
