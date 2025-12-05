@@ -20,7 +20,8 @@ import {
     ChevronDown,
     FileText,
     GraduationCap,
-    Clock
+    Clock,
+    MessageSquare
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/select"
 import { getCourseAssignments } from "@/lib/actions/teacher.actions"
 import { AddTaskModal } from "@/components/teacher/add-task-modal"
+import { ChatSidebar } from "@/components/chat/chat-sidebar"
 
 interface SidebarNavProps {
     userRoles: Role[]
@@ -165,6 +167,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                     <NavItem href="/admin/courses" icon={BookOpen} label="Courses" active={pathname.startsWith("/admin/courses")} />
                     <NavItem href="/admin/semesters" icon={CalendarRange} label="Semesters" active={pathname.startsWith("/admin/semesters")} />
                     <NavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname.startsWith("/admin/schedule")} />
+                    <NavItem href="/admin/socials" icon={MessageSquare} label="Socials Monitoring" active={pathname.startsWith("/admin/socials")} />
                 </div>
             )}
 
@@ -174,7 +177,9 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                     <div className="space-y-1">
                         <NavItem href="/teacher" icon={LayoutDashboard} label="Dashboard" active={pathname === "/teacher"} />
                         <NavItem href="/teacher/attendance" icon={Clock} label="Daily Attendance" active={pathname === "/teacher/attendance"} />
+                        <NavItem href="/teacher/attendance" icon={Clock} label="Daily Attendance" active={pathname === "/teacher/attendance"} />
                         <NavItem href="/teacher/materials" icon={FileText} label="Study Materials" active={pathname === "/teacher/materials"} />
+                        <NavItem href="/socials" icon={MessageSquare} label="Socials" active={pathname.startsWith("/socials")} />
                     </div>
 
                     {!isCollapsed && (
@@ -270,7 +275,9 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                     <div className="space-y-1">
                         <NavItem href="/student" icon={LayoutDashboard} label="Dashboard" active={pathname === "/student"} />
                         <NavItem href="/student/attendance" icon={Clock} label="Attendance" active={pathname === "/student/attendance"} />
+                        <NavItem href="/student/attendance" icon={Clock} label="Attendance" active={pathname === "/student/attendance"} />
                         <NavItem href="/student/grades" icon={GraduationCap} label="Grades" active={pathname === "/student/grades"} />
+                        <NavItem href="/socials" icon={MessageSquare} label="Socials" active={pathname.startsWith("/socials")} />
                     </div>
 
                     {!isCollapsed && (
@@ -345,20 +352,34 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
 interface DashboardSidebarProps {
     userRoles: Role[]
     courses?: any[]
+    conversations?: any[]
+    userId?: string
 }
 
-export function DashboardSidebar({ userRoles, courses }: DashboardSidebarProps) {
+export function DashboardSidebar({ userRoles, courses, conversations = [], userId }: DashboardSidebarProps) {
     const [isCollapsed, setIsCollapsed] = useState(false)
+    const pathname = usePathname()
+    const isSocials = pathname.startsWith("/socials")
 
     return (
         <aside
             className={cn(
                 "bg-gray-900 text-white flex flex-col transition-all duration-300 relative border-r border-gray-800",
-                isCollapsed ? "w-16" : "w-64"
+                isCollapsed ? "w-16" : "w-80" // Wider for chat
             )}
         >
-            <div className="p-4 flex-1 overflow-y-auto">
-                <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} courses={courses} />
+            <div className="flex-1 overflow-y-auto">
+                {isSocials && !isCollapsed && userId ? (
+                    <ChatSidebar
+                        initialConversations={conversations}
+                        userId={userId}
+                        variant="sidebar"
+                    />
+                ) : (
+                    <div className="p-4">
+                        <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} courses={courses} />
+                    </div>
+                )}
             </div>
 
             <div className="p-4 border-t border-gray-800">

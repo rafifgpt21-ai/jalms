@@ -22,6 +22,13 @@ export default async function DashboardLayout({
         if (res.courses) teacherCourses = res.courses
     }
 
+    let conversations: any[] = []
+    if (session.user?.id) {
+        // We need to dynamically import this to avoid circular dependencies if any
+        const { getConversations } = await import("@/app/actions/chat")
+        conversations = await getConversations()
+    }
+
     let studentCourses: any[] = []
     if (userRoles.includes("STUDENT") && session.user?.id) {
         // We need to import this dynamically or just import it at top
@@ -49,6 +56,8 @@ export default async function DashboardLayout({
                     courses={allCourses}
                     userEmail={session.user?.email}
                     userName={session.user?.name}
+                    conversations={conversations}
+                    userId={session.user?.id}
                 />
             </div>
 
@@ -67,6 +76,8 @@ export default async function DashboardLayout({
                     <DashboardSidebar
                         userRoles={userRoles}
                         courses={allCourses}
+                        conversations={conversations}
+                        userId={session.user?.id}
                     />
                 </div>
 

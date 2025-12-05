@@ -1,0 +1,257 @@
+"use server";
+
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
+
+export async function getConversations() {
+    const session = await auth();
+    if (!session?.user?.id) return [];
+
+    try {
+        const conversations = await db.conversation.findMany({
+            where: {
+                participantIds: {
+                    has: session.user.id,
+                },
+            },
+            include: {
+                participants: {
+                    select: {
+                        id: true,
+                        name: true,
+                        image: true,
+                        email: true,
+                    },
+                },
+                messages: {
+                    orderBy: {
+                        createdAt: "desc",
+                    },
+                    take: 1,
+                },
+            },
+            orderBy: {
+                lastMessageAt: "desc",
+            },
+        });
+
+        // Filter conversations:
+        // Show if:
+        // 1. It has messages
+        // 2. OR current user is the initiator
+        const visibleConversations = conversations.filter(conv => {
+            if (conv.messages.length > 0) return true;
+            return conv.initiatorId === session.user.id;
+        });
+
+        return visibleConversations;
+    } catch (error) {
+        console.error("Error fetching conversations:", error);
+        return [];
+    }
+}
+
+export async function getMessages(conversationId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return [];
+
+    try {
+        // Ensure user is participant or admin
+        const conversation = await db.conversation.findUnique({
+            where: { id: conversationId },
+            select: { participantIds: true },
+        });
+
+        if (!conversation) return [];
+
+        const isAdmin = session.user.roles.includes("ADMIN");
+        const isParticipant = conversation.participantIds.includes(session.user.id);
+
+        if (!isParticipant && !isAdmin) {
+            return [];
+        }
+
+        const messages = await db.message.findMany({
+            where: {
+                conversationId,
+            },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        name: true,
+                        image: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "asc",
+            },
+        });
+
+        return messages;
+    } catch (error) {
+        console.error("Error fetching messages:", error);
+        return [];
+    }
+}
+
+export async function sendMessage(conversationId: string, content: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        const message = await db.message.create({
+            data: {
+                content,
+                conversationId,
+                senderId: session.user.id,
+            },
+        });
+
+        await db.conversation.update({
+            where: { id: conversationId },
+            data: {
+                lastMessageAt: new Date(),
+            },
+        });
+
+        revalidatePath(`/socials`);
+        revalidatePath(`/socials/${conversationId}`); // If we have a specific page
+        return { success: true, message };
+    } catch (error) {
+        console.error("Error sending message:", error);
+        return { error: "Failed to send message" };
+    }
+}
+
+export async function createConversation(participantIds: string[]) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    // Add current user to participants if not already included
+    const allParticipants = Array.from(new Set([...participantIds, session.user.id]));
+    console.log("Creating conversation with participants:", allParticipants);
+
+    if (allParticipants.length < 2) {
+        console.log("Error: Need at least 2 participants");
+        return { error: "Need at least 2 participants" };
+    }
+
+    try {
+        // Check if conversation already exists (for 1-on-1)
+        if (allParticipants.length === 2) {
+            const existing = await db.conversation.findFirst({
+                where: {
+                    participantIds: {
+                        hasEvery: allParticipants,
+                    },
+                },
+            });
+
+            if (existing) {
+                return { success: true, conversationId: existing.id };
+            }
+        }
+
+        const conversation = await db.conversation.create({
+            data: {
+                participantIds: allParticipants,
+                initiatorId: session.user.id,
+            },
+        });
+
+        revalidatePath("/socials");
+        return { success: true, conversationId: conversation.id };
+    } catch (error) {
+        console.error("Error creating conversation:", error);
+        return { error: "Failed to create conversation" };
+    }
+}
+
+export async function searchUsers(query: string) {
+    const session = await auth();
+    if (!session?.user?.id) return [];
+
+    if (!query || query.length < 2) return [];
+
+    try {
+        console.log("Searching users with query:", query);
+        const users = await db.user.findMany({
+            where: {
+                OR: [
+                    { name: { contains: query, mode: "insensitive" } },
+                    { email: { contains: query, mode: "insensitive" } },
+                ],
+                NOT: {
+                    id: session.user.id,
+                },
+            },
+            select: {
+                id: true,
+                name: true,
+                image: true,
+                email: true,
+                roles: true,
+            },
+            take: 10,
+        });
+
+        return users;
+    } catch (error) {
+        console.error("Error searching users:", error);
+        return [];
+    }
+}
+
+// Admin Actions
+
+export async function getAllConversations() {
+    const session = await auth();
+    // Check for ADMIN role. Adjust based on how roles are stored in session.
+    // Assuming session.user.role or similar.
+    // If roles is an array in DB, session might reflect that.
+    // Let's assume we need to check DB or session properly.
+
+    // For now, let's fetch user from DB to be safe if session is lightweight
+    if (!session?.user?.id) return [];
+
+    const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { roles: true }
+    });
+
+    if (!user?.roles.includes("ADMIN")) {
+        return [];
+    }
+
+    try {
+        const conversations = await db.conversation.findMany({
+            include: {
+                participants: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                    },
+                },
+                messages: {
+                    orderBy: {
+                        createdAt: "desc",
+                    },
+                    take: 1,
+                },
+            },
+            orderBy: {
+                lastMessageAt: "desc",
+            },
+        });
+
+        return conversations;
+    } catch (error) {
+        console.error("Error fetching all conversations:", error);
+        return [];
+    }
+}

@@ -46,10 +46,17 @@ export function WorkspaceTabs({ roles, userName, userEmail }: WorkspaceTabsProps
             role: Role.PARENT,
             isActive: pathname.startsWith("/parent"),
         },
+        {
+            label: "Socials",
+            href: "/socials",
+            role: Role.STUDENT, // Placeholder, accessible to all
+            isActive: pathname.startsWith("/socials"),
+            isPublic: true,
+        },
     ]
 
     // Filter tabs based on user roles
-    const visibleTabs = tabs.filter((tab) => roles.includes(tab.role))
+    const visibleTabs = tabs.filter((tab) => (tab as any).isPublic || roles.includes(tab.role))
 
     return (
 
