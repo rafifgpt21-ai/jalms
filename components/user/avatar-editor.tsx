@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { createAvatar } from "@dicebear/core"
-import { avataaars } from "@dicebear/collection"
+import { funEmoji } from "@dicebear/collection"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -16,23 +16,22 @@ import { useRouter } from "next/navigation"
 
 type AvatarConfig = {
     seed: string
-    top?: string[]
-    hairColor?: string[]
-    hatColor?: string[]
-    accessories?: string[]
-    accessoriesColor?: string[]
-    facialHair?: string[]
-    facialHairColor?: string[]
-    clothes?: string[]
-    clothesColor?: string[]
     eyes?: string[]
-    eyebrows?: string[]
     mouth?: string[]
-    skinColor?: string[]
+    backgroundColor?: string[]
+    scale?: number
+    translateX?: number
+    translateY?: number
 }
 
 const defaultOptions: AvatarConfig = {
-    seed: "felix",
+    seed: "jalms",
+    eyes: ["plain"],
+    mouth: ["plain"],
+    backgroundColor: ["b6e3f4"],
+    scale: 100,
+    translateX: 0,
+    translateY: 0,
 }
 
 export function AvatarEditor({ initialConfig }: { initialConfig?: any }) {
@@ -41,7 +40,7 @@ export function AvatarEditor({ initialConfig }: { initialConfig?: any }) {
     const router = useRouter()
 
     const avatarSvg = useMemo(() => {
-        return createAvatar(avataaars, {
+        return createAvatar(funEmoji, {
             ...config,
             size: 128,
         } as any).toString()
@@ -67,32 +66,32 @@ export function AvatarEditor({ initialConfig }: { initialConfig?: any }) {
     }
 
     const randomize = () => {
+        const eyesOptions = getOptions("eyes")
+        const mouthOptions = getOptions("mouth")
+        const bgOptions = getOptions("backgroundColor")
+
         setConfig(prev => ({
             ...prev,
-            seed: Math.random().toString(36).substring(7)
+            seed: Math.random().toString(36).substring(7),
+            eyes: [eyesOptions[Math.floor(Math.random() * eyesOptions.length)]],
+            mouth: [mouthOptions[Math.floor(Math.random() * mouthOptions.length)]],
+            backgroundColor: [bgOptions[Math.floor(Math.random() * bgOptions.length)]],
         }))
     }
 
     const updateConfig = (key: keyof AvatarConfig, value: any) => {
         setConfig(prev => ({
             ...prev,
-            [key]: [value]
+            [key]: (key === 'scale' || key === 'translateX' || key === 'translateY') ? value : [value]
         }))
     }
 
     // Helper to generate options for select inputs
     const getOptions = (key: string) => {
-        // This is a simplified list. In a real app, you might want to pull these from the collection metadata if available,
-        // or define a comprehensive list of valid values for 'avataaars'.
-        // For now, I'll hardcode some common ones for demonstration.
         const options: Record<string, string[]> = {
-            top: ["longHair", "shortHair", "eyepatch", "hat", "hijab", "turban", "winterHat1", "winterHat2", "winterHat3"],
-            accessories: ["kurt", "prescription01", "prescription02", "round", "sunglasses", "wayfarers"],
-            hairColor: ["auburn", "black", "blonde", "brown", "pastelPink", "platinum", "red", "silverGray"],
-            clothes: ["blazerAndShirt", "blazerAndSweater", "collarAndSweater", "graphicShirt", "hoodie", "overall", "shirtCrewNeck", "shirtScoopNeck", "shirtVNeck"],
-            eyes: ["close", "cry", "default", "dizzy", "eyeRoll", "happy", "hearts", "side", "squint", "surprised", "wink", "winkWacky"],
-            mouth: ["concerned", "default", "disbelief", "eating", "grimace", "sad", "scream", "serious", "smile", "tongue", "twinkle", "vomit"],
-            skinColor: ["tanned", "yellow", "pale", "light", "brown", "darkBrown", "black"],
+            eyes: ["sad", "tearDrop", "pissed", "cute", "wink", "wink2", "plain", "glasses", "closed", "love", "stars", "shades", "closed2", "crying", "sleepClose"],
+            mouth: ["plain", "lilSmile", "sad", "shy", "cute", "wideSmile", "shout", "smileTeeth", "smileLol", "pissed", "drip", "tongueOut", "kissHeart", "sick", "faceMask"],
+            backgroundColor: ["fcbc34", "d84be5", "d9915b", "f6d594", "059ff2", "71cf62", "b6e3f4", "c0aede", "d1d4f9", "ffd5dc", "ffdfbf"],
         }
         return options[key] || []
     }
@@ -115,42 +114,12 @@ export function AvatarEditor({ initialConfig }: { initialConfig?: any }) {
                     </Button>
                 </div>
 
-                <Tabs defaultValue="head" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="head">Head</TabsTrigger>
+                <Tabs defaultValue="face" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="face">Face</TabsTrigger>
-                        <TabsTrigger value="clothes">Clothes</TabsTrigger>
-                        <TabsTrigger value="accessories">Extras</TabsTrigger>
+                        <TabsTrigger value="background">Background</TabsTrigger>
+                        <TabsTrigger value="adjustments">Adjustments</TabsTrigger>
                     </TabsList>
-
-                    <TabsContent value="head" className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                            <Label>Top / Hair</Label>
-                            <Select onValueChange={(v) => updateConfig("top", v)} value={config.top?.[0] || ""}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select style" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {getOptions("top").map(opt => (
-                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Hair Color</Label>
-                            <Select onValueChange={(v) => updateConfig("hairColor", v)} value={config.hairColor?.[0] || ""}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select color" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {getOptions("hairColor").map(opt => (
-                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </TabsContent>
 
                     <TabsContent value="face" className="space-y-4 pt-4">
                         <div className="space-y-2">
@@ -179,50 +148,63 @@ export function AvatarEditor({ initialConfig }: { initialConfig?: any }) {
                                 </SelectContent>
                             </Select>
                         </div>
+                    </TabsContent>
+
+                    <TabsContent value="background" className="space-y-4 pt-4">
                         <div className="space-y-2">
-                            <Label>Skin Color</Label>
-                            <Select onValueChange={(v) => updateConfig("skinColor", v)} value={config.skinColor?.[0] || ""}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select skin color" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {getOptions("skinColor").map(opt => (
-                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Label>Background Color</Label>
+                            <div className="grid grid-cols-6 gap-2">
+                                {getOptions("backgroundColor").map(color => (
+                                    <button
+                                        key={color}
+                                        className={`w-8 h-8 rounded-full border-2 ${config.backgroundColor?.[0] === color ? 'border-primary' : 'border-transparent'}`}
+                                        style={{ backgroundColor: `#${color}` }}
+                                        onClick={() => updateConfig("backgroundColor", color)}
+                                        aria-label={`Select color ${color}`}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="clothes" className="space-y-4 pt-4">
+                    <TabsContent value="adjustments" className="space-y-4 pt-4">
                         <div className="space-y-2">
-                            <Label>Clothing</Label>
-                            <Select onValueChange={(v) => updateConfig("clothes", v)} value={config.clothes?.[0] || ""}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select clothes" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {getOptions("clothes").map(opt => (
-                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <div className="flex justify-between">
+                                <Label>Scale</Label>
+                                <span className="text-sm text-muted-foreground">{config.scale || 100}%</span>
+                            </div>
+                            <Slider
+                                defaultValue={[config.scale || 100]}
+                                max={200}
+                                step={10}
+                                onValueChange={(vals) => updateConfig("scale", vals[0])}
+                            />
                         </div>
-                    </TabsContent>
-
-                    <TabsContent value="accessories" className="space-y-4 pt-4">
                         <div className="space-y-2">
-                            <Label>Accessories</Label>
-                            <Select onValueChange={(v) => updateConfig("accessories", v)} value={config.accessories?.[0] || ""}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select accessories" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {getOptions("accessories").map(opt => (
-                                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <div className="flex justify-between">
+                                <Label>Horizontal Position (X)</Label>
+                                <span className="text-sm text-muted-foreground">{config.translateX || 0}%</span>
+                            </div>
+                            <Slider
+                                defaultValue={[config.translateX || 0]}
+                                min={-100}
+                                max={100}
+                                step={5}
+                                onValueChange={(vals) => updateConfig("translateX", vals[0])}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <Label>Vertical Position (Y)</Label>
+                                <span className="text-sm text-muted-foreground">{config.translateY || 0}%</span>
+                            </div>
+                            <Slider
+                                defaultValue={[config.translateY || 0]}
+                                min={-100}
+                                max={100}
+                                step={5}
+                                onValueChange={(vals) => updateConfig("translateY", vals[0])}
+                            />
                         </div>
                     </TabsContent>
                 </Tabs>

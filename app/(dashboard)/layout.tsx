@@ -57,6 +57,7 @@ export default async function DashboardLayout({
                     courses={allCourses}
                     userEmail={session.user?.email}
                     userName={session.user?.name}
+                    userImage={session.user?.image}
                     conversations={conversations}
                     userId={session.user?.id}
                 />
@@ -68,6 +69,7 @@ export default async function DashboardLayout({
                     roles={userRoles}
                     userName={session.user?.name}
                     userEmail={session.user?.email}
+                    userImage={session.user?.image}
                 />
             </div>
 

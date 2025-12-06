@@ -5,15 +5,23 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Role } from "@prisma/client"
 import { UserSettings } from "@/components/user-settings"
+import { useState, useEffect } from "react"
 
 interface WorkspaceTabsProps {
     roles: Role[]
     userName?: string | null
     userEmail?: string | null
+    userImage?: string | null
 }
 
-export function WorkspaceTabs({ roles, userName, userEmail }: WorkspaceTabsProps) {
+export function WorkspaceTabs({ roles, userName, userEmail, userImage }: WorkspaceTabsProps) {
     const pathname = usePathname()
+    const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
+
+    // Reset optimistic path when actual navigation occurs
+    useEffect(() => {
+        setOptimisticPath(null)
+    }, [pathname])
 
     const tabs = [
         {
@@ -73,27 +81,33 @@ export function WorkspaceTabs({ roles, userName, userEmail }: WorkspaceTabsProps
             <div className="flex-1 flex justify-center min-w-0 overflow-x-auto no-scrollbar mx-4">
                 {visibleTabs.length > 0 && (
                     <div className="flex items-center p-1 bg-gray-100/80 border border-gray-200 rounded-full shadow-inner whitespace-nowrap">
-                        {visibleTabs.map((tab) => (
-                            <Link
-                                key={tab.href}
-                                href={tab.href}
-                                className={cn(
-                                    "px-5 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
-                                    tab.isActive
-                                        ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
-                                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-200/50"
-                                )}
-                            >
-                                {tab.label}
-                            </Link>
-                        ))}
+                        {visibleTabs.map((tab) => {
+                            const isOptimisticActive = optimisticPath ? optimisticPath.startsWith(tab.href) : tab.isActive
+
+                            return (
+                                <Link
+                                    key={tab.href}
+                                    href={tab.href}
+                                    onMouseDown={() => setOptimisticPath(tab.href)}
+                                    onClick={() => setOptimisticPath(tab.href)}
+                                    className={cn(
+                                        "px-5 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+                                        isOptimisticActive
+                                            ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                                            : "text-gray-500 hover:text-gray-900 hover:bg-gray-200/50"
+                                    )}
+                                >
+                                    {tab.label}
+                                </Link>
+                            )
+                        })}
                     </div>
                 )}
             </div>
 
             {/* User Profile & Logout */}
             <div className="flex items-center gap-4 min-w-fit justify-end">
-                <UserSettings email={userEmail} name={userName} />
+                <UserSettings email={userEmail} name={userName} image={userImage} />
             </div>
         </div>
     )

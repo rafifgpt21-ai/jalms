@@ -23,16 +23,18 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 
 interface UserSettingsProps {
     email?: string | null
     name?: string | null
+    image?: string | null
     side?: "top" | "bottom" | "left" | "right"
     align?: "start" | "center" | "end"
 }
 
-export function UserSettings({ email, name, side = "bottom", align = "end" }: UserSettingsProps) {
+export function UserSettings({ email, name, image, side = "bottom", align = "end" }: UserSettingsProps) {
     const [showLogoutDialog, setShowLogoutDialog] = useState(false)
     const [showPasswordDialog, setShowPasswordDialog] = useState(false)
     const [showAvatarDialog, setShowAvatarDialog] = useState(false)
@@ -41,18 +43,28 @@ export function UserSettings({ email, name, side = "bottom", align = "end" }: Us
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <Settings className="h-5 w-5 text-gray-500" />
-                        <span className="sr-only">User Settings</span>
+                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 p-0">
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={image || ""} alt={name || "User"} />
+                            <AvatarFallback>
+                                <Settings className="h-4 w-4 text-gray-500" />
+                            </AvatarFallback>
+                        </Avatar>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side={side} align={align} className="w-56">
                     <DropdownMenuLabel>
-                        <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{name || "User"}</p>
-                            <p className="text-xs leading-none text-muted-foreground">
-                                {email}
-                            </p>
+                        <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={image || ""} alt={name || "User"} />
+                                <AvatarFallback>{name?.[0] || "U"}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col space-y-1">
+                                <p className="text-sm font-medium leading-none">{name || "User"}</p>
+                                <p className="text-xs leading-none text-muted-foreground">
+                                    {email}
+                                </p>
+                            </div>
                         </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />

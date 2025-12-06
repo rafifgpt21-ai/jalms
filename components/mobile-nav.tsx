@@ -24,11 +24,12 @@ interface MobileNavProps {
     courses?: any[]
     userEmail?: string | null
     userName?: string | null
+    userImage?: string | null
     conversations?: any[]
     userId?: string
 }
 
-export function MobileNav({ userRoles, courses, userEmail, userName, conversations = [], userId }: MobileNavProps) {
+export function MobileNav({ userRoles, courses, userEmail, userName, userImage, conversations = [], userId }: MobileNavProps) {
     const [open, setOpen] = useState(false)
     const pathname = usePathname()
     const router = useRouter()
@@ -84,7 +85,7 @@ export function MobileNav({ userRoles, courses, userEmail, userName, conversatio
     return (
         <div className="md:hidden px-4 py-2 bg-white/80 backdrop-blur-md text-gray-900 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200">
             <div className="flex items-center gap-2">
-                <Sheet open={open} onOpenChange={setOpen}>
+                <Sheet open={open} onOpenChange={setOpen} modal={false}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-gray-900 hover:bg-gray-100 -ml-2">
                             <Menu className="h-6 w-6" />
@@ -125,7 +126,7 @@ export function MobileNav({ userRoles, courses, userEmail, userName, conversatio
                 </span>
             </div>
 
-            <UserSettings email={userEmail} name={userName} />
+            <UserSettings email={userEmail} name={userName} image={userImage} />
         </div>
     )
 }
