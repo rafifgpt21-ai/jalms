@@ -126,16 +126,21 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                 href={href}
                                 onClick={handleClick}
                                 className={cn(
-                                    "flex items-center justify-center p-2 rounded-md hover:bg-gray-800 transition-colors relative",
-                                    isActive && "bg-gray-800 text-blue-400"
+                                    "flex items-center justify-center p-3 rounded-md transition-all duration-200 relative group",
+                                    isActive
+                                        ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
+                                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                 )}
                             >
                                 {isNavigating ? (
                                     <Loader2 className="h-5 w-5 animate-spin" />
                                 ) : (
-                                    <Icon className="h-5 w-5" />
+                                    <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
                                 )}
                                 <span className="sr-only">{label}</span>
+                                {isActive && (
+                                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-blue-500" />
+                                )}
                             </Link>
                         </TooltipTrigger>
                         <TooltipContent side="right">
@@ -151,15 +156,19 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                 href={href}
                 onClick={handleClick}
                 className={cn(
-                    "flex items-center gap-3 rounded-md hover:bg-gray-800 transition-colors relative",
-                    isMobile ? "px-4 py-3 text-base" : "px-3 py-2 text-sm",
-                    isActive && "bg-gray-800 text-blue-400"
+                    "flex items-center gap-3 rounded-md transition-all duration-200 relative overflow-hidden px-4 py-3 text-base",
+                    isActive
+                        ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
+                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                 )}
             >
+                {isActive && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/50" />
+                )}
                 {isNavigating ? (
-                    <Loader2 className={cn("animate-spin", isMobile ? "h-5 w-5" : "h-4 w-4")} />
+                    <Loader2 className="animate-spin h-5 w-5" />
                 ) : (
-                    <Icon className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
+                    <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
                 )}
                 <span>{label}</span>
             </Link>
@@ -194,18 +203,18 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                         <div className="px-2 flex justify-center">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-gray-400 hover:text-white hover:bg-gray-800">
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent">
                                         <BookOpen className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent side="right" className="w-56 bg-gray-900 border-gray-800 text-white">
+                                <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                     <DropdownMenuLabel>Select Course</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-gray-800" />
+                                    <DropdownMenuSeparator className="bg-sidebar-border" />
                                     {courses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
-                                            className="hover:bg-gray-800 cursor-pointer focus:bg-gray-800 focus:text-white"
+                                            className="hover:bg-sidebar-accent cursor-pointer focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
                                         >
                                             {course.name}
                                         </DropdownMenuItem>
@@ -223,7 +232,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                     // router.push(`/teacher/courses/${val}`)
                                 }}
                             >
-                                <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
+                                <SelectTrigger className="w-full bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
                                     <SelectValue placeholder="Select Course" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -245,27 +254,27 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                     <div className="flex justify-center">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 hover:bg-gray-800", tasksExpanded ? "text-white" : "text-gray-400")}>
+                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 hover:bg-sidebar-accent", tasksExpanded ? "text-sidebar-accent-foreground" : "text-muted-foreground")}>
                                                     <ListTodo className="h-5 w-5" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent side="right" className="w-56 bg-gray-900 border-gray-800 text-white">
+                                            <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                                 <DropdownMenuLabel>Tasks</DropdownMenuLabel>
-                                                <DropdownMenuSeparator className="bg-gray-800" />
+                                                <DropdownMenuSeparator className="bg-sidebar-border" />
                                                 {assignments.map(assignment => (
                                                     <DropdownMenuItem key={assignment.id} asChild>
                                                         <Link
                                                             href={`/teacher/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                             className={cn(
-                                                                "w-full cursor-pointer hover:bg-gray-800 focus:bg-gray-800 focus:text-white",
-                                                                pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
+                                                                "w-full cursor-pointer hover:bg-sidebar-accent focus:bg-sidebar-accent focus:text-sidebar-accent-foreground",
+                                                                pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
                                                             )}
                                                         >
                                                             {assignment.title}
                                                         </Link>
                                                     </DropdownMenuItem>
                                                 ))}
-                                                <div className="p-2 border-t border-gray-800">
+                                                <div className="p-2 border-t border-sidebar-border">
                                                     <AddTaskModal
                                                         courseId={selectedCourseId}
                                                         onSuccess={() => {
@@ -284,8 +293,8 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                         <button
                                             onClick={() => setTasksExpanded(!tasksExpanded)}
                                             className={cn(
-                                                "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-800 transition-colors text-sm text-gray-300",
-                                                tasksExpanded && "text-white"
+                                                "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-sidebar-accent transition-colors text-sm text-muted-foreground",
+                                                tasksExpanded && "text-sidebar-foreground"
                                             )}
                                         >
                                             <div className="flex items-center gap-3">
@@ -302,8 +311,8 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                                         key={assignment.id}
                                                         href={`/teacher/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                         className={cn(
-                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-gray-800 hover:text-white transition-colors truncate",
-                                                            pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
+                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors truncate",
+                                                            pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary font-medium" : "text-muted-foreground"
                                                         )}
                                                     >
                                                         {assignment.title}
@@ -353,18 +362,18 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                         <div className="px-2 flex justify-center">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-gray-400 hover:text-white hover:bg-gray-800">
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent">
                                         <BookOpen className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent side="right" className="w-56 bg-gray-900 border-gray-800 text-white">
+                                <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                     <DropdownMenuLabel>Select Course</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-gray-800" />
+                                    <DropdownMenuSeparator className="bg-sidebar-border" />
                                     {courses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
-                                            className="hover:bg-gray-800 cursor-pointer focus:bg-gray-800 focus:text-white"
+                                            className="hover:bg-sidebar-accent cursor-pointer focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
                                         >
                                             {course.name}
                                         </DropdownMenuItem>
@@ -380,7 +389,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                     setSelectedCourseId(val)
                                 }}
                             >
-                                <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
+                                <SelectTrigger className="w-full bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
                                     <SelectValue placeholder="Select Course" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -402,20 +411,20 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                     <div className="flex justify-center">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 hover:bg-gray-800", tasksExpanded ? "text-white" : "text-gray-400")}>
+                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 hover:bg-sidebar-accent", tasksExpanded ? "text-sidebar-accent-foreground" : "text-muted-foreground")}>
                                                     <ListTodo className="h-5 w-5" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent side="right" className="w-56 bg-gray-900 border-gray-800 text-white">
+                                            <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                                 <DropdownMenuLabel>Tasks</DropdownMenuLabel>
-                                                <DropdownMenuSeparator className="bg-gray-800" />
+                                                <DropdownMenuSeparator className="bg-sidebar-border" />
                                                 {assignments.map(assignment => (
                                                     <DropdownMenuItem key={assignment.id} asChild>
                                                         <Link
                                                             href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                             className={cn(
-                                                                "w-full cursor-pointer hover:bg-gray-800 focus:bg-gray-800 focus:text-white",
-                                                                pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
+                                                                "w-full cursor-pointer hover:bg-sidebar-accent focus:bg-sidebar-accent focus:text-sidebar-accent-foreground",
+                                                                pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
                                                             )}
                                                         >
                                                             {assignment.title}
@@ -430,8 +439,8 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                         <button
                                             onClick={() => setTasksExpanded(!tasksExpanded)}
                                             className={cn(
-                                                "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-800 transition-colors text-sm text-gray-300",
-                                                tasksExpanded && "text-white"
+                                                "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-sidebar-accent transition-colors text-sm text-muted-foreground",
+                                                tasksExpanded && "text-sidebar-foreground"
                                             )}
                                         >
                                             <div className="flex items-center gap-3">
@@ -448,8 +457,8 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                                         key={assignment.id}
                                                         href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                         className={cn(
-                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-gray-800 hover:text-white transition-colors truncate",
-                                                            pathname.includes(`/tasks/${assignment.id}`) ? "text-blue-400" : "text-gray-400"
+                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors truncate",
+                                                            pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
                                                         )}
                                                     >
                                                         {assignment.title}
@@ -485,7 +494,7 @@ export function DashboardSidebar({ userRoles, courses, conversations = [], userI
     return (
         <aside
             className={cn(
-                "bg-gray-900 text-white flex flex-col transition-all duration-300 relative border-r border-gray-800",
+                "bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 relative border-r border-sidebar-border",
                 isCollapsed ? "w-16" : "w-80" // Wider for chat
             )}
         >
@@ -498,18 +507,18 @@ export function DashboardSidebar({ userRoles, courses, conversations = [], userI
                         isCollapsed={isCollapsed}
                     />
                 ) : (
-                    <div className="p-4">
+                    <div className={cn("p-4", isCollapsed && "p-2")}>
                         <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} courses={courses} />
                     </div>
                 )}
             </div>
 
-            <div className="p-4 border-t border-gray-800">
+            <div className="p-4 border-t border-sidebar-border">
                 <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="w-full flex items-center justify-center hover:bg-gray-800 text-gray-400 hover:text-white"
+                    className="w-full flex items-center justify-center hover:bg-sidebar-accent text-muted-foreground hover:text-sidebar-accent-foreground"
                 >
                     {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                 </Button>

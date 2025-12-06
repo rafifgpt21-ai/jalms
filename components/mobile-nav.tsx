@@ -91,14 +91,14 @@ export function MobileNav({ userRoles, courses, userEmail, userName, userImage, 
                             <Menu className="h-6 w-6" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-72 bg-gray-900 text-white border-r-gray-800 p-0">
+                    <SheetContent side="left" className="w-72 bg-sidebar text-sidebar-foreground border-r-sidebar-border p-0">
                         <div className="flex flex-col h-full">
-                            <div className="p-6 border-b border-gray-800">
+                            <div className="p-6 border-b border-sidebar-border">
                                 <div className="flex items-center gap-2 mb-1">
                                     <img src="/arsync.svg" alt="Logo" className="h-12 w-auto" />
                                     <SheetTitle className="sr-only">ARSYNC</SheetTitle>
                                 </div>
-                                <SheetDescription className="text-xs text-gray-400">School Management System</SheetDescription>
+                                <SheetDescription className="text-xs text-muted-foreground">School Management System</SheetDescription>
                             </div>
 
 

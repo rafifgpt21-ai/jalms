@@ -24,10 +24,10 @@ export async function getClasses() {
             ],
         })
 
-        return { classes }
+        return { classes, error: null }
     } catch (error) {
         console.error("Error fetching classes:", error)
-        return { classes: [] }
+        return { classes: [], error: "Failed to fetch classes" }
     }
 }
 
@@ -118,10 +118,10 @@ export async function getHomeroomTeachers() {
                 name: true,
             }
         })
-        return { teachers }
+        return { teachers, error: null }
     } catch (error) {
         console.error("Error fetching teachers:", error)
-        return { teachers: [] }
+        return { teachers: [], error: "Failed to fetch teachers" }
     }
 }
 
@@ -147,10 +147,10 @@ export async function getActiveTerms(includeTermId?: string) {
             include: { academicYear: true },
             orderBy: { startDate: "desc" }
         })
-        return { terms }
+        return { terms, error: null }
     } catch (error) {
         console.error("Error fetching terms:", error)
-        return { terms: [] }
+        return { terms: [], error: "Failed to fetch terms" }
     }
 }
 

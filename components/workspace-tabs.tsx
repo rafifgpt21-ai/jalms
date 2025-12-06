@@ -72,7 +72,7 @@ export function WorkspaceTabs({ roles, userName, userEmail, userImage }: Workspa
             {/* Branding */}
             <div className="flex items-center gap-2 min-w-fit">
                 <div className="flex items-center justify-center">
-                    <img src="/arsync.svg" alt="Logo" className="h-16 w-auto" />
+                    <img src="/arsync.svg" alt="Logo" className="h-12 w-auto" />
                 </div>
             </div>
 
