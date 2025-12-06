@@ -185,9 +185,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                     <div className="space-y-1">
                         <NavItem href="/teacher" icon={LayoutDashboard} label="Dashboard" active={pathname === "/teacher"} />
                         <NavItem href="/teacher/attendance" icon={Clock} label="Daily Attendance" active={pathname === "/teacher/attendance"} />
-                        <NavItem href="/teacher/attendance" icon={Clock} label="Daily Attendance" active={pathname === "/teacher/attendance"} />
                         <NavItem href="/teacher/materials" icon={FileText} label="Study Materials" active={pathname === "/teacher/materials"} />
-                        <NavItem href="/socials" icon={MessageSquare} label="Socials" active={pathname.startsWith("/socials")} />
                     </div>
 
                     {isCollapsed ? (
@@ -346,9 +344,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                     <div className="space-y-1">
                         <NavItem href="/student" icon={LayoutDashboard} label="Dashboard" active={pathname === "/student"} />
                         <NavItem href="/student/attendance" icon={Clock} label="Attendance" active={pathname === "/student/attendance"} />
-                        <NavItem href="/student/attendance" icon={Clock} label="Attendance" active={pathname === "/student/attendance"} />
                         <NavItem href="/student/grades" icon={GraduationCap} label="Grades" active={pathname === "/student/grades"} />
-                        <NavItem href="/socials" icon={MessageSquare} label="Socials" active={pathname.startsWith("/socials")} />
                     </div>
 
                     {isCollapsed ? (
