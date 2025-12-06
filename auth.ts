@@ -39,6 +39,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (token.roles && session.user) {
                 session.user.roles = token.roles as Role[];
             }
+            if (token.avatarConfig && session.user) {
+                session.user.avatarConfig = token.avatarConfig;
+            }
             return session;
         },
         async jwt({ token }) {
@@ -46,6 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const user = await db.user.findUnique({ where: { id: token.sub } });
             if (!user) return token;
             token.roles = user.roles;
+            token.avatarConfig = user.avatarConfig;
             return token;
         }
     }

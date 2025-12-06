@@ -35,6 +35,7 @@ interface UserSettingsProps {
 export function UserSettings({ email, name, side = "bottom", align = "end" }: UserSettingsProps) {
     const [showLogoutDialog, setShowLogoutDialog] = useState(false)
     const [showPasswordDialog, setShowPasswordDialog] = useState(false)
+    const [showAvatarDialog, setShowAvatarDialog] = useState(false)
 
     return (
         <>
@@ -55,6 +56,10 @@ export function UserSettings({ email, name, side = "bottom", align = "end" }: Us
                         </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowAvatarDialog(true)}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Customize Avatar</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowPasswordDialog(true)}>
                         <KeyRound className="mr-2 h-4 w-4" />
                         <span>Change Password</span>
@@ -94,6 +99,21 @@ export function UserSettings({ email, name, side = "bottom", align = "end" }: Us
                 open={showPasswordDialog}
                 onOpenChange={setShowPasswordDialog}
             />
+
+            <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Customize Avatar</DialogTitle>
+                        <DialogDescription>
+                            Create your unique avatar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <AvatarEditor />
+                </DialogContent>
+            </Dialog>
         </>
     )
 }
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { AvatarEditor } from "@/components/user/avatar-editor"

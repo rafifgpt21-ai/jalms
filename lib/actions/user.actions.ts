@@ -137,6 +137,7 @@ export async function updateUser(id: string, data: any) {
             roles: data.roles,
             officialId: data.officialId,
             isActive: data.isActive,
+            avatarConfig: data.avatarConfig,
         }
 
         // Only hash and update password if provided
@@ -222,5 +223,28 @@ export async function changePassword(currentPassword: string, newPassword: strin
     } catch (error) {
         console.error("Error changing password:", error)
         return { error: "Failed to change password" }
+    }
+}
+
+export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) {
+            return { error: "Unauthorized" }
+        }
+
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: {
+                avatarConfig,
+                image: imageUrl
+            }
+        })
+
+        revalidatePath("/admin/users")
+        return { success: true }
+    } catch (error) {
+        console.error("Error updating avatar:", error)
+        return { error: "Failed to update avatar" }
     }
 }
