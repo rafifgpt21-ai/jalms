@@ -207,6 +207,10 @@ export async function changePassword(currentPassword: string, newPassword: strin
             return { error: "Invalid current password" }
         }
 
+        if (newPassword.length < 8) {
+            return { error: "Password must be at least 8 characters" }
+        }
+
         const hashedPassword = await bcrypt.hash(newPassword, 10)
 
         await prisma.user.update({

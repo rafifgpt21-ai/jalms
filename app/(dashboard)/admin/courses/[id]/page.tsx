@@ -42,9 +42,9 @@ export default async function CourseWorkspacePage({ params }: CourseWorkspacePag
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
+            <div className="flex flex-row justify-between items-center gap-4">
                 <h2 className="text-lg md:text-xl font-semibold">Enrolled Students ({students.length})</h2>
-                <div className="flex gap-2 w-full md:w-auto">
+                <div className="flex gap-2">
                     <AddClassToCourseModal courseId={id} />
                     <AddCourseStudentModal courseId={id} />
                 </div>

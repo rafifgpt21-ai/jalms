@@ -54,9 +54,10 @@ interface SidebarNavProps {
     isCollapsed?: boolean
     onNavigate?: () => void
     courses?: any[]
+    isMobile?: boolean
 }
 
-export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }: SidebarNavProps) {
+export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], isMobile = false }: SidebarNavProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
@@ -150,14 +151,15 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [] }:
                 href={href}
                 onClick={handleClick}
                 className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-800 transition-colors text-sm relative",
+                    "flex items-center gap-3 rounded-md hover:bg-gray-800 transition-colors relative",
+                    isMobile ? "px-4 py-3 text-base" : "px-3 py-2 text-sm",
                     isActive && "bg-gray-800 text-blue-400"
                 )}
             >
                 {isNavigating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className={cn("animate-spin", isMobile ? "h-5 w-5" : "h-4 w-4")} />
                 ) : (
-                    <Icon className="h-4 w-4" />
+                    <Icon className={cn(isMobile ? "h-5 w-5" : "h-4 w-4")} />
                 )}
                 <span>{label}</span>
             </Link>

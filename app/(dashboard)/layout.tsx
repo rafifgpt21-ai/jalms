@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { WorkspaceTabs } from "@/components/workspace-tabs"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { MobileNav } from "@/components/mobile-nav"
+import { BottomNavigation } from "@/components/bottom-navigation"
 
 import { getTeacherActiveCourses } from "@/lib/actions/teacher.actions"
 
@@ -82,10 +83,12 @@ export default async function DashboardLayout({
                 </div>
 
                 {/* Main Content */}
-                <main className="flex-1 p-4 md:p-8 bg-gray-50 overflow-y-auto">
+                <main className="flex-1 p-4 md:p-8 bg-gray-50 overflow-y-auto pb-20 md:pb-8">
                     {children}
                 </main>
             </div>
+
+            <BottomNavigation roles={userRoles} />
         </div>
     )
 }
