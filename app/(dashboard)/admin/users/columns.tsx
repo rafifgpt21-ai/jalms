@@ -69,7 +69,7 @@ export const columns: ColumnDef<UserColumn>[] = [
             className: "max-lg:hidden",
         },
         cell: ({ row }) => {
-            const roles = row.getValue("roles") as Role[]
+            const roles = Array.from(new Set(row.getValue("roles") as Role[]))
             return (
                 <div className="flex flex-wrap gap-1">
                     {roles.map((role) => (

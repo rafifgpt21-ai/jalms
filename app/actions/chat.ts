@@ -138,8 +138,10 @@ export async function markConversationAsRead(conversationId: string) {
     if (!session?.user?.id) return { error: "Unauthorized" };
 
     try {
+        console.log(`Marking conversation ${conversationId} as read for user ${session.user.id}`);
+
         // Update all messages in this conversation where user is NOT in readByIds
-        await db.message.updateMany({
+        const result = await db.message.updateMany({
             where: {
                 conversationId: conversationId,
                 NOT: {
@@ -155,7 +157,9 @@ export async function markConversationAsRead(conversationId: string) {
             }
         });
 
-        revalidatePath("/socials");
+        console.log(`Marked ${result.count} messages as read.`);
+
+        revalidatePath("/", "layout"); // Revalidate everything to be sure the sidebar updates
         return { success: true };
     } catch (error) {
         console.error("Error marking conversation as read:", error);

@@ -12,7 +12,6 @@ export async function authenticate(
         console.log("Attempting login with:", data.email)
         await signIn("credentials", { ...data, redirectTo: "/admin" })
     } catch (error) {
-        console.error("Login error:", error)
         if (error instanceof AuthError) {
             switch (error.type) {
                 case "CredentialsSignin":
@@ -21,6 +20,17 @@ export async function authenticate(
                     return "Something went wrong."
             }
         }
+
+        // Next.js redirects are thrown as errors, we should rethrow them without logging
+        const isRedirectError = error instanceof Error && (
+            error.message === 'NEXT_REDIRECT' ||
+            (error as any).digest?.startsWith('NEXT_REDIRECT')
+        );
+
+        if (!isRedirectError) {
+            console.error("Login error:", error)
+        }
+
         throw error
     }
 }

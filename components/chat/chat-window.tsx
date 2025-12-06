@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ type Message = {
     id: string;
     content: string;
     createdAt: Date;
+    readByIds: string[];
     sender: {
         id: string;
         name: string | null;
@@ -31,7 +33,7 @@ type Participant = {
 
 interface ChatWindowProps {
     conversationId: string;
-    initialMessages: Message[];
+    initialMessages: any[]; // Using any[] temporarily if Message type mismatch occurs with Prisma return
     currentUserId: string;
     participants: Participant[];
 }
@@ -42,7 +44,8 @@ export function ChatWindow({
     currentUserId,
     participants,
 }: ChatWindowProps) {
-    const [messages, setMessages] = useState<Message[]>(initialMessages);
+    const router = useRouter();
+    const [messages, setMessages] = useState<Message[]>(initialMessages as Message[]);
     const [newMessage, setNewMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -60,19 +63,24 @@ export function ChatWindow({
         const interval = setInterval(async () => {
             const latestMessages = await getMessages(conversationId);
             if (latestMessages.length > messages.length) {
-                setMessages(latestMessages);
+                setMessages(latestMessages as Message[]);
                 // Also mark as read if new messages came in
                 await markConversationAsRead(conversationId);
+                router.refresh();
             }
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [conversationId, messages.length]);
+    }, [conversationId, messages.length, router]);
 
     // Mark as read on mount
     useEffect(() => {
-        markConversationAsRead(conversationId);
-    }, [conversationId]);
+        const markRead = async () => {
+            await markConversationAsRead(conversationId);
+            router.refresh();
+        };
+        markRead();
+    }, [conversationId, router]);
 
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -84,15 +92,20 @@ export function ChatWindow({
             if (result.error) {
                 toast.error(result.error);
             } else if (result.message) {
-                setMessages((prev) => [...prev, {
-                    ...result.message,
+                // Optimistic update
+                const optimisticMessage: Message = {
+                    id: result.message.id,
+                    content: result.message.content,
+                    createdAt: new Date(result.message.createdAt),
+                    readByIds: result.message.readByIds,
                     sender: {
                         id: currentUserId,
-                        name: "Me", // Optimistic update, will be fixed on refresh/poll
+                        name: "Me",
                         image: null
-                    },
-                    createdAt: new Date()
-                }]);
+                    }
+                };
+
+                setMessages((prev) => [...prev, optimisticMessage]);
                 setNewMessage("");
             }
         } catch (error) {
