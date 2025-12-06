@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send } from "lucide-react";
-import { getMessages, sendMessage } from "@/app/actions/chat";
+import { getMessages, sendMessage, markConversationAsRead } from "@/app/actions/chat";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -55,17 +55,24 @@ export function ChatWindow({
         }
     }, [messages]);
 
-    // Polling for new messages
+    // Poll every 3 seconds
     useEffect(() => {
         const interval = setInterval(async () => {
             const latestMessages = await getMessages(conversationId);
             if (latestMessages.length > messages.length) {
                 setMessages(latestMessages);
+                // Also mark as read if new messages came in
+                await markConversationAsRead(conversationId);
             }
-        }, 3000); // Poll every 3 seconds
+        }, 3000);
 
         return () => clearInterval(interval);
     }, [conversationId, messages.length]);
+
+    // Mark as read on mount
+    useEffect(() => {
+        markConversationAsRead(conversationId);
+    }, [conversationId]);
 
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();

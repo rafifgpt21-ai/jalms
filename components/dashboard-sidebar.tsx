@@ -55,9 +55,10 @@ interface SidebarNavProps {
     onNavigate?: () => void
     courses?: any[]
     isMobile?: boolean
+    hasUnreadMessages?: boolean
 }
 
-export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], isMobile = false }: SidebarNavProps) {
+export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], isMobile = false, hasUnreadMessages = false }: SidebarNavProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
@@ -101,7 +102,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
     const isHomeroom = pathname.startsWith("/homeroom")
     const isStudent = pathname.startsWith("/student")
 
-    const NavItem = ({ href, icon: Icon, label, active, onClick }: { href: string, icon: any, label: string, active: boolean, onClick?: () => void }) => {
+    const NavItem = ({ href, icon: Icon, label, active, onClick, hasBadge }: { href: string, icon: any, label: string, active: boolean, onClick?: () => void, hasBadge?: boolean }) => {
         const isNavigating = navigatingTo === href
         const isActive = active || isNavigating
 
@@ -135,7 +136,12 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                 {isNavigating ? (
                                     <Loader2 className="h-5 w-5 animate-spin" />
                                 ) : (
-                                    <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
+                                    <div className="relative">
+                                        <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
+                                        {hasBadge && (
+                                            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                                        )}
+                                    </div>
                                 )}
                                 <span className="sr-only">{label}</span>
                                 {isActive && (
@@ -145,6 +151,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                         </TooltipTrigger>
                         <TooltipContent side="right">
                             {label}
+                            {hasBadge && " (Unread)"}
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -168,7 +175,12 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                 {isNavigating ? (
                     <Loader2 className="animate-spin h-5 w-5" />
                 ) : (
-                    <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
+                    <div className="relative">
+                        <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
+                        {hasBadge && (
+                            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                        )}
+                    </div>
                 )}
                 <span>{label}</span>
             </Link>
@@ -186,7 +198,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                     <NavItem href="/admin/courses" icon={BookOpen} label="Courses" active={pathname.startsWith("/admin/courses")} />
                     <NavItem href="/admin/semesters" icon={CalendarRange} label="Semesters" active={pathname.startsWith("/admin/semesters")} />
                     <NavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname.startsWith("/admin/schedule")} />
-                    <NavItem href="/admin/socials" icon={MessageSquare} label="Socials Monitoring" active={pathname.startsWith("/admin/socials")} />
+                    <NavItem href="/admin/socials" icon={MessageSquare} label="Socials Monitoring" active={pathname.startsWith("/admin/socials")} hasBadge={hasUnreadMessages} />
                 </div>
             )}
 
@@ -491,6 +503,13 @@ export function DashboardSidebar({ userRoles, courses, conversations = [], userI
     const pathname = usePathname()
     const isSocials = pathname.startsWith("/socials")
 
+    // Calculate unread globally for the sidebar
+    const hasUnreadMessages = conversations?.some(conv => {
+        const lastMessage = conv.messages && conv.messages[0];
+        // User not in readByIds of last message
+        return lastMessage && userId && !lastMessage.readByIds?.includes(userId);
+    }) || false;
+
     return (
         <aside
             className={cn(
@@ -508,7 +527,7 @@ export function DashboardSidebar({ userRoles, courses, conversations = [], userI
                     />
                 ) : (
                     <div className={cn("p-4", isCollapsed && "p-2")}>
-                        <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} courses={courses} />
+                        <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} courses={courses} hasUnreadMessages={hasUnreadMessages} />
                     </div>
                 )}
             </div>

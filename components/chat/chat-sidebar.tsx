@@ -34,6 +34,7 @@ type Conversation = {
     messages: {
         content: string;
         createdAt: Date;
+        readByIds?: string[];
     }[];
 };
 
@@ -198,6 +199,9 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                         {filteredConversations.map((conv) => {
                             const otherParticipant = conv.participants.find((p) => p.id !== userId);
                             const isActive = pathname === `/socials/${conv.id}`;
+                            const lastMessage = conv.messages[0];
+                            // Check if unread: has last message, and user ID is NOT in readByIds
+                            const isUnread = lastMessage && !lastMessage.readByIds?.includes(userId);
 
                             return (
                                 <TooltipProvider key={conv.id}>
@@ -206,7 +210,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             <Link
                                                 href={`/socials/${conv.id}`}
                                                 className={cn(
-                                                    "flex items-center justify-center p-2 rounded-md transition-colors",
+                                                    "flex items-center justify-center p-2 rounded-md transition-colors relative",
                                                     "hover:bg-sidebar-accent",
                                                     isActive && "bg-sidebar-accent"
                                                 )}
@@ -217,10 +221,14 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                         {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
                                                     </AvatarFallback>
                                                 </Avatar>
+                                                {isUnread && (
+                                                    <div className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                                                )}
                                             </Link>
                                         </TooltipTrigger>
                                         <TooltipContent side="right">
                                             {otherParticipant?.name || "Unknown User"}
+                                            {isUnread && " (Unread)"}
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
@@ -238,13 +246,15 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                 const otherParticipant = conv.participants.find((p) => p.id !== userId);
                                 const lastMessage = conv.messages[0];
                                 const isActive = pathname === `/socials/${conv.id}`;
+                                // Check if unread: has last message, and user ID is NOT in readByIds
+                                const isUnread = lastMessage && !lastMessage.readByIds?.includes(userId);
 
                                 return (
                                     <Link
                                         key={conv.id}
                                         href={`/socials/${conv.id}`}
                                         className={cn(
-                                            "flex items-center gap-3 p-3 transition-colors last:border-0",
+                                            "flex items-center gap-3 p-3 transition-colors last:border-0 relative",
                                             isSidebar
                                                 ? "hover:bg-sidebar-accent border-sidebar-border"
                                                 : "hover:bg-muted/50 border-b border-border/40",
@@ -254,26 +264,31 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             )
                                         )}
                                     >
-                                        <Avatar>
-                                            <AvatarImage src={otherParticipant?.image || ""} />
-                                            <AvatarFallback>
-                                                {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <div className="relative">
+                                            <Avatar>
+                                                <AvatarImage src={otherParticipant?.image || ""} />
+                                                <AvatarFallback>
+                                                    {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            {isUnread && (
+                                                <div className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 border-2 border-background" />
+                                            )}
+                                        </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between mb-1">
-                                                <span className="font-medium truncate">
+                                                <span className={cn("font-medium truncate", isUnread && "font-bold text-foreground")}>
                                                     {otherParticipant?.name || "Unknown User"}
                                                 </span>
                                                 {lastMessage && (
-                                                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                                                    <span className={cn("text-xs whitespace-nowrap ml-2", isUnread ? "text-red-500 font-medium" : "text-muted-foreground")}>
                                                         {formatDistanceToNow(new Date(lastMessage.createdAt), {
                                                             addSuffix: false,
                                                         })}
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className={cn("text-sm truncate", isSidebar ? "text-muted-foreground" : "text-muted-foreground")}>
+                                            <p className={cn("text-sm truncate", isUnread ? "text-foreground font-medium" : "text-muted-foreground")}>
                                                 {lastMessage ? lastMessage.content : "No messages yet"}
                                             </p>
                                         </div>

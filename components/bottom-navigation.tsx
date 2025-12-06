@@ -15,9 +15,10 @@ import {
 
 interface BottomNavigationProps {
     roles: Role[]
+    hasUnreadMessages?: boolean
 }
 
-export function BottomNavigation({ roles }: BottomNavigationProps) {
+export function BottomNavigation({ roles, hasUnreadMessages = false }: BottomNavigationProps) {
     const pathname = usePathname()
 
     const tabs = [
@@ -63,6 +64,7 @@ export function BottomNavigation({ roles }: BottomNavigationProps) {
             icon: MessageSquare,
             isActive: pathname.startsWith("/socials"),
             isPublic: true,
+            hasBadge: hasUnreadMessages,
         },
     ]
 
@@ -76,18 +78,25 @@ export function BottomNavigation({ roles }: BottomNavigationProps) {
             <div className="flex items-center justify-around h-16">
                 {visibleTabs.map((tab) => {
                     const Icon = tab.icon
+                    const hasBadge = (tab as any).hasBadge
+
                     return (
                         <Link
                             key={tab.href}
                             href={tab.href}
                             className={cn(
-                                "flex flex-col items-center justify-center w-full h-full space-y-1",
+                                "flex flex-col items-center justify-center w-full h-full space-y-1 relative",
                                 tab.isActive
                                     ? "text-blue-600"
                                     : "text-gray-500 hover:text-gray-900"
                             )}
                         >
-                            <Icon className={cn("h-6 w-6", tab.isActive && "fill-current")} />
+                            <div className="relative">
+                                <Icon className={cn("h-6 w-6", tab.isActive && "fill-current")} />
+                                {hasBadge && (
+                                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white" />
+                                )}
+                            </div>
                             <span className="sr-only">{tab.label}</span>
                         </Link>
                     )

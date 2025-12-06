@@ -29,6 +29,12 @@ export async function getConversations() {
                         createdAt: "desc",
                     },
                     take: 1,
+                    select: {
+                        content: true,
+                        createdAt: true,
+                        readByIds: true,
+                        senderId: true,
+                    }
                 },
             },
             orderBy: {
@@ -107,6 +113,7 @@ export async function sendMessage(conversationId: string, content: string) {
                 content,
                 conversationId,
                 senderId: session.user.id,
+                readByIds: [session.user.id], // Sender has read their own message
             },
         });
 
@@ -123,6 +130,36 @@ export async function sendMessage(conversationId: string, content: string) {
     } catch (error) {
         console.error("Error sending message:", error);
         return { error: "Failed to send message" };
+    }
+}
+
+export async function markConversationAsRead(conversationId: string) {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
+
+    try {
+        // Update all messages in this conversation where user is NOT in readByIds
+        await db.message.updateMany({
+            where: {
+                conversationId: conversationId,
+                NOT: {
+                    readByIds: {
+                        has: session.user.id
+                    }
+                }
+            },
+            data: {
+                readByIds: {
+                    push: session.user.id
+                }
+            }
+        });
+
+        revalidatePath("/socials");
+        return { success: true };
+    } catch (error) {
+        console.error("Error marking conversation as read:", error);
+        return { error: "Failed to mark as read" };
     }
 }
 
@@ -242,6 +279,12 @@ export async function getAllConversations() {
                         createdAt: "desc",
                     },
                     take: 1,
+                    select: {
+                        content: true,
+                        createdAt: true,
+                        readByIds: true,
+                        senderId: true,
+                    }
                 },
             },
             orderBy: {

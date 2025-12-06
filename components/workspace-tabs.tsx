@@ -12,9 +12,10 @@ interface WorkspaceTabsProps {
     userName?: string | null
     userEmail?: string | null
     userImage?: string | null
+    hasUnreadMessages?: boolean
 }
 
-export function WorkspaceTabs({ roles, userName, userEmail, userImage }: WorkspaceTabsProps) {
+export function WorkspaceTabs({ roles, userName, userEmail, userImage, hasUnreadMessages = false }: WorkspaceTabsProps) {
     const pathname = usePathname()
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
 
@@ -60,6 +61,7 @@ export function WorkspaceTabs({ roles, userName, userEmail, userImage }: Workspa
             role: Role.STUDENT, // Placeholder, accessible to all
             isActive: pathname.startsWith("/socials"),
             isPublic: true,
+            hasBadge: hasUnreadMessages,
         },
     ]
 
@@ -82,6 +84,7 @@ export function WorkspaceTabs({ roles, userName, userEmail, userImage }: Workspa
                     <div className="flex items-center p-1 bg-gray-100/80 border border-gray-200 rounded-full shadow-inner whitespace-nowrap">
                         {visibleTabs.map((tab) => {
                             const isOptimisticActive = optimisticPath ? optimisticPath.startsWith(tab.href) : tab.isActive
+                            const hasBadge = (tab as any).hasBadge
 
                             return (
                                 <Link
@@ -90,13 +93,16 @@ export function WorkspaceTabs({ roles, userName, userEmail, userImage }: Workspa
                                     onMouseDown={() => setOptimisticPath(tab.href)}
                                     onClick={() => setOptimisticPath(tab.href)}
                                     className={cn(
-                                        "px-5 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+                                        "px-5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 relative",
                                         isOptimisticActive
                                             ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
                                             : "text-gray-500 hover:text-gray-900 hover:bg-gray-200/50"
                                     )}
                                 >
                                     {tab.label}
+                                    {hasBadge && (
+                                        <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white" />
+                                    )}
                                 </Link>
                             )
                         })}

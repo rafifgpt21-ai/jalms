@@ -48,6 +48,13 @@ export default async function DashboardLayout({
         ))
     )
 
+    // Calculate unread globally
+    const hasUnreadMessages = conversations?.some(conv => {
+        const lastMessage = conv.messages && conv.messages[0];
+        // User not in readByIds of last message
+        return lastMessage && session.user?.id && !lastMessage.readByIds?.includes(session.user.id);
+    }) || false;
+
     return (
         <div className="flex h-screen flex-col">
             {/* Mobile Navigation */}
@@ -70,6 +77,7 @@ export default async function DashboardLayout({
                     userName={session.user?.name}
                     userEmail={session.user?.email}
                     userImage={session.user?.image}
+                    hasUnreadMessages={hasUnreadMessages}
                 />
             </div>
 
@@ -90,7 +98,7 @@ export default async function DashboardLayout({
                 </main>
             </div>
 
-            <BottomNavigation roles={userRoles} />
+            <BottomNavigation roles={userRoles} hasUnreadMessages={hasUnreadMessages} />
         </div>
     )
 }
