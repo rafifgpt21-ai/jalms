@@ -68,13 +68,12 @@ export function WorkspaceTabs({ roles, userName, userEmail, userImage }: Workspa
 
     return (
 
-        <div className="relative border-b bg-white/80 backdrop-blur-md px-6 py-3 flex items-center justify-between z-10 sticky top-0 gap-4">
+        <div className="relative border-b bg-white/80 backdrop-blur-md px-6 py-1 flex items-center justify-between z-10 sticky top-0 gap-4">
             {/* Branding */}
             <div className="flex items-center gap-2 min-w-fit">
-                <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-                    J
+                <div className="flex items-center justify-center">
+                    <img src="/arsync.svg" alt="Logo" className="h-16 w-auto" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 tracking-tight">JALMS</h1>
             </div>
 
             {/* Tabs - Centered in available space */}

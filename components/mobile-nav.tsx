@@ -94,7 +94,10 @@ export function MobileNav({ userRoles, courses, userEmail, userName, userImage, 
                     <SheetContent side="left" className="w-72 bg-gray-900 text-white border-r-gray-800 p-0">
                         <div className="flex flex-col h-full">
                             <div className="p-6 border-b border-gray-800">
-                                <SheetTitle className="font-bold text-xl mb-1 text-white">JALMS</SheetTitle>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <img src="/arsync.svg" alt="Logo" className="h-12 w-auto" />
+                                    <SheetTitle className="sr-only">ARSYNC</SheetTitle>
+                                </div>
                                 <SheetDescription className="text-xs text-gray-400">School Management System</SheetDescription>
                             </div>
 

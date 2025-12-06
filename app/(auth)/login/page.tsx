@@ -14,7 +14,10 @@ export default function LoginPage() {
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <Card className="w-[350px]">
                 <CardHeader>
-                    <CardTitle>Login to JALMS</CardTitle>
+                    <div className="flex justify-center mb-4">
+                        <img src="/arsync.svg" alt="Logo" className="h-24 w-auto" />
+                    </div>
+                    <CardTitle className="sr-only">Login</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form action={dispatch} className="space-y-4">

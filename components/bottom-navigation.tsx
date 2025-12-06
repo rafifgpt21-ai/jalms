@@ -88,7 +88,7 @@ export function BottomNavigation({ roles }: BottomNavigationProps) {
                             )}
                         >
                             <Icon className={cn("h-6 w-6", tab.isActive && "fill-current")} />
-                            <span className="text-[10px] font-medium">{tab.label}</span>
+                            <span className="sr-only">{tab.label}</span>
                         </Link>
                     )
                 })}
