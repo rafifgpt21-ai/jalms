@@ -76,13 +76,7 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
         setDeleteId(null)
     }
 
-    if (classes.length === 0) {
-        return (
-            <div className="text-center p-8 border rounded-lg bg-gray-50">
-                <p className="text-gray-500">No classes found.</p>
-            </div>
-        )
-    }
+
 
     return (
         <>
