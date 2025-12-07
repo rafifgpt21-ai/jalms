@@ -94,7 +94,7 @@ export function MobileNav({ userRoles, courses, userEmail, userName, userImage, 
             <div className="flex items-center gap-2">
                 <Sheet open={open} onOpenChange={setOpen} modal={false}>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-gray-900 hover:bg-gray-100 -ml-2">
+                        <Button variant="ghost" size="icon" className="text-gray-900 hover:bg-gray-100 -ml-2" suppressHydrationWarning>
                             <Menu className="h-6 w-6" />
                         </Button>
                     </SheetTrigger>

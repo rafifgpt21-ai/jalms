@@ -43,7 +43,7 @@ export function UserSettings({ email, name, image, side = "bottom", align = "end
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 p-0">
+                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 p-0" suppressHydrationWarning>
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={image || ""} alt={name || "User"} />
                             <AvatarFallback>

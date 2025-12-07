@@ -60,15 +60,17 @@ export default async function DashboardLayout({
         <div className="flex h-screen flex-col">
             <ChatNotificationProvider initialConversations={conversations} userId={session.user?.id || ""}>
                 {/* Mobile Navigation */}
-                <MobileNav
-                    userRoles={userRoles}
-                    courses={allCourses}
-                    userEmail={session.user?.email}
-                    userName={session.user?.name}
-                    userImage={session.user?.image}
-                    conversations={conversations}
-                    userId={session.user?.id}
-                />
+                <div className="md:hidden">
+                    <MobileNav
+                        userRoles={userRoles}
+                        courses={allCourses}
+                        userEmail={session.user?.email}
+                        userName={session.user?.name}
+                        userImage={session.user?.image}
+                        conversations={conversations}
+                        userId={session.user?.id}
+                    />
+                </div>
 
                 {/* Top Navigation Tabs (Desktop only) */}
                 <div className="hidden md:!block">
