@@ -31,7 +31,7 @@ export default async function TeacherSchedulePage({
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Link href="/admin/schedule">
                     <Button variant="outline" size="icon">

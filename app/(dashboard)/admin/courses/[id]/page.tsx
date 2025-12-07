@@ -24,7 +24,7 @@ export default async function CourseWorkspacePage({ params }: CourseWorkspacePag
     const students = course.students
 
     return (
-        <div className="p-4 md:p-6 space-y-6">
+        <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" asChild>
                     <Link href="/admin/courses">

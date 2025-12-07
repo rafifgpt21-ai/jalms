@@ -142,7 +142,7 @@ export default function TaskWorkspacePage() {
     }
 
     if (loading) {
-        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        return <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
 
     if (!assignment) {

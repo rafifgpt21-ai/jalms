@@ -39,7 +39,7 @@ export default async function AdminChatPage({ params }: AdminChatPageProps) {
     const messages = await getMessages(conversationId);
 
     return (
-        <div className="p-6 h-full">
+        <div className="h-full">
             <AdminChatView
                 conversationId={conversationId}
                 initialMessages={messages}
