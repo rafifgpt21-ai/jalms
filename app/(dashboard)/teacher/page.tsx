@@ -16,7 +16,7 @@ export default async function TeacherDashboard() {
     const { stats, recentSubmissions, upcomingAssignments } = data
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">Teacher Dashboard</h1>
                 <p className="text-muted-foreground">Overview of your teaching activity.</p>

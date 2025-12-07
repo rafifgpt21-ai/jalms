@@ -30,9 +30,7 @@ export default async function ClassesPage() {
     }
 
     return (
-        <div className="p-6">
-
-
+        <div>
             <ClassList classes={classes} teachers={teachers} terms={terms} />
         </div>
     )

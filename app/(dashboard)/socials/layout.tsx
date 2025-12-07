@@ -1,4 +1,4 @@
-import { ChatSidebar } from "@/components/chat/chat-sidebar";
+
 import { getConversations } from "@/app/actions/chat";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";

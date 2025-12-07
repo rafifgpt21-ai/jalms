@@ -12,7 +12,7 @@ export default async function AdminSocialsPage() {
     const conversations = await getAllConversations();
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
             <h1 className="text-2xl font-bold">Socials Monitoring</h1>
             <p className="text-muted-foreground">
                 Monitor all conversations within the platform.
