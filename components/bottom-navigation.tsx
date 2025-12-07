@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -22,6 +24,12 @@ interface BottomNavigationProps {
 
 export function BottomNavigation({ roles, hasUnreadMessages: initialHasUnread = false }: BottomNavigationProps) {
     const pathname = usePathname()
+    const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
+
+    // Reset navigating state when pathname changes
+    if (navigatingTo === pathname) {
+        setNavigatingTo(null)
+    }
 
     // Use context
     const { hasUnreadMessages: contextHasUnread } = useChatNotification()
@@ -33,42 +41,42 @@ export function BottomNavigation({ roles, hasUnreadMessages: initialHasUnread = 
             href: "/admin",
             role: Role.ADMIN,
             icon: LayoutDashboard,
-            isActive: pathname.startsWith("/admin"),
+            isActive: (navigatingTo === "/admin" || (pathname.startsWith("/admin") && navigatingTo === null)),
         },
         {
             label: "Teaching",
             href: "/teacher",
             role: Role.SUBJECT_TEACHER,
             icon: BookOpen,
-            isActive: pathname.startsWith("/teacher"),
+            isActive: (navigatingTo === "/teacher" || (pathname.startsWith("/teacher") && navigatingTo === null)),
         },
         {
             label: "Homeroom",
             href: "/homeroom",
             role: Role.HOMEROOM_TEACHER,
             icon: Home,
-            isActive: pathname.startsWith("/homeroom"),
+            isActive: (navigatingTo === "/homeroom" || (pathname.startsWith("/homeroom") && navigatingTo === null)),
         },
         {
             label: "Student",
             href: "/student",
             role: Role.STUDENT,
             icon: GraduationCap,
-            isActive: pathname.startsWith("/student"),
+            isActive: (navigatingTo === "/student" || (pathname.startsWith("/student") && navigatingTo === null)),
         },
         {
             label: "Family",
             href: "/parent",
             role: Role.PARENT,
             icon: Users,
-            isActive: pathname.startsWith("/parent"),
+            isActive: (navigatingTo === "/parent" || (pathname.startsWith("/parent") && navigatingTo === null)),
         },
         {
             label: "Socials",
             href: "/socials",
             role: Role.STUDENT, // Placeholder, accessible to all
             icon: MessageSquare,
-            isActive: pathname.startsWith("/socials"),
+            isActive: (navigatingTo === "/socials" || (pathname.startsWith("/socials") && navigatingTo === null)),
             isPublic: true,
             hasBadge: hasUnreadMessages,
         },
@@ -90,6 +98,11 @@ export function BottomNavigation({ roles, hasUnreadMessages: initialHasUnread = 
                         <Link
                             key={tab.href}
                             href={tab.href}
+                            onClick={() => {
+                                if (pathname !== tab.href) {
+                                    setNavigatingTo(tab.href)
+                                }
+                            }}
                             className={cn(
                                 "flex flex-col items-center justify-center w-full h-full space-y-1 relative",
                                 tab.isActive

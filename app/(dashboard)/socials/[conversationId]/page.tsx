@@ -13,19 +13,23 @@ export default async function ConversationPage({ params }: PageProps) {
     const session = await auth();
     if (!session?.user?.id) redirect("/auth/login");
 
-    const conversation = await db.conversation.findUnique({
-        where: { id: conversationId },
-        include: {
-            participants: {
-                select: {
-                    id: true,
-                    name: true,
-                    image: true,
-                    email: true,
+
+    const [conversation, messages] = await Promise.all([
+        db.conversation.findUnique({
+            where: { id: conversationId },
+            include: {
+                participants: {
+                    select: {
+                        id: true,
+                        name: true,
+                        image: true,
+                        email: true,
+                    },
                 },
             },
-        },
-    });
+        }),
+        getMessages(conversationId)
+    ]);
 
     if (!conversation) {
         return <div>Conversation not found</div>;
@@ -35,14 +39,10 @@ export default async function ConversationPage({ params }: PageProps) {
     const isParticipant = conversation.participantIds.includes(session.user.id);
     if (!isParticipant) {
         // Check if admin, otherwise redirect
-        // For now assuming strict participation or admin override in getMessages
-        // But for page access, let's restrict to participants for now unless admin logic is added here
         if (!session.user.roles.includes("ADMIN")) {
             redirect("/socials");
         }
     }
-
-    const messages = await getMessages(conversationId);
 
     return (
         <ChatWindow
