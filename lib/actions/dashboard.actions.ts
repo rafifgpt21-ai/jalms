@@ -5,60 +5,65 @@ import { db as prisma } from "@/lib/db"
 export async function getDashboardStats() {
     try {
         const [
-            studentCount,
-            teacherCount,
-            classCount,
-            activeCourseCount,
-            recentUsers
+            totalUsers,
+            lastLoggedInUsers
         ] = await Promise.all([
             prisma.user.count({
                 where: {
-                    roles: { has: "STUDENT" },
                     deletedAt: { isSet: false },
                     isActive: true
-                }
-            }),
-            prisma.user.count({
-                where: {
-                    roles: { hasSome: ["SUBJECT_TEACHER", "HOMEROOM_TEACHER"] },
-                    deletedAt: { isSet: false },
-                    isActive: true
-                }
-            }),
-            prisma.class.count({
-                where: {
-                    deletedAt: { isSet: false }
-                }
-            }),
-            prisma.course.count({
-                where: {
-                    deletedAt: { isSet: false },
-                    term: { isActive: true }
                 }
             }),
             prisma.user.findMany({
-                where: { deletedAt: { isSet: false } },
-                orderBy: { createdAt: "desc" },
+                where: {
+                    deletedAt: { isSet: false },
+                    lastLoginAt: { not: null }
+                },
+                orderBy: { lastLoginAt: "desc" },
                 take: 5,
                 select: {
                     id: true,
                     name: true,
                     email: true,
                     roles: true,
-                    createdAt: true,
+                    lastLoginAt: true,
                     image: true
                 }
             })
         ])
 
+        // Calculate Attendance Stats for Today
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+
+        const todayAttendances = await prisma.attendance.findMany({
+            where: {
+                date: {
+                    gte: today,
+                    lt: tomorrow
+                },
+                deletedAt: { isSet: false }
+            }
+        })
+
+        const totalRecords = todayAttendances.length
+        const totalPresent = todayAttendances.filter(a => a.status === "PRESENT").length
+        const percentage = totalRecords > 0 ? Math.round((totalPresent / totalRecords) * 100) : 0
+
         return {
             stats: {
-                students: studentCount,
-                teachers: teacherCount,
-                classes: classCount,
-                courses: activeCourseCount
+                totalUsers,
+                attendance: {
+                    percentage,
+                    totalRecords,
+                    presentCount: totalPresent,
+                    absentCount: totalRecords - totalPresent
+                }
             },
-            recentUsers
+            lastLoggedInUsers
         }
     } catch (error) {
         console.error("Error fetching dashboard stats:", error)

@@ -31,6 +31,7 @@ model User {
   image    String?
   avatarConfig Json?
   roles    Role[]  @default([STUDENT])
+  lastLoginAt DateTime?
 
   isActive Boolean @default(true)
 

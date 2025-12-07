@@ -24,7 +24,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     if (!user || !user.password) return null;
 
                     const passwordsMatch = await bcrypt.compare(password, user.password);
-                    if (passwordsMatch) return user;
+                    if (passwordsMatch) {
+                        try {
+                            await db.user.update({
+                                where: { id: user.id },
+                                data: { lastLoginAt: new Date() }
+                            });
+                        } catch (error) {
+                            console.error("Failed to update last login:", error);
+                        }
+                        return user;
+                    }
                 }
                 return null;
             },

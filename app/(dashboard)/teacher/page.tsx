@@ -1,6 +1,6 @@
 import { getTeacherDashboardStats } from "@/lib/actions/teacher.actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BookOpen, Users, FileText, Clock, CheckCircle } from "lucide-react"
+import { BookOpen, Users, FileText, Clock, CheckCircle, Plus, Calendar } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
@@ -13,41 +13,51 @@ export default async function TeacherDashboard() {
         return <div className="p-6">Error loading dashboard: {data.error}</div>
     }
 
-    const { stats, recentSubmissions, upcomingAssignments } = data
+    const { stats, recentSubmissions, upcomingAssignments, classesToday } = data
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight">Teacher Dashboard</h1>
-                <p className="text-muted-foreground">Overview of your teaching activity.</p>
-                <div className="mt-4">
-                    <Link href="/teacher/attendance">
-                        <Button>
-                            <Clock className="mr-2 h-4 w-4" />
-                            Take Attendance
-                        </Button>
-                    </Link>
-                </div>
-            </div>
+            {/* Classes Today Widget */}
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-100 dark:border-blue-900">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                        <Calendar className="mr-2 h-5 w-5 text-blue-600" />
+                        Classes Today
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                        {classesToday?.length === 0 && (
+                            <p className="text-sm text-muted-foreground py-4">No classes scheduled for today.</p>
+                        )}
+                        {classesToday?.map((schedule: any) => (
+                            <div key={schedule.id} className="min-w-[200px] p-3 bg-white dark:bg-card rounded-lg border shadow-sm">
+                                <div className="flex justify-between items-start mb-2">
+                                    <Badge variant="secondary" className="font-mono">Period {schedule.period}</Badge>
+                                </div>
+                                <h3 className="font-semibold truncate">{schedule.course.class?.name || schedule.course.name}</h3>
+                                <p className="text-sm text-muted-foreground truncate">{schedule.topic || "-"}</p>
+                                <Button asChild variant="outline" size="sm" className="w-full mt-2">
+                                    <Link href={`/teacher/courses/${schedule.courseId}/attendance/session?date=${format(new Date(), "yyyy-MM-dd")}&period=${schedule.period}`}>
+                                        View
+                                    </Link>
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Stats Grid */}
             <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Needs Grading</CardTitle>
+                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats?.courses || 0}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats?.students || 0}</div>
+                        <div className="text-2xl font-bold">{stats?.ungraded || 0}</div>
+                        <p className="text-xs text-muted-foreground">Submissions pending review</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -57,6 +67,17 @@ export default async function TeacherDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats?.assignments || 0}</div>
+                        <p className="text-xs text-muted-foreground">Currently open for students</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats?.courses || 0}</div>
+                        <p className="text-xs text-muted-foreground">Active courses this term</p>
                     </CardContent>
                 </Card>
             </div>

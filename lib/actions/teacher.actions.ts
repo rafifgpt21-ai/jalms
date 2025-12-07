@@ -513,14 +513,84 @@ export async function getTeacherDashboardStats() {
             }
         })
 
+        // 4. Get Classes Today with Topics
+        const dayOfWeek = new Date().getDay()
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+
+        const rawClassesToday = await prisma.schedule.findMany({
+            where: {
+                dayOfWeek,
+                course: {
+                    teacherId,
+                    term: { isActive: true },
+                    deletedAt: { isSet: false }
+                },
+                deletedAt: { isSet: false }
+            },
+            orderBy: { period: 'asc' },
+            include: {
+                course: {
+                    include: {
+                        class: true,
+                        subject: true
+                    }
+                }
+            }
+        })
+
+        // Fetch topics for each class
+        const classesToday = await Promise.all(rawClassesToday.map(async (schedule) => {
+            // Find an attendance record for this course, date, and period that has a topic
+            // We use findFirst because all students in the same session should have the same topic
+            const attendance = await prisma.attendance.findFirst({
+                where: {
+                    courseId: schedule.courseId,
+                    period: schedule.period,
+                    date: {
+                        gte: today,
+                        lt: tomorrow
+                    },
+                    deletedAt: { isSet: false },
+                    // topic: { not: null } // We want the record even if topic is null, to check presence?
+                    // Actually, we just need the topic.
+                },
+                select: { topic: true }
+            })
+
+            return {
+                ...schedule,
+                topic: attendance?.topic || null
+            }
+        }))
+
+        // 5. Get Ungraded Submissions Count
+        const ungradedCount = await prisma.submission.count({
+            where: {
+                grade: null,
+                assignment: {
+                    course: {
+                        teacherId,
+                        term: { isActive: true }
+                    },
+                    deletedAt: { isSet: false }
+                },
+                deletedAt: { isSet: false }
+            }
+        })
+
         return {
             stats: {
                 courses: coursesCount,
                 students: studentsCount,
-                assignments: assignmentsCount
+                assignments: assignmentsCount,
+                ungraded: ungradedCount
             },
             recentSubmissions,
-            upcomingAssignments
+            upcomingAssignments,
+            classesToday
         }
 
     } catch (error) {
