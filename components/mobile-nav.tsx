@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils"
 
 import { UserSettings } from "@/components/user-settings"
 
+import { useChatNotification } from "@/components/chat/chat-notification-provider"
+
 interface MobileNavProps {
     userRoles: Role[]
     courses?: any[]
@@ -29,13 +31,18 @@ interface MobileNavProps {
     userId?: string
 }
 
-export function MobileNav({ userRoles, courses, userEmail, userName, userImage, conversations = [], userId }: MobileNavProps) {
+export function MobileNav({ userRoles, courses, userEmail, userName, userImage, conversations: initialConversations = [], userId }: MobileNavProps) {
     const [open, setOpen] = useState(false)
     const pathname = usePathname()
     const router = useRouter()
     const isSocials = pathname.startsWith("/socials")
 
+    // Use context
+    const { conversations, hasUnreadMessages } = useChatNotification()
+    const activeConversations = conversations.length > 0 ? conversations : initialConversations
+
     const tabs = [
+        // ... (omitting tabs for brevity in replacement, will rely on StartLine/EndLine)
         {
             label: "Admin Workspace",
             href: "/admin",
@@ -106,7 +113,7 @@ export function MobileNav({ userRoles, courses, userEmail, userName, userImage, 
                             <div className="flex-1 overflow-y-auto">
                                 {isSocials && userId ? (
                                     <ChatSidebar
-                                        initialConversations={conversations}
+                                        initialConversations={activeConversations}
                                         userId={userId}
                                         variant="sidebar"
                                     />
@@ -115,7 +122,7 @@ export function MobileNav({ userRoles, courses, userEmail, userName, userImage, 
                                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block px-2">
                                             Menu
                                         </label>
-                                        <SidebarNav userRoles={userRoles} onNavigate={() => setOpen(false)} courses={courses} isMobile={true} />
+                                        <SidebarNav userRoles={userRoles} onNavigate={() => setOpen(false)} courses={courses} isMobile={true} hasUnreadMessages={hasUnreadMessages} />
                                     </div>
                                 )}
                             </div>

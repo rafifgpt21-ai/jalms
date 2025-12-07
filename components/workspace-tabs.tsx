@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Role } from "@prisma/client"
 import { UserSettings } from "@/components/user-settings"
 import { useState, useEffect } from "react"
+import { useChatNotification } from "@/components/chat/chat-notification-provider"
 
 interface WorkspaceTabsProps {
     roles: Role[]
@@ -15,9 +16,13 @@ interface WorkspaceTabsProps {
     hasUnreadMessages?: boolean
 }
 
-export function WorkspaceTabs({ roles, userName, userEmail, userImage, hasUnreadMessages = false }: WorkspaceTabsProps) {
+export function WorkspaceTabs({ roles, userName, userEmail, userImage, hasUnreadMessages: initialHasUnread = false }: WorkspaceTabsProps) {
     const pathname = usePathname()
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
+
+    // Use context
+    const { hasUnreadMessages: contextHasUnread } = useChatNotification()
+    const hasUnreadMessages = contextHasUnread || initialHasUnread
 
     // Reset optimistic path when actual navigation occurs
     useEffect(() => {

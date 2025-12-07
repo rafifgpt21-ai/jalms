@@ -11,6 +11,7 @@ import { getMessages, sendMessage, markConversationAsRead } from "@/app/actions/
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useChatNotification } from "@/components/chat/chat-notification-provider"
 
 type Message = {
     id: string;
@@ -45,6 +46,7 @@ export function ChatWindow({
     participants,
 }: ChatWindowProps) {
     const router = useRouter();
+    const { refreshConversations } = useChatNotification()
     const [messages, setMessages] = useState<Message[]>(initialMessages as Message[]);
     const [newMessage, setNewMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
@@ -66,21 +68,21 @@ export function ChatWindow({
                 setMessages(latestMessages as Message[]);
                 // Also mark as read if new messages came in
                 await markConversationAsRead(conversationId);
-                router.refresh();
+                refreshConversations(); // Update sidebar badges
             }
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [conversationId, messages.length, router]);
+    }, [conversationId, messages.length, refreshConversations]);
 
     // Mark as read on mount
     useEffect(() => {
         const markRead = async () => {
             await markConversationAsRead(conversationId);
-            router.refresh();
+            refreshConversations(); // Update sidebar badges
         };
         markRead();
-    }, [conversationId, router]);
+    }, [conversationId, refreshConversations]);
 
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -92,7 +94,7 @@ export function ChatWindow({
             if (result.error) {
                 toast.error(result.error);
             } else if (result.message) {
-                // Optimistic update
+                // ... (optimistic update logic)
                 const optimisticMessage: Message = {
                     id: result.message.id,
                     content: result.message.content,
@@ -107,6 +109,7 @@ export function ChatWindow({
 
                 setMessages((prev) => [...prev, optimisticMessage]);
                 setNewMessage("");
+                refreshConversations(); // Update sidebar with new message preview
             }
         } catch (error) {
             toast.error("Failed to send message");

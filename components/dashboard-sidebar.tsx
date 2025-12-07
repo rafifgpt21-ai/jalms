@@ -40,6 +40,7 @@ import {
 import { getCourseAssignments } from "@/lib/actions/teacher.actions"
 import { AddTaskModal } from "@/components/teacher/add-task-modal"
 import { ChatSidebar } from "@/components/chat/chat-sidebar"
+import { useChatNotification } from "@/components/chat/chat-notification-provider"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -498,17 +499,16 @@ interface DashboardSidebarProps {
     userId?: string
 }
 
-export function DashboardSidebar({ userRoles, courses, conversations = [], userId }: DashboardSidebarProps) {
+export function DashboardSidebar({ userRoles, courses, conversations: initialConversations = [], userId }: DashboardSidebarProps) {
     const [isCollapsed, setIsCollapsed] = useState(false)
     const pathname = usePathname()
     const isSocials = pathname.startsWith("/socials")
 
-    // Calculate unread globally for the sidebar
-    const hasUnreadMessages = conversations?.some(conv => {
-        const lastMessage = conv.messages && conv.messages[0];
-        // User not in readByIds of last message
-        return lastMessage && userId && !lastMessage.readByIds?.includes(userId);
-    }) || false;
+    // Use context for real-time updates
+    const { conversations, hasUnreadMessages } = useChatNotification()
+
+    // Fallback to initial props if context is empty (shouldn't happen if provider is working)
+    const activeConversations = conversations.length > 0 ? conversations : initialConversations;
 
     return (
         <aside
@@ -520,7 +520,7 @@ export function DashboardSidebar({ userRoles, courses, conversations = [], userI
             <div className="flex-1 overflow-y-auto">
                 {isSocials && userId ? (
                     <ChatSidebar
-                        initialConversations={conversations}
+                        initialConversations={activeConversations}
                         userId={userId}
                         variant="sidebar"
                         isCollapsed={isCollapsed}

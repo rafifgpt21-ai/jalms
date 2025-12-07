@@ -13,13 +13,19 @@ import {
     MessageSquare
 } from "lucide-react"
 
+import { useChatNotification } from "@/components/chat/chat-notification-provider"
+
 interface BottomNavigationProps {
     roles: Role[]
     hasUnreadMessages?: boolean
 }
 
-export function BottomNavigation({ roles, hasUnreadMessages = false }: BottomNavigationProps) {
+export function BottomNavigation({ roles, hasUnreadMessages: initialHasUnread = false }: BottomNavigationProps) {
     const pathname = usePathname()
+
+    // Use context
+    const { hasUnreadMessages: contextHasUnread } = useChatNotification()
+    const hasUnreadMessages = contextHasUnread || initialHasUnread
 
     const tabs = [
         {
