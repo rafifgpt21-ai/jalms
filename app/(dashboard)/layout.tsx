@@ -57,20 +57,18 @@ export default async function DashboardLayout({
     }) || false;
 
     return (
-        <ChatNotificationProvider initialConversations={conversations} userId={session.user?.id || ""}>
-            <div className="flex h-screen flex-col">
+        <div className="flex h-screen flex-col">
+            <ChatNotificationProvider initialConversations={conversations} userId={session.user?.id || ""}>
                 {/* Mobile Navigation */}
-                <div className="md:hidden">
-                    <MobileNav
-                        userRoles={userRoles}
-                        courses={allCourses}
-                        userEmail={session.user?.email}
-                        userName={session.user?.name}
-                        userImage={session.user?.image}
-                        conversations={conversations}
-                        userId={session.user?.id}
-                    />
-                </div>
+                <MobileNav
+                    userRoles={userRoles}
+                    courses={allCourses}
+                    userEmail={session.user?.email}
+                    userName={session.user?.name}
+                    userImage={session.user?.image}
+                    conversations={conversations}
+                    userId={session.user?.id}
+                />
 
                 {/* Top Navigation Tabs (Desktop only) */}
                 <div className="hidden md:!block">
@@ -101,7 +99,7 @@ export default async function DashboardLayout({
                 </div>
 
                 <BottomNavigation roles={userRoles} hasUnreadMessages={hasUnreadMessages} />
-            </div>
-        </ChatNotificationProvider>
+            </ChatNotificationProvider>
+        </div>
     )
 }
