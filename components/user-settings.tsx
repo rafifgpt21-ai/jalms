@@ -120,7 +120,7 @@ export function UserSettings({ email, name, image, side = "bottom", align = "end
                             Create your unique avatar.
                         </DialogDescription>
                     </DialogHeader>
-                    <AvatarEditor />
+                    <AvatarEditor onSaved={() => setShowAvatarDialog(false)} />
                 </DialogContent>
             </Dialog>
         </>

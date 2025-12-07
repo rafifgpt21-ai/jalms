@@ -35,7 +35,7 @@ export default async function StudentDashboard() {
                                             <div className="font-semibold">{slot.course.reportName || slot.course.name}</div>
                                             <div className="text-sm text-gray-500">Period {slot.period}</div>
                                             {slot.topic && (
-                                                <div className="text-xs text-muted-foreground mt-1 italic">
+                                                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">
                                                     {slot.topic}
                                                 </div>
                                             )}
@@ -74,8 +74,8 @@ export default async function StudentDashboard() {
                                             key={assignment.id}
                                             href={`/student/courses/${assignment.courseId}/tasks/${assignment.id}`}
                                             className={`block p-3 rounded-lg border transition-colors ${isSubmitted
-                                                    ? "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-900 hover:border-green-300"
-                                                    : "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-900 hover:border-yellow-300"
+                                                ? "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-900 hover:border-green-300"
+                                                : "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-900 hover:border-yellow-300"
                                                 }`}
                                         >
                                             <div className="flex justify-between items-start mb-1">

@@ -34,7 +34,7 @@ const defaultOptions: AvatarConfig = {
     translateY: 0,
 }
 
-export function AvatarEditor({ initialConfig }: { initialConfig?: any }) {
+export function AvatarEditor({ initialConfig, onSaved }: { initialConfig?: any, onSaved?: () => void }) {
     const [config, setConfig] = useState<AvatarConfig>(initialConfig || defaultOptions)
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
@@ -57,6 +57,7 @@ export function AvatarEditor({ initialConfig }: { initialConfig?: any }) {
             } else {
                 toast.success("Avatar updated successfully")
                 router.refresh()
+                onSaved?.()
             }
         } catch (error) {
             toast.error("Failed to update avatar")
