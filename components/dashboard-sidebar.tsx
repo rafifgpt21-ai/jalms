@@ -267,9 +267,19 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                     <div className="flex justify-center">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 hover:bg-sidebar-accent", tasksExpanded ? "text-sidebar-accent-foreground" : "text-muted-foreground")}>
-                                                    <ListTodo className="h-5 w-5" />
-                                                </Button>
+                                                <div
+                                                    className={cn(
+                                                        "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
+                                                        pathname.includes("/tasks")
+                                                            ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
+                                                            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-blue-600 dark:text-blue-400")} />
+                                                    {pathname.includes("/tasks") && (
+                                                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-blue-500" />
+                                                    )}
+                                                </div>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                                 <DropdownMenuLabel>Tasks</DropdownMenuLabel>
@@ -304,12 +314,17 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                         <button
                                             onClick={() => setTasksExpanded(!tasksExpanded)}
                                             className={cn(
-                                                "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-sidebar-accent transition-colors text-sm text-muted-foreground",
-                                                tasksExpanded && "text-sidebar-foreground"
+                                                "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
+                                                pathname.includes("/tasks")
+                                                    ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
+                                                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                             )}
                                         >
+                                            {pathname.includes("/tasks") && (
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/50" />
+                                            )}
                                             <div className="flex items-center gap-3">
-                                                <ListTodo className="h-4 w-4" />
+                                                <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-blue-600 dark:text-blue-400")} />
                                                 <span>Tasks</span>
                                             </div>
                                             <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
@@ -420,9 +435,19 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                     <div className="flex justify-center">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className={cn("h-10 w-10 hover:bg-sidebar-accent", tasksExpanded ? "text-sidebar-accent-foreground" : "text-muted-foreground")}>
-                                                    <ListTodo className="h-5 w-5" />
-                                                </Button>
+                                                <div
+                                                    className={cn(
+                                                        "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
+                                                        pathname.includes("/tasks")
+                                                            ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
+                                                            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-blue-600 dark:text-blue-400")} />
+                                                    {pathname.includes("/tasks") && (
+                                                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-blue-500" />
+                                                    )}
+                                                </div>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                                 <DropdownMenuLabel>Tasks</DropdownMenuLabel>
@@ -448,12 +473,17 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                         <button
                                             onClick={() => setTasksExpanded(!tasksExpanded)}
                                             className={cn(
-                                                "w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-sidebar-accent transition-colors text-sm text-muted-foreground",
-                                                tasksExpanded && "text-sidebar-foreground"
+                                                "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
+                                                pathname.includes("/tasks")
+                                                    ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
+                                                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                             )}
                                         >
+                                            {pathname.includes("/tasks") && (
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/50" />
+                                            )}
                                             <div className="flex items-center gap-3">
-                                                <ListTodo className="h-4 w-4" />
+                                                <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-blue-600 dark:text-blue-400")} />
                                                 <span>Tasks</span>
                                             </div>
                                             <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
