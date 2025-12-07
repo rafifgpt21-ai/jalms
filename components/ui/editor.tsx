@@ -20,9 +20,10 @@ interface EditorProps {
     value: string
     onChange: (value: string) => void
     editable?: boolean
+    className?: string
 }
 
-export function Editor({ value, onChange, editable = true }: EditorProps) {
+export function Editor({ value, onChange, editable = true, className }: EditorProps) {
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -39,7 +40,7 @@ export function Editor({ value, onChange, editable = true }: EditorProps) {
         },
         editorProps: {
             attributes: {
-                class: 'prose dark:prose-invert max-w-none min-h-[400px] p-4 focus:outline-none',
+                class: `prose dark:prose-invert max-w-none p-4 focus:outline-none ${className || 'min-h-[400px]'}`,
             },
         },
     })

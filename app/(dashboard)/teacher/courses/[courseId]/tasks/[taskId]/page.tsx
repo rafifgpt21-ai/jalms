@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getAssignmentDetails, updateSubmissionScore } from "@/lib/actions/teacher.actions"
-import { AddTaskModal } from "@/components/teacher/add-task-modal"
 import { SubmissionGradeDialog } from "@/components/teacher/tasks/submission-grade-dialog"
 import {
     AlertDialog,
@@ -31,6 +30,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 export default function TaskWorkspacePage() {
@@ -189,16 +189,12 @@ export default function TaskWorkspacePage() {
                         </div>
                     </div>
                     <div>
-                        <AddTaskModal
-                            assignment={assignment}
-                            onSuccess={loadAssignment}
-                            trigger={
-                                <Button variant="outline" size="sm" className="h-8">
-                                    <Edit className="h-3.5 w-3.5 mr-2" />
-                                    Edit Task
-                                </Button>
-                            }
-                        />
+                        <Link href={`/teacher/courses/${assignment.courseId}/tasks/${taskId}/edit`}>
+                            <Button variant="outline" size="sm" className="h-8">
+                                <Edit className="h-3.5 w-3.5 mr-2" />
+                                Edit Task
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </Card>

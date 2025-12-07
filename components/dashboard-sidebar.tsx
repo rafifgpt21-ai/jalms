@@ -21,7 +21,8 @@ import {
     FileText,
     GraduationCap,
     Clock,
-    MessageSquare
+    MessageSquare,
+    Plus
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,7 +39,6 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { getCourseAssignments } from "@/lib/actions/teacher.actions"
-import { AddTaskModal } from "@/components/teacher/add-task-modal"
 import { ChatSidebar } from "@/components/chat/chat-sidebar"
 import { useChatNotification } from "@/components/chat/chat-notification-provider"
 import {
@@ -288,15 +288,13 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                                     </DropdownMenuItem>
                                                 ))}
                                                 <div className="p-2 border-t border-sidebar-border">
-                                                    <AddTaskModal
-                                                        courseId={selectedCourseId}
-                                                        onSuccess={() => {
-                                                            // Refresh assignments
-                                                            getCourseAssignments(selectedCourseId).then(res => {
-                                                                if (res.assignments) setAssignments(res.assignments)
-                                                            })
-                                                        }}
-                                                    />
+                                                    <Link
+                                                        href={`/teacher/courses/${selectedCourseId}/tasks/new`}
+                                                        className="w-full flex items-center justify-start px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                    >
+                                                        <Plus className="mr-2 h-4 w-4" />
+                                                        Add Task
+                                                    </Link>
                                                 </div>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -332,15 +330,13 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                                     </Link>
                                                 ))}
                                                 <div className="pt-1">
-                                                    <AddTaskModal
-                                                        courseId={selectedCourseId}
-                                                        onSuccess={() => {
-                                                            // Refresh assignments
-                                                            getCourseAssignments(selectedCourseId).then(res => {
-                                                                if (res.assignments) setAssignments(res.assignments)
-                                                            })
-                                                        }}
-                                                    />
+                                                    <Link
+                                                        href={`/teacher/courses/${selectedCourseId}/tasks/new`}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                    >
+                                                        <Plus className="h-4 w-4" />
+                                                        Add Task
+                                                    </Link>
                                                 </div>
                                             </div>
                                         )}
