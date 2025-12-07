@@ -1,15 +1,18 @@
-import { MessageSquare } from "lucide-react";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { getConversations } from "@/app/actions/chat";
+import { SocialsMainView } from "@/components/chat/socials-main-view";
 
-export default function SocialsPage() {
+export default async function SocialsPage() {
+    const session = await auth();
+    if (!session?.user?.id) redirect("/auth/login");
+
+    const conversations = await getConversations();
+
     return (
-        <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4 text-center">
-            <div className="bg-muted/20 p-4 rounded-full mb-4">
-                <MessageSquare className="w-12 h-12" />
-            </div>
-            <h2 className="text-xl font-semibold mb-2">Select a chat to start messaging</h2>
-            <p className="max-w-sm">
-                Choose a conversation from the sidebar or start a new one to connect with teachers and students.
-            </p>
-        </div>
+        <SocialsMainView
+            initialConversations={conversations}
+            userId={session.user.id}
+        />
     );
 }

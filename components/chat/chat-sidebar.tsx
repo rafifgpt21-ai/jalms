@@ -65,131 +65,188 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
 
     return (
         <div className={cn("flex flex-col h-full", isSidebar && "text-sidebar-foreground")}>
-            <div className={cn("p-4 space-y-4", !isSidebar && "border-b", isCollapsed && "items-center px-2")}>
-                {!isCollapsed && (
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold">Chats</h2>
-                    </div>
-                )}
-
+            <div className={cn("p-4 flex items-center justify-end gap-2", !isSidebar && "border-b", isCollapsed && "flex-col space-y-4 px-2")}>
                 {isCollapsed ? (
-                    <TooltipProvider>
-                        <Tooltip delayDuration={0}>
-                            <TooltipTrigger asChild>
+                    <>
+                        <TooltipProvider>
+                            <Tooltip delayDuration={0}>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-10 w-10 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
+                                        onClick={() => setIsNewChatOpen(true)}
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">New Chat</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <Popover>
+                            <PopoverTrigger asChild>
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-10 w-10 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
-                                    onClick={() => setIsNewChatOpen(true)}
                                 >
-                                    <Plus className="w-5 h-5" />
+                                    <Search className="w-5 h-5" />
                                 </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">New Chat</TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                ) : (
-                    <Button
-                        className={cn(
-                            "w-full justify-start gap-2",
-                            isSidebar ? "bg-sidebar-accent hover:bg-sidebar-accent/90 text-sidebar-foreground" : ""
-                        )}
-                        onClick={() => setIsNewChatOpen(true)}
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Chat
-                    </Button>
-                )}
+                            </PopoverTrigger>
+                            <PopoverContent side="right" className="w-80 p-0 bg-sidebar border-sidebar-border">
+                                <div className="p-4 space-y-4">
+                                    <div className="relative">
+                                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Search chats..."
+                                            className="pl-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-muted-foreground"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div className="max-h-[300px] overflow-y-auto">
+                                        {filteredConversations.length === 0 ? (
+                                            <div className="p-4 text-center text-muted-foreground text-sm">
+                                                No conversations found.
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col">
+                                                {filteredConversations.map((conv) => {
+                                                    const otherParticipant = conv.participants.find((p) => p.id !== userId);
+                                                    const lastMessage = conv.messages[0];
+                                                    const isActive = pathname === `/socials/${conv.id}`;
 
-                {isCollapsed ? (
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
-                            >
-                                <Search className="w-5 h-5" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent side="right" className="w-80 p-0 bg-sidebar border-sidebar-border">
-                            <div className="p-4 space-y-4">
-                                <div className="relative">
-                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search chats..."
-                                        className="pl-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-muted-foreground"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        autoFocus
-                                    />
-                                </div>
-                                <div className="max-h-[300px] overflow-y-auto">
-                                    {filteredConversations.length === 0 ? (
-                                        <div className="p-4 text-center text-muted-foreground text-sm">
-                                            No conversations found.
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col">
-                                            {filteredConversations.map((conv) => {
-                                                const otherParticipant = conv.participants.find((p) => p.id !== userId);
-                                                const lastMessage = conv.messages[0];
-                                                const isActive = pathname === `/socials/${conv.id}`;
-
-                                                return (
-                                                    <Link
-                                                        key={conv.id}
-                                                        href={`/socials/${conv.id}`}
-                                                        className={cn(
-                                                            "flex items-center gap-3 p-3 transition-colors hover:bg-sidebar-accent rounded-md",
-                                                            isActive && "bg-sidebar-accent"
-                                                        )}
-                                                    >
-                                                        <Avatar>
-                                                            <AvatarImage src={otherParticipant?.image || ""} />
-                                                            <AvatarFallback>
-                                                                {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="flex-1 min-w-0 text-sidebar-foreground">
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <span className="font-medium truncate">
-                                                                    {otherParticipant?.name || "Unknown User"}
-                                                                </span>
-                                                                {lastMessage && (
-                                                                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                                                                        {formatDistanceToNow(new Date(lastMessage.createdAt), {
-                                                                            addSuffix: false,
-                                                                        })}
+                                                    return (
+                                                        <Link
+                                                            key={conv.id}
+                                                            href={`/socials/${conv.id}`}
+                                                            className={cn(
+                                                                "flex items-center gap-3 p-3 transition-colors hover:bg-sidebar-accent rounded-md",
+                                                                isActive && "bg-sidebar-accent"
+                                                            )}
+                                                        >
+                                                            <Avatar>
+                                                                <AvatarImage src={otherParticipant?.image || ""} />
+                                                                <AvatarFallback>
+                                                                    {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex-1 min-w-0 text-sidebar-foreground">
+                                                                <div className="flex items-center justify-between mb-1">
+                                                                    <span className="font-medium truncate">
+                                                                        {otherParticipant?.name || "Unknown User"}
                                                                     </span>
-                                                                )}
+                                                                    {lastMessage && (
+                                                                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                                                                            {formatDistanceToNow(new Date(lastMessage.createdAt), {
+                                                                                addSuffix: false,
+                                                                            })}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-sm truncate text-muted-foreground">
+                                                                    {lastMessage ? lastMessage.content : "No messages yet"}
+                                                                </p>
                                                             </div>
-                                                            <p className="text-sm truncate text-muted-foreground">
-                                                                {lastMessage ? lastMessage.content : "No messages yet"}
-                                                            </p>
-                                                        </div>
-                                                    </Link>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                            </PopoverContent>
+                        </Popover>
+                    </>
                 ) : (
-                    <div className="relative">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search chats..."
-                            className={cn(
-                                "pl-8",
-                                isSidebar ? "bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-muted-foreground" : "bg-muted/50"
-                            )}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
+                    <>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-10 w-10 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
+                                >
+                                    <Search className="w-5 h-5" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent side="bottom" align="end" className="w-80 p-0 bg-sidebar border-sidebar-border">
+                                <div className="p-4 space-y-4">
+                                    <div className="relative">
+                                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Search chats..."
+                                            className="pl-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-muted-foreground"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div className="max-h-[300px] overflow-y-auto">
+                                        {filteredConversations.length === 0 ? (
+                                            <div className="p-4 text-center text-muted-foreground text-sm">
+                                                No conversations found.
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col">
+                                                {filteredConversations.map((conv) => {
+                                                    const otherParticipant = conv.participants.find((p) => p.id !== userId);
+                                                    const lastMessage = conv.messages[0];
+                                                    const isActive = pathname === `/socials/${conv.id}`;
+
+                                                    return (
+                                                        <Link
+                                                            key={conv.id}
+                                                            href={`/socials/${conv.id}`}
+                                                            className={cn(
+                                                                "flex items-center gap-3 p-3 transition-colors hover:bg-sidebar-accent rounded-md",
+                                                                isActive && "bg-sidebar-accent"
+                                                            )}
+                                                        >
+                                                            <Avatar>
+                                                                <AvatarImage src={otherParticipant?.image || ""} />
+                                                                <AvatarFallback>
+                                                                    {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex-1 min-w-0 text-sidebar-foreground">
+                                                                <div className="flex items-center justify-between mb-1">
+                                                                    <span className="font-medium truncate">
+                                                                        {otherParticipant?.name || "Unknown User"}
+                                                                    </span>
+                                                                    {lastMessage && (
+                                                                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                                                                            {formatDistanceToNow(new Date(lastMessage.createdAt), {
+                                                                                addSuffix: false,
+                                                                            })}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-sm truncate text-muted-foreground">
+                                                                    {lastMessage ? lastMessage.content : "No messages yet"}
+                                                                </p>
+                                                            </div>
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
+                            onClick={() => setIsNewChatOpen(true)}
+                        >
+                            <Plus className="w-5 h-5" />
+                        </Button>
+                    </>
                 )}
             </div>
 
