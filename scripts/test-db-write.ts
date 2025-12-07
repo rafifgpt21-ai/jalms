@@ -19,6 +19,7 @@ async function main() {
                 description: "This is a test material created by the debug script.",
                 fileUrl: "https://example.com/test.pdf",
                 courseId: course.id,
+                teacherId: course.teacherId,
             }
         })
         console.log("Successfully created material:", material)

@@ -14,7 +14,14 @@ export const ourFileRouter = {
     courseAttachment: f(["pdf"])
         .middleware(() => handleAuth())
         .onUploadComplete(() => { }),
-    assignmentSubmission: f(["pdf", "text", "image", "video", "audio", "blob"], { maxFileSize: "2MB" })
+    assignmentSubmission: f({
+        pdf: { maxFileSize: "4MB" },
+        text: { maxFileSize: "4MB" },
+        image: { maxFileSize: "4MB" },
+        video: { maxFileSize: "16MB" },
+        audio: { maxFileSize: "8MB" },
+        blob: { maxFileSize: "8MB" }
+    })
         .middleware(() => handleAuth())
         .onUploadComplete(() => { }),
 } satisfies FileRouter;

@@ -25,8 +25,20 @@ async function main() {
         // Create Terms separately to avoid nested write transactions
         await prisma.term.createMany({
             data: [
-                { name: "Semester 1", academicYearId: academicYear.id },
-                { name: "Semester 2", academicYearId: academicYear.id },
+                {
+                    type: "ODD",
+                    startDate: new Date("2024-07-15"),
+                    endDate: new Date("2024-12-20"),
+                    academicYearId: academicYear.id,
+                    isActive: true
+                },
+                {
+                    type: "EVEN",
+                    startDate: new Date("2025-01-06"),
+                    endDate: new Date("2025-06-20"),
+                    academicYearId: academicYear.id,
+                    isActive: false
+                },
             ]
         })
         console.log(`✅ Created Terms for ${academicYear.name}`)

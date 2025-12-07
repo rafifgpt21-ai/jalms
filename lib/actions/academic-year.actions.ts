@@ -25,10 +25,10 @@ export async function getSemesters() {
             return false; // Deleted
         })
 
-        return { terms }
+        return { terms, error: undefined }
     } catch (error) {
         console.error("Error fetching semesters:", error)
-        return { terms: [] }
+        return { terms: [], error: "Failed to fetch semesters" }
     }
 }
 
@@ -189,5 +189,60 @@ export async function deleteSemester(id: string) {
     } catch (error) {
         console.error("Error deleting semester:", error)
         return { error: "Failed to delete semester: " + (error as Error).message }
+    }
+}
+
+export async function setActiveAcademicYear(id: string) {
+    try {
+        await prisma.$transaction(async (tx) => {
+            // Deactivate all
+            await tx.academicYear.updateMany({
+                where: { isActive: true },
+                data: { isActive: false }
+            })
+
+            // Activate target
+            await tx.academicYear.update({
+                where: { id },
+                data: { isActive: true }
+            })
+        })
+
+        revalidatePath("/admin/academic-years")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error setting active academic year:", error)
+        return { success: false, error: "Failed to set active academic year" }
+    }
+}
+
+export async function deleteAcademicYear(id: string) {
+    try {
+        await prisma.academicYear.update({
+            where: { id },
+            data: { deletedAt: new Date() }
+        })
+
+        revalidatePath("/admin/academic-years")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error deleting academic year:", error)
+        return { success: false, error: "Failed to delete academic year" }
+    }
+}
+
+export async function createAcademicYear(data: { name: string, startDate: Date, endDate: Date }) {
+    try {
+        await prisma.academicYear.create({
+            data: {
+                ...data,
+                isActive: false
+            }
+        })
+        revalidatePath("/admin/academic-years")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error creating academic year:", error)
+        return { success: false, error: "Failed to create academic year" }
     }
 }

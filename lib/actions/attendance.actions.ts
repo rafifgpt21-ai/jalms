@@ -98,10 +98,10 @@ export async function getDailySchedule(teacherId: string, date: Date) {
             }
         }))
 
-        return { schedules: schedulesWithStatus }
+        return { schedules: schedulesWithStatus, error: undefined }
     } catch (error) {
         console.error("Error fetching daily schedule:", error)
-        return { error: "Failed to fetch daily schedule" }
+        return { schedules: [], error: "Failed to fetch daily schedule" }
     }
 }
 
@@ -120,7 +120,7 @@ export async function getCourseAttendance(courseId: string, date: Date, period: 
         })
 
         if (!course) {
-            return { error: "Course not found" }
+            return { error: "Course not found", course: null, students: [], topic: null, attendancePoolScore: 0 }
         }
 
         // 2. Get existing attendance records for this date and period
@@ -160,12 +160,13 @@ export async function getCourseAttendance(courseId: string, date: Date, period: 
             course,
             students: studentsWithAttendance,
             topic,
-            attendancePoolScore: course.attendancePoolScore
+            attendancePoolScore: course.attendancePoolScore,
+            error: undefined
         }
 
     } catch (error) {
         console.error("Error fetching course attendance:", error)
-        return { error: "Failed to fetch course attendance" }
+        return { error: "Failed to fetch course attendance", course: null, students: [], topic: null, attendancePoolScore: 0 }
     }
 }
 

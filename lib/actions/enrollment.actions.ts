@@ -28,7 +28,7 @@ export async function getEnrolledStudents(classId: string) {
             enrolledAt: e.id // Using ID as proxy for time if created_at missing on enrollment, or just return student data
         }))
 
-        return { students }
+        return { students, error: undefined }
     } catch (error) {
         console.error("Error fetching enrolled students:", error)
         return { error: "Failed to fetch enrolled students", students: [] }
@@ -78,7 +78,7 @@ export async function getAvailableStudents(classId: string, search: string = "")
             }
         })
 
-        return { students }
+        return { students, error: undefined }
     } catch (error) {
         console.error("Error fetching available students:", error)
         return { error: "Failed to fetch students", students: [] }
@@ -107,10 +107,10 @@ export async function enrollStudent(classId: string, studentId: string) {
         })
 
         revalidatePath(`/admin/classes/${classId}`)
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error enrolling student:", error)
-        return { error: "Failed to enroll student" }
+        return { success: false, error: "Failed to enroll student" }
     }
 }
 
@@ -135,10 +135,10 @@ export async function removeStudent(classId: string, studentId: string) {
         }
 
         revalidatePath(`/admin/classes/${classId}`)
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error removing student:", error)
-        return { error: "Failed to remove student" }
+        return { success: false, error: "Failed to remove student" }
     }
 }
 
@@ -181,7 +181,7 @@ export async function getAvailableStudentsForCourse(courseId: string, search: st
             }
         })
 
-        return { students }
+        return { students, error: undefined }
     } catch (error) {
         console.error("Error fetching available students for course:", error)
         return { error: "Failed to fetch students", students: [] }
@@ -223,10 +223,10 @@ export async function enrollStudentToCourse(courseId: string, studentId: string)
         })
 
         revalidatePath(`/admin/courses/${courseId}`)
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error enrolling student to course:", error)
-        return { error: "Failed to enroll student" }
+        return { success: false, error: "Failed to enroll student" }
     }
 }
 
@@ -257,10 +257,10 @@ export async function removeStudentFromCourse(courseId: string, studentId: strin
 
         console.log(`[removeStudentFromCourse] Successfully removed student ${studentId}`)
         revalidatePath(`/admin/courses/${courseId}`)
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error removing student from course:", error)
-        return { error: "Failed to remove student" }
+        return { success: false, error: "Failed to remove student" }
     }
 }
 
@@ -335,9 +335,9 @@ export async function enrollClassToCourse(courseId: string, classId: string) {
         })
 
         revalidatePath(`/admin/courses/${courseId}`)
-        return { success: true, count: validStudentIds.length }
+        return { success: true, count: validStudentIds.length, error: undefined }
     } catch (error) {
         console.error("Error enrolling class to course:", error)
-        return { error: "Failed to enroll class" }
+        return { success: false, count: 0, error: "Failed to enroll class" }
     }
 }

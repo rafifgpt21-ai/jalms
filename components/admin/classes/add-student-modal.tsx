@@ -28,7 +28,7 @@ import {
 import { cn } from "@/lib/utils"
 import { getAvailableStudents, enrollStudent } from "@/lib/actions/enrollment.actions"
 import { toast } from "sonner"
-import { useDebounce } from "@/hooks/use-debounce" // Assuming this hook exists or I'll implement a simple debounce
+
 
 // Simple debounce hook implementation if not exists
 function useDebounceValue<T>(value: T, delay: number): T {

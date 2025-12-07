@@ -21,8 +21,10 @@ export default async function CourseAttendancePage({
     const resolvedSearchParams = await searchParams
     const dateParam = typeof resolvedSearchParams.date === 'string' ? resolvedSearchParams.date : undefined
     const date = dateParam ? new Date(dateParam) : new Date()
+    const periodParam = resolvedSearchParams.period
+    const period = typeof periodParam === 'string' ? parseInt(periodParam) : 1
 
-    const { course, students, topic, error } = await getCourseAttendance(courseId, date)
+    const { course, students, topic, error } = await getCourseAttendance(courseId, date, period)
 
     if (error || !course) {
         if (error === "Course not found") return notFound()
@@ -48,8 +50,9 @@ export default async function CourseAttendancePage({
             <AttendanceForm
                 courseId={courseId}
                 date={date}
+                period={period}
                 initialStudents={students}
-                initialTopic={topic}
+                initialTopic={topic || ""}
             />
         </div>
     )

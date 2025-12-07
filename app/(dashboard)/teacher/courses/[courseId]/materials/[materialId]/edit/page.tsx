@@ -30,7 +30,12 @@ export default async function EditMaterialPage({
                 </p>
             </div>
 
-            <MaterialForm courseId={courseId} initialData={material} />
+            <MaterialForm courseId={courseId} initialData={material ? {
+                id: material.id,
+                title: material.title,
+                description: material.description,
+                fileUrl: material.fileUrl
+            } : undefined} />
         </div>
     )
 }

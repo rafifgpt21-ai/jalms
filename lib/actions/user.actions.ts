@@ -44,6 +44,7 @@ export async function getUsers({
             status !== "ALL"
                 ? { isActive: status === "ACTIVE" }
                 : {},
+            { deletedAt: null }, // Only show non-deleted users
         ],
     }
 
@@ -119,13 +120,13 @@ export async function createUser(data: any) {
         })
 
         revalidatePath("/admin/users")
-        return { success: true, user }
+        return { success: true, user, error: undefined }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { error: "Email or ID already exists" }
+            return { success: false, user: null, error: "Email or ID already exists" }
         }
         console.error("Error creating user:", error)
-        return { error: "Failed to create user" }
+        return { success: false, user: null, error: "Failed to create user" }
     }
 }
 
@@ -151,26 +152,41 @@ export async function updateUser(id: string, data: any) {
         })
 
         revalidatePath("/admin/users")
-        return { success: true }
+        revalidatePath("/admin/users")
+        return { success: true, error: undefined }
     } catch (error: any) {
         if (error.code === 'P2002') {
-            return { error: "Email or ID already exists" }
+            return { success: false, error: "Email or ID already exists" }
         }
         console.error("Error updating user:", error)
-        return { error: "Failed to update user" }
+        return { success: false, error: "Failed to update user" }
     }
 }
 
 export async function deleteUser(id: string) {
     try {
-        await prisma.user.delete({
+        const timestamp = new Date().getTime()
+        // Soft delete: update email to free it up, set active to false, set deletedAt
+        // We fetch the user first to get their email if we want to be safe, but we can just use the ID update
+        // Actually, we need to append to the current email to avoid collisions and free up the original email.
+
+        const user = await prisma.user.findUnique({ where: { id }, select: { email: true } })
+        if (!user) return { error: "User not found" }
+
+        await prisma.user.update({
             where: { id },
+            data: {
+                deletedAt: new Date(),
+                isActive: false,
+                email: `deleted_${timestamp}_${user.email}`, // Scramble email to release unique constraint
+            }
         })
         revalidatePath("/admin/users")
-        return { success: true }
+        revalidatePath("/admin/users")
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error deleting user:", error)
-        return { error: "Failed to delete user" }
+        return { success: false, error: "Failed to delete user" }
     }
 }
 
@@ -181,9 +197,9 @@ export async function toggleUserStatus(id: string, isActive: boolean) {
             data: { isActive }
         })
         revalidatePath("/admin/users")
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
-        return { error: "Failed to update status" }
+        return { success: false, error: "Failed to update status" }
     }
 }
 
@@ -219,10 +235,10 @@ export async function changePassword(currentPassword: string, newPassword: strin
             data: { password: hashedPassword }
         })
 
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error changing password:", error)
-        return { error: "Failed to change password" }
+        return { success: false, error: "Failed to change password" }
     }
 }
 
@@ -242,9 +258,10 @@ export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
         })
 
         revalidatePath("/admin/users")
-        return { success: true }
+        revalidatePath("/admin/users")
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error updating avatar:", error)
-        return { error: "Failed to update avatar" }
+        return { success: false, error: "Failed to update avatar" }
     }
 }

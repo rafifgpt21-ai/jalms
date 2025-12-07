@@ -10,18 +10,17 @@ const utapi = new UTApi()
 export async function deleteMaterialFile(materialId: string, fileUrl: string) {
     try {
         const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        if (!user) return { success: false, error: "Unauthorized" }
 
         const material = await prisma.material.findUnique({
             where: { id: materialId }
         })
 
         if (!material || material.teacherId !== user.id) {
-            return { error: "Unauthorized or material not found" }
+            return { success: false, error: "Unauthorized or material not found" }
         }
 
         // Extract file key from URL
-        // URL format: https://utfs.io/f/KEY or similar
         const fileKey = fileUrl.split("/").pop()
 
         if (fileKey) {
@@ -34,10 +33,10 @@ export async function deleteMaterialFile(materialId: string, fileUrl: string) {
         })
 
         revalidatePath("/teacher/materials")
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error deleting material file:", error)
-        return { error: "Failed to delete file" }
+        return { success: false, error: "Failed to delete file" }
     }
 }
 
@@ -48,29 +47,29 @@ export async function createMaterial(data: {
 }) {
     try {
         const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        if (!user || !user.id) return { success: false, material: null, error: "Unauthorized" }
 
         const material = await prisma.material.create({
             data: {
                 title: data.title,
-                description: data.description,
+                description: data.description || null,
                 fileUrl: data.fileUrl,
-                teacherId: user.id,
+                teacherId: user.id
             }
         })
 
         revalidatePath("/teacher/materials")
-        return { material }
+        return { success: true, material, error: undefined }
     } catch (error) {
         console.error("Error creating material:", error)
-        return { error: "Failed to create material" }
+        return { success: false, material: null, error: "Failed to create material" }
     }
 }
 
 export async function getTeacherMaterials() {
     try {
         const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        if (!user) return { materials: [], error: "Unauthorized" }
 
         const materials = await prisma.material.findMany({
             where: {
@@ -97,17 +96,17 @@ export async function getTeacherMaterials() {
             }
         })
 
-        return { materials }
+        return { materials, error: undefined }
     } catch (error) {
         console.error("Error fetching teacher materials:", error)
-        return { error: "Failed to fetch materials" }
+        return { materials: [], error: "Failed to fetch materials" }
     }
 }
 
 export async function assignMaterialToCourse(materialId: string, courseId: string) {
     try {
         const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        if (!user) return { assignment: null, error: "Unauthorized" }
 
         // Verify ownership
         const material = await prisma.material.findUnique({
@@ -115,7 +114,7 @@ export async function assignMaterialToCourse(materialId: string, courseId: strin
         })
 
         if (!material || material.teacherId !== user.id) {
-            return { error: "Unauthorized or material not found" }
+            return { assignment: null, error: "Unauthorized or material not found" }
         }
 
         // Check if already assigned
@@ -127,7 +126,7 @@ export async function assignMaterialToCourse(materialId: string, courseId: strin
         })
 
         if (existing) {
-            return { error: "Material already assigned to this course" }
+            return { assignment: null, error: "Material already assigned to this course" }
         }
 
         const assignment = await prisma.materialAssignment.create({
@@ -138,17 +137,17 @@ export async function assignMaterialToCourse(materialId: string, courseId: strin
         })
 
         revalidatePath("/teacher/materials")
-        return { assignment }
+        return { assignment, error: undefined }
     } catch (error) {
         console.error("Error assigning material:", error)
-        return { error: "Failed to assign material" }
+        return { assignment: null, error: "Failed to assign material" }
     }
 }
 
 export async function removeMaterialFromCourse(materialId: string, courseId: string) {
     try {
         const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        if (!user) return { success: false, error: "Unauthorized" }
 
         // Verify ownership
         const material = await prisma.material.findUnique({
@@ -156,7 +155,7 @@ export async function removeMaterialFromCourse(materialId: string, courseId: str
         })
 
         if (!material || material.teacherId !== user.id) {
-            return { error: "Unauthorized or material not found" }
+            return { success: false, error: "Unauthorized or material not found" }
         }
 
         await prisma.materialAssignment.deleteMany({
@@ -167,17 +166,17 @@ export async function removeMaterialFromCourse(materialId: string, courseId: str
         })
 
         revalidatePath("/teacher/materials")
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error removing material assignment:", error)
-        return { error: "Failed to remove material assignment" }
+        return { success: false, error: "Failed to remove material assignment" }
     }
 }
 
 export async function searchTeacherCourses(query: string) {
     try {
         const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        if (!user) return { courses: [], error: "Unauthorized" }
 
         const courses = await prisma.course.findMany({
             where: {
@@ -203,24 +202,24 @@ export async function searchTeacherCourses(query: string) {
             take: 10
         })
 
-        return { courses }
+        return { courses, error: undefined }
     } catch (error) {
         console.error("Error searching courses:", error)
-        return { error: "Failed to search courses" }
+        return { courses: [], error: "Failed to search courses" }
     }
 }
 
 export async function deleteMaterial(materialId: string) {
     try {
         const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        if (!user) return { success: false, error: "Unauthorized" }
 
         const material = await prisma.material.findUnique({
             where: { id: materialId }
         })
 
         if (!material || material.teacherId !== user.id) {
-            return { error: "Unauthorized or material not found" }
+            return { success: false, error: "Unauthorized or material not found" }
         }
 
         await prisma.material.update({
@@ -229,10 +228,10 @@ export async function deleteMaterial(materialId: string) {
         })
 
         revalidatePath("/teacher/materials")
-        return { success: true }
+        return { success: true, error: undefined }
     } catch (error) {
         console.error("Error deleting material:", error)
-        return { error: "Failed to delete material" }
+        return { success: false, error: "Failed to delete material" }
     }
 }
 
@@ -244,14 +243,14 @@ export async function updateMaterial(
 ) {
     try {
         const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        if (!user) return { success: false, material: null, error: "Unauthorized" }
 
         const material = await prisma.material.findUnique({
             where: { id: materialId }
         })
 
         if (!material || material.teacherId !== user.id) {
-            return { error: "Unauthorized or material not found" }
+            return { success: false, material: null, error: "Unauthorized or material not found" }
         }
 
         const updated = await prisma.material.update({
@@ -264,9 +263,9 @@ export async function updateMaterial(
         })
 
         revalidatePath("/teacher/materials")
-        return { success: true, material: updated }
+        return { success: true, material: updated, error: undefined }
     } catch (error) {
         console.error("Error updating material:", error)
-        return { error: "Failed to update material" }
+        return { success: false, material: null, error: "Failed to update material" }
     }
 }

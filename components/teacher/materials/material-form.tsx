@@ -46,9 +46,10 @@ interface MaterialFormProps {
         description?: string | null
         fileUrl: string
     }
+    courseId?: string
 }
 
-export function MaterialForm({ initialData }: MaterialFormProps) {
+export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -105,7 +106,11 @@ export function MaterialForm({ initialData }: MaterialFormProps) {
 
             if (res.success || res.material) {
                 toast.success(initialData ? "Material updated" : "Material created")
-                router.push(`/teacher/materials`)
+                if (courseId) {
+                    router.push(`/teacher/courses/${courseId}`)
+                } else {
+                    router.push(`/teacher/materials`)
+                }
             } else {
                 toast.error(res.error || "Operation failed")
             }

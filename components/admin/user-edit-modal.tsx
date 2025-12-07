@@ -16,6 +16,17 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast"
+import {
     Form,
     FormControl,
     FormDescription,
@@ -57,7 +68,9 @@ interface UserEditModalProps {
 export function UserEditModal({ user, trigger, open, onOpenChange }: UserEditModalProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [showDeleteAlert, setShowDeleteAlert] = useState(false)
     const router = useRouter()
+    const { toast } = useToast()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -76,35 +89,58 @@ export function UserEditModal({ user, trigger, open, onOpenChange }: UserEditMod
         try {
             const result = await updateUser(user.id, values)
             if (result.error) {
-                // In a real app, use toast here
-                alert(result.error)
+                toast({
+                    title: "Error",
+                    description: result.error,
+                    variant: "destructive",
+                })
             } else {
                 onOpenChange?.(false)
                 router.refresh()
+                toast({
+                    title: "Success",
+                    description: "User updated successfully",
+                })
             }
         } catch (error) {
             console.error(error)
-            alert("Something went wrong")
+            toast({
+                title: "Error",
+                description: "Something went wrong",
+                variant: "destructive",
+            })
         } finally {
             setIsLoading(false)
         }
     }
 
     async function handleDelete() {
-        if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return
-
         setIsDeleting(true)
+        setShowDeleteAlert(false) // Close the alert dialog
+
         try {
             const result = await deleteUser(user.id)
             if (result.error) {
-                alert(result.error)
+                toast({
+                    title: "Error",
+                    description: result.error,
+                    variant: "destructive",
+                })
             } else {
                 onOpenChange?.(false)
                 router.refresh()
+                toast({
+                    title: "Success",
+                    description: "User deleted successfully",
+                })
             }
         } catch (error) {
             console.error(error)
-            alert("Failed to delete user")
+            toast({
+                title: "Error",
+                description: "Failed to delete user",
+                variant: "destructive",
+            })
         } finally {
             setIsDeleting(false)
         }
@@ -256,7 +292,7 @@ export function UserEditModal({ user, trigger, open, onOpenChange }: UserEditMod
                             <Button
                                 type="button"
                                 variant="destructive"
-                                onClick={handleDelete}
+                                onClick={() => setShowDeleteAlert(true)}
                                 disabled={isDeleting || isLoading}
                             >
                                 {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
@@ -275,6 +311,24 @@ export function UserEditModal({ user, trigger, open, onOpenChange }: UserEditMod
                     </form>
                 </Form>
             </DialogContent>
+
+            <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the user account
+                            and remove their data from our servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     )
 }

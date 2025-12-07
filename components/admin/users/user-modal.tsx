@@ -211,7 +211,7 @@ export function UserModal({ initialData, open: controlledOpen, onOpenChange, sho
                                                                     checked={field.value?.includes(role.id)}
                                                                     onCheckedChange={(checked) => {
                                                                         return checked
-                                                                            ? field.onChange([...field.value, role.id])
+                                                                            ? field.onChange([...(field.value || []), role.id])
                                                                             : field.onChange(
                                                                                 field.value?.filter(
                                                                                     (value) => value !== role.id
