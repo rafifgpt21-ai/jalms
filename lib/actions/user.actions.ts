@@ -44,7 +44,7 @@ export async function getUsers({
             status !== "ALL"
                 ? { isActive: status === "ACTIVE" }
                 : {},
-            { deletedAt: null }, // Only show non-deleted users
+            { deletedAt: { isSet: false } } as any, // Only show non-deleted users (unset fields)
         ],
     }
 
