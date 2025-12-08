@@ -157,7 +157,7 @@ export async function getActiveTerms(includeTermId?: string) {
 export async function getAvailableClassesForDropdown(search: string = "", activeSemesterOnly: boolean = true) {
     try {
         const where: any = {
-            // deletedAt: { isSet: false } // Removed due to potential issues, relying on logic
+            deletedAt: { isSet: false }
         }
 
         if (search) {
