@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ArsyncLogo } from "@/components/ArsyncLogo"
 
 export default function LoginPage() {
     const [errorMessage, dispatch, isPending] = useActionState(authenticate, undefined)
@@ -15,7 +16,7 @@ export default function LoginPage() {
             <Card className="w-[350px]">
                 <CardHeader>
                     <div className="flex justify-center mb-4">
-                        <img src="/arsync.svg" alt="Logo" className="h-24 w-auto" />
+                        <ArsyncLogo className="h-24 w-auto" />
                     </div>
                     <CardTitle className="sr-only">Login</CardTitle>
                 </CardHeader>
@@ -43,4 +44,3 @@ export default function LoginPage() {
         </div>
     )
 }
-

@@ -63,7 +63,7 @@ export default async function AdminDashboard() {
             </Card>
 
             {/* Attendance Pulse */}
-            <Card className="bg-gradient-to-br from-primary/5 via-primary/10 to-background border-primary/20">
+            <Card className="bg-linear-to-br from-primary/5 via-primary/10 to-background border-primary/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-lg font-medium">Today's Pulse</CardTitle>
                     <div className="flex items-center space-x-2">
@@ -106,25 +106,30 @@ export default async function AdminDashboard() {
                 <CardContent>
                     <div className="space-y-8">
                         {lastLoggedInUsers?.map((user) => (
-                            <div key={user.id} className="flex items-center">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={user.image || undefined} alt={user.name} />
-                                    <AvatarFallback>{user.name[0]}</AvatarFallback>
-                                </Avatar>
-                                <div className="ml-4 space-y-1">
-                                    <p className="text-sm font-medium leading-none">{user.name}</p>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                                </div>
-                                <div className="ml-4">
-                                    <div className="flex gap-1 flex-wrap">
-                                        {user.roles.map(role => (
-                                            <span key={role} className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
-                                                {role}
-                                            </span>
-                                        ))}
+                            <div key={user.id} className="w-full flex flex-col gap-y-2 gap-x-4">
+                                {/* Identity Block */}
+                                <div className="flex items-center gap-4 min-w-0">
+                                    <Avatar className="h-9 w-9 shrink-0">
+                                        <AvatarImage src={user.image || undefined} alt={user.name} />
+                                        <AvatarFallback>{user.name[0]}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="space-y-1 text-left">
+                                        <p className="text-sm font-medium leading-none text-left truncate">{user.name}</p>
+                                        <p className="text-sm text-muted-foreground text-left truncate">{user.email}</p>
                                     </div>
                                 </div>
-                                <div className="ml-auto font-medium text-xs text-muted-foreground">
+
+                                {/* Roles Block */}
+                                <div className="flex flex-wrap gap-1 ml-13 items-center">
+                                    {user.roles.map(role => (
+                                        <span key={role} className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground whitespace-nowrap">
+                                            {role}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                {/* Date Block */}
+                                <div className="ml-13 text-xs text-muted-foreground whitespace-nowrap text-left sm:text-right">
                                     {user.lastLoginAt ? format(new Date(user.lastLoginAt), "MMM d, yyyy h:mm a") : "Never"}
                                 </div>
                             </div>

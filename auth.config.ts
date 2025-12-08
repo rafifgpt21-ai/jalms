@@ -2,24 +2,22 @@ import type { NextAuthConfig } from "next-auth"
 
 export const authConfig = {
     pages: {
-        signIn: "/auth/login",
+        signIn: "/login",
     },
     callbacks: {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
+            const isOnLogin = nextUrl.pathname.startsWith('/login');
 
-            // Protect dashboard routes
-            const isProtected = nextUrl.pathname.startsWith('/teacher') ||
-                nextUrl.pathname.startsWith('/homeroom') ||
-                nextUrl.pathname.startsWith('/admin') ||
-                nextUrl.pathname.startsWith('/student') ||
-                nextUrl.pathname.startsWith('/parent');
-
-            if (isProtected) {
-                if (isLoggedIn) return true;
-                return false; // Redirect unauthenticated users to login page
+            if (isOnLogin) {
+                return true;
             }
-            return true;
+
+            if (isLoggedIn) {
+                return true;
+            }
+
+            return false;
         },
     },
     providers: [],
