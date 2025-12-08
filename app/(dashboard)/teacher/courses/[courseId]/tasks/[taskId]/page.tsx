@@ -213,9 +213,10 @@ export default function TaskWorkspacePage() {
                 </div>
                 {showDescription && (
                     <div className="px-4 pb-4">
-                        <div className="whitespace-pre-wrap text-sm text-muted-foreground">
-                            {assignment.description || "No description provided."}
-                        </div>
+                        <div
+                            className="prose prose-sm max-w-none text-muted-foreground"
+                            dangerouslySetInnerHTML={{ __html: assignment.description || "<p>No description provided.</p>" }}
+                        />
                     </div>
                 )}
             </Card>

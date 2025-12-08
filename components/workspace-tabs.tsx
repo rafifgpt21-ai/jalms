@@ -12,12 +12,13 @@ import { motion } from "framer-motion"
 interface WorkspaceTabsProps {
     roles: Role[]
     userName?: string | null
+    userNickname?: string | null
     userEmail?: string | null
     userImage?: string | null
     hasUnreadMessages?: boolean
 }
 
-export function WorkspaceTabs({ roles, userName, userEmail, userImage, hasUnreadMessages: initialHasUnread = false }: WorkspaceTabsProps) {
+export function WorkspaceTabs({ roles, userName, userNickname, userEmail, userImage, hasUnreadMessages: initialHasUnread = false }: WorkspaceTabsProps) {
     const pathname = usePathname()
     const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
 
@@ -125,7 +126,7 @@ export function WorkspaceTabs({ roles, userName, userEmail, userImage, hasUnread
 
             {/* User Profile & Logout */}
             <div className="flex items-center gap-4 min-w-fit justify-end">
-                <UserSettings email={userEmail} name={userName} image={userImage} />
+                <UserSettings email={userEmail} name={userName} nickname={userNickname} image={userImage} />
             </div>
         </div>
     )

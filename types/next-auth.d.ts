@@ -4,6 +4,7 @@ import NextAuth, { DefaultSession } from "next-auth"
 export type ExtendedUser = DefaultSession["user"] & {
     roles: Role[]
     avatarConfig?: any
+    nickname?: string | null
 }
 
 declare module "next-auth" {
@@ -16,5 +17,6 @@ declare module "next-auth/jwt" {
     interface JWT {
         roles?: Role[]
         avatarConfig?: any
+        nickname?: string | null
     }
 }

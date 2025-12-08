@@ -343,6 +343,14 @@ export async function getCourseGradebook(courseId: string) {
         if (!course) return { error: "Course not found" }
         if (course.teacherId !== user.id) return { error: "Unauthorized" }
 
+        const attendancePool = course.attendancePoolScore || 0
+
+        // Calculate Course Total Max Points
+        // Sum of all non-extra-credit assignments + attendance pool
+        const courseMaxPoints = course.assignments.reduce((sum, assignment) => {
+            return !assignment.isExtraCredit ? sum + assignment.maxPoints : sum
+        }, 0) + attendancePool
+
         const gradebookData = course.students.map(student => {
             // 1. Calculate Attendance %
             const studentAttendance = course.attendances.filter(a => a.studentId === student.id)
@@ -357,7 +365,7 @@ export async function getCourseGradebook(courseId: string) {
 
             const attendancePercentage = totalSessions > 0 ? (attendedCount / totalSessions) : 1
 
-            // 2. Calculate Student Points & Max Points
+            // 2. Calculate Student Points & Max Points (Student Context)
             let studentPoints = 0
             let maxPointsPossible = 0
             let extraCreditPoints = 0
@@ -390,7 +398,6 @@ export async function getCourseGradebook(courseId: string) {
             })
 
             // 3. Apply Formula
-            const attendancePool = course.attendancePoolScore || 0
             const attendanceScore = attendancePercentage * attendancePool
 
             const numerator = studentPoints + extraCreditPoints + attendanceScore
@@ -411,6 +418,7 @@ export async function getCourseGradebook(courseId: string) {
                 studentName: student.name,
                 attendancePercentage: totalSessions > 0 ? (attendedCount / totalSessions) * 100 : 100,
                 totalScore: Math.round(totalScore * 10) / 10,
+                earnedPoints: Math.round(numerator * 10) / 10,
                 breakdown: {
                     studentPoints,
                     extraCreditPoints,
@@ -421,7 +429,7 @@ export async function getCourseGradebook(courseId: string) {
             }
         })
 
-        return { gradebook: gradebookData, courseName: course.name }
+        return { gradebook: gradebookData, courseName: course.name, maxPoints: courseMaxPoints }
 
     } catch (error) {
         console.error("Error fetching gradebook:", error)

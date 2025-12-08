@@ -26,12 +26,13 @@ interface MobileNavProps {
     courses?: any[]
     userEmail?: string | null
     userName?: string | null
+    userNickname?: string | null
     userImage?: string | null
     conversations?: any[]
     userId?: string
 }
 
-export function MobileNav({ userRoles, courses, userEmail, userName, userImage, conversations: initialConversations = [], userId }: MobileNavProps) {
+export function MobileNav({ userRoles, courses, userEmail, userName, userNickname, userImage, conversations: initialConversations = [], userId }: MobileNavProps) {
     const [open, setOpen] = useState(false)
     const pathname = usePathname()
     const router = useRouter()
@@ -42,7 +43,6 @@ export function MobileNav({ userRoles, courses, userEmail, userName, userImage, 
     const activeConversations = conversations.length > 0 ? conversations : initialConversations
 
     const tabs = [
-        // ... (omitting tabs for brevity in replacement, will rely on StartLine/EndLine)
         {
             label: "Admin Workspace",
             href: "/admin",
@@ -136,8 +136,7 @@ export function MobileNav({ userRoles, courses, userEmail, userName, userImage, 
                 </span>
             </div>
 
-            <UserSettings email={userEmail} name={userName} image={userImage} />
+            <UserSettings email={userEmail} name={userName} nickname={userNickname} image={userImage} />
         </div>
     )
 }
-

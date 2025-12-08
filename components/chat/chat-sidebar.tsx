@@ -30,6 +30,7 @@ type Conversation = {
         name: string | null;
         image: string | null;
         email: string | null;
+        nickname?: string | null;
     }[];
     messages: {
         content: string;
@@ -60,7 +61,8 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
 
     const filteredConversations = conversations.filter((conv) => {
         const otherParticipant = conv.participants.find((p) => p.id !== userId);
-        return otherParticipant?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+        const displayName = otherParticipant?.nickname || otherParticipant?.name || "";
+        return displayName.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
     return (
@@ -130,13 +132,13 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                             <Avatar>
                                                                 <AvatarImage src={otherParticipant?.image || undefined} />
                                                                 <AvatarFallback>
-                                                                    {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                                    {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                             <div className="flex-1 min-w-0 text-sidebar-foreground">
                                                                 <div className="flex items-center justify-between mb-1">
                                                                     <span className="font-medium truncate">
-                                                                        {otherParticipant?.name || "Unknown User"}
+                                                                        {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
                                                                     </span>
                                                                     {lastMessage && (
                                                                         <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
@@ -208,13 +210,13 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                             <Avatar>
                                                                 <AvatarImage src={otherParticipant?.image || undefined} />
                                                                 <AvatarFallback>
-                                                                    {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                                    {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                             <div className="flex-1 min-w-0 text-sidebar-foreground">
                                                                 <div className="flex items-center justify-between mb-1">
                                                                     <span className="font-medium truncate">
-                                                                        {otherParticipant?.name || "Unknown User"}
+                                                                        {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
                                                                     </span>
                                                                     {lastMessage && (
                                                                         <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
@@ -275,7 +277,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                 <Avatar>
                                                     <AvatarImage src={otherParticipant?.image || undefined} />
                                                     <AvatarFallback>
-                                                        {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                        {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 {isUnread && (
@@ -284,7 +286,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             </Link>
                                         </TooltipTrigger>
                                         <TooltipContent side="right">
-                                            {otherParticipant?.name || "Unknown User"}
+                                            {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
                                             {isUnread && " (Unread)"}
                                         </TooltipContent>
                                     </Tooltip>
@@ -325,7 +327,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             <Avatar>
                                                 <AvatarImage src={otherParticipant?.image || undefined} />
                                                 <AvatarFallback>
-                                                    {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                    {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
                                                 </AvatarFallback>
                                             </Avatar>
                                             {isUnread && (
@@ -335,7 +337,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className={cn("font-medium truncate", isUnread && "font-bold text-foreground")}>
-                                                    {otherParticipant?.name || "Unknown User"}
+                                                    {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
                                                 </span>
                                                 {lastMessage && (
                                                     <span className={cn("text-xs whitespace-nowrap ml-2", isUnread ? "text-red-500 font-medium" : "text-muted-foreground")}>

@@ -61,20 +61,25 @@ export default function GradebookPage() {
         return <div className="p-8">Gradebook not found</div>
     }
 
-    const { gradebook, courseName } = data
+    const { gradebook, courseName, maxPoints } = data
 
     return (
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl">Gradebook: {courseName}</CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl font-bold">{courseName}</CardTitle>
+                        <div className="text-sm font-bold bg-muted px-4 py-2 rounded-lg">
+                            Max Points: {maxPoints}
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Student Name</TableHead>
-                                <TableHead className="text-right">Attendance %</TableHead>
+                                <TableHead className="text-right">Points Earned</TableHead>
                                 <TableHead className="text-right">Total Score</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -82,8 +87,8 @@ export default function GradebookPage() {
                             {gradebook.map((student: any) => (
                                 <TableRow key={student.studentId}>
                                     <TableCell className="font-medium">{student.studentName}</TableCell>
-                                    <TableCell className="text-right">
-                                        {Math.round(student.attendancePercentage)}%
+                                    <TableCell className="text-right font-medium">
+                                        {student.earnedPoints}
                                     </TableCell>
                                     <TableCell className="text-right font-bold text-lg">
                                         {student.totalScore}

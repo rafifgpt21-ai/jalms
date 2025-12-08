@@ -53,6 +53,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (token.avatarConfig && session.user) {
                 session.user.avatarConfig = token.avatarConfig;
             }
+            if (session.user) {
+                session.user.nickname = token.nickname;
+            }
             return session;
         },
         async jwt({ token }) {
@@ -62,6 +65,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.roles = user.roles;
             token.avatarConfig = user.avatarConfig;
             token.picture = user.image;
+            token.nickname = user.nickname;
             return token;
         }
     }

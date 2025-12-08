@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { LogOut, Settings, User, KeyRound } from "lucide-react"
+import { LogOut, Settings, User, KeyRound, Pencil } from "lucide-react"
 import { signOut } from "next-auth/react"
 
 import {
@@ -25,19 +25,22 @@ import {
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
+import { NicknameDialog } from "@/components/user/nickname-dialog"
 
 interface UserSettingsProps {
     email?: string | null
     name?: string | null
+    nickname?: string | null
     image?: string | null
     side?: "top" | "bottom" | "left" | "right"
     align?: "start" | "center" | "end"
 }
 
-export function UserSettings({ email, name, image, side = "bottom", align = "end" }: UserSettingsProps) {
+export function UserSettings({ email, name, nickname, image, side = "bottom", align = "end" }: UserSettingsProps) {
     const [showLogoutDialog, setShowLogoutDialog] = useState(false)
     const [showPasswordDialog, setShowPasswordDialog] = useState(false)
     const [showAvatarDialog, setShowAvatarDialog] = useState(false)
+    const [showNicknameDialog, setShowNicknameDialog] = useState(false)
 
     return (
         <>
@@ -71,6 +74,10 @@ export function UserSettings({ email, name, image, side = "bottom", align = "end
                     <DropdownMenuItem onClick={() => setShowAvatarDialog(true)}>
                         <User className="mr-2 h-4 w-4" />
                         <span>Customize Avatar</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowNicknameDialog(true)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        <span>Edit Nickname</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowPasswordDialog(true)}>
                         <KeyRound className="mr-2 h-4 w-4" />
@@ -113,6 +120,12 @@ export function UserSettings({ email, name, image, side = "bottom", align = "end
             <ChangePasswordDialog
                 open={showPasswordDialog}
                 onOpenChange={setShowPasswordDialog}
+            />
+
+            <NicknameDialog
+                open={showNicknameDialog}
+                onOpenChange={setShowNicknameDialog}
+                currentNickname={nickname}
             />
 
             <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>

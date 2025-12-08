@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress"
 import { SemesterSelector } from "@/components/student/grades/semester-selector"
 import { GradeStatistics } from "@/components/student/grades/grade-statistics"
 import { GradeHistoryChart } from "@/components/student/grades/grade-history-chart"
+import { GradesTable } from "@/components/student/grades/grades-table"
 
 export default async function StudentGradesPage({
     searchParams,
@@ -51,53 +52,7 @@ export default async function StudentGradesPage({
 
             <GradeStatistics grades={grades} />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{semesterTitle} Grades</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Course</TableHead>
-                                <TableHead>Teacher</TableHead>
-                                <TableHead>Attendance</TableHead>
-                                <TableHead className="text-right">Overall Grade</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {grades && grades.length > 0 ? (
-                                grades.map((grade: any) => (
-                                    <TableRow key={grade.courseId}>
-                                        <TableCell className="font-medium">{grade.courseName}</TableCell>
-                                        <TableCell>{grade.teacherName}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Progress value={grade.attendancePercentage} className="w-[60px]" />
-                                                <span className="text-xs text-muted-foreground">{grade.attendancePercentage}%</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <span className={`text-lg font-bold ${grade.grade >= 90 ? 'text-green-600' :
-                                                grade.grade >= 80 ? 'text-blue-600' :
-                                                    grade.grade >= 70 ? 'text-yellow-600' : 'text-red-600'
-                                                }`}>
-                                                {grade.grade}%
-                                            </span>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                                        No grades found for this semester.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <GradesTable grades={grades} semesterTitle={semesterTitle} />
         </div>
     )
 }

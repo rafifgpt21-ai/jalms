@@ -25,6 +25,7 @@ export function GradeHistoryChart({ history }: GradeHistoryChartProps) {
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
+                                tickFormatter={(_, i) => (i + 1).toString()}
                             />
                             <YAxis
                                 stroke="#888888"

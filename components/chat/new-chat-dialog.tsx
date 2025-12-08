@@ -26,6 +26,7 @@ type UserResult = {
     name: string;
     image: string | null;
     email: string;
+    nickname?: string | null;
     roles: string[];
 };
 
@@ -118,12 +119,12 @@ export function NewChatDialog({ open, onOpenChange, userId }: NewChatDialogProps
                                         <Avatar>
                                             <AvatarImage src={user.image || undefined} />
                                             <AvatarFallback>
-                                                {user.name.slice(0, 2).toUpperCase()}
+                                                {(user.nickname || user.name).slice(0, 2).toUpperCase()}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-medium text-sm">{user.name}</p>
-                                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                                            <p className="font-medium text-sm">{user.nickname || user.name}</p>
+                                            <p className="text-xs text-muted-foreground">{user.nickname ? user.name : user.email}</p>
                                         </div>
                                     </div>
                                     <Button

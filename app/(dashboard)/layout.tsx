@@ -66,6 +66,7 @@ export default async function DashboardLayout({
                         courses={allCourses}
                         userEmail={session.user?.email}
                         userName={session.user?.name}
+                        userNickname={session.user?.nickname}
                         userImage={session.user?.image}
                         conversations={conversations}
                         userId={session.user?.id}
@@ -77,6 +78,7 @@ export default async function DashboardLayout({
                     <WorkspaceTabs
                         roles={userRoles}
                         userName={session.user?.name}
+                        userNickname={session.user?.nickname}
                         userEmail={session.user?.email}
                         userImage={session.user?.image}
                         hasUnreadMessages={hasUnreadMessages}

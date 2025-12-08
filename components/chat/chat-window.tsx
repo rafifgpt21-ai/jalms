@@ -22,6 +22,7 @@ type Message = {
         id: string;
         name: string | null;
         image: string | null;
+        nickname?: string | null;
     };
 };
 
@@ -30,6 +31,7 @@ type Participant = {
     name: string | null;
     image: string | null;
     email: string | null;
+    nickname?: string | null;
 };
 
 interface ChatWindowProps {
@@ -125,13 +127,13 @@ export function ChatWindow({
                 <Avatar>
                     <AvatarImage src={otherParticipant?.image || undefined} />
                     <AvatarFallback>
-                        {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
+                        {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
                     </AvatarFallback>
                 </Avatar>
                 <div>
-                    <h3 className="font-semibold">{otherParticipant?.name || "Unknown User"}</h3>
+                    <h3 className="font-semibold">{otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}</h3>
                     <p className="text-xs text-muted-foreground">
-                        {otherParticipant?.email}
+                        {otherParticipant?.nickname ? otherParticipant?.name : otherParticipant?.email}
                     </p>
                 </div>
             </div>

@@ -22,6 +22,7 @@ export async function getConversations() {
                         name: true,
                         image: true,
                         email: true,
+                        nickname: true,
                     },
                 },
                 messages: {
@@ -88,6 +89,7 @@ export async function getMessages(conversationId: string) {
                         id: true,
                         name: true,
                         image: true,
+                        nickname: true,
                     },
                 },
             },
@@ -234,6 +236,7 @@ export async function searchUsers(query: string) {
                 name: true,
                 image: true,
                 email: true,
+                nickname: true,
                 roles: true,
             },
             take: 10,
@@ -276,6 +279,7 @@ export async function getAllConversations() {
                         name: true,
                         email: true,
                         image: true,
+                        nickname: true,
                     },
                 },
                 messages: {

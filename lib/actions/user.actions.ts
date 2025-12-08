@@ -262,6 +262,25 @@ export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
         return { success: true, error: undefined }
     } catch (error) {
         console.error("Error updating avatar:", error)
-        return { success: false, error: "Failed to update avatar" }
+    }
+}
+
+export async function updateNickname(nickname: string) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) {
+            return { error: "Unauthorized" }
+        }
+
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { nickname }
+        })
+
+        revalidatePath("/")
+        return { success: true }
+    } catch (error) {
+        console.error("Error updating nickname:", error)
+        return { error: "Failed to update nickname" }
     }
 }

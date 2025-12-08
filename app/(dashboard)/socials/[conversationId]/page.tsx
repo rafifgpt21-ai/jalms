@@ -24,6 +24,7 @@ export default async function ConversationPage({ params }: PageProps) {
                         name: true,
                         image: true,
                         email: true,
+                        nickname: true,
                     },
                 },
             },

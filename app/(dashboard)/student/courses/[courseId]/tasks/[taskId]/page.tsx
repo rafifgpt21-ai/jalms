@@ -64,7 +64,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                     </CardHeader>
                     <CardContent>
                         <div className="prose dark:prose-invert max-w-none">
-                            <p>{assignment.description || "No instructions provided."}</p>
+                            <div dangerouslySetInnerHTML={{ __html: assignment.description || "<p>No instructions provided.</p>" }} />
                         </div>
                     </CardContent>
                 </Card>

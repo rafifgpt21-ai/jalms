@@ -15,6 +15,7 @@ import {
     Heading1,
     Heading2
 } from "lucide-react"
+import React from 'react'
 
 interface EditorProps {
     value: string
@@ -24,6 +25,9 @@ interface EditorProps {
 }
 
 export function Editor({ value, onChange, editable = true, className }: EditorProps) {
+    // Force re-render on editor state changes to update toolbar active states
+    const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
+
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -37,6 +41,12 @@ export function Editor({ value, onChange, editable = true, className }: EditorPr
         immediatelyRender: false,
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML())
+        },
+        onSelectionUpdate: () => {
+            forceUpdate()
+        },
+        onTransaction: () => {
+            forceUpdate()
         },
         editorProps: {
             attributes: {
@@ -76,21 +86,6 @@ export function Editor({ value, onChange, editable = true, className }: EditorPr
                     onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
                 >
                     <UnderlineIcon className="h-4 w-4" />
-                </Toggle>
-                <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
-                <Toggle
-                    size="sm"
-                    pressed={editor.isActive('heading', { level: 1 })}
-                    onPressedChange={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                >
-                    <Heading1 className="h-4 w-4" />
-                </Toggle>
-                <Toggle
-                    size="sm"
-                    pressed={editor.isActive('heading', { level: 2 })}
-                    onPressedChange={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                >
-                    <Heading2 className="h-4 w-4" />
                 </Toggle>
                 <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
                 <Toggle

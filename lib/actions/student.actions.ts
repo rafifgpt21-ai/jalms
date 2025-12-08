@@ -295,7 +295,9 @@ export async function getStudentGrades(termId?: string) {
                 breakdown: {
                     studentPoints,
                     maxPointsPossible,
-                    attendanceScore
+                    attendanceScore,
+                    extraCreditPoints,
+                    attendancePool
                 }
             }
         })
