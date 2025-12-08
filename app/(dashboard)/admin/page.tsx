@@ -108,7 +108,7 @@ export default async function AdminDashboard() {
                         {lastLoggedInUsers?.map((user) => (
                             <div key={user.id} className="flex items-center">
                                 <Avatar className="h-9 w-9">
-                                    <AvatarImage src={user.image || ""} alt={user.name} />
+                                    <AvatarImage src={user.image || undefined} alt={user.name} />
                                     <AvatarFallback>{user.name[0]}</AvatarFallback>
                                 </Avatar>
                                 <div className="ml-4 space-y-1">

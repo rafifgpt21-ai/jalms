@@ -45,7 +45,7 @@ export function SocialsTable({ conversations }: SocialsTableProps) {
                                         <div className="flex -space-x-2 overflow-hidden">
                                             {conv.participants.map((p: any) => (
                                                 <Avatar key={p.id} className="inline-block border-2 border-background w-8 h-8">
-                                                    <AvatarImage src={p.image || ""} />
+                                                    <AvatarImage src={p.image || undefined} />
                                                     <AvatarFallback>{p.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
                                                 </Avatar>
                                             ))}

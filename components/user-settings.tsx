@@ -45,7 +45,7 @@ export function UserSettings({ email, name, image, side = "bottom", align = "end
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 p-0" suppressHydrationWarning>
                         <Avatar className="h-8 w-8">
-                            <AvatarImage src={image || ""} alt={name || "User"} />
+                            <AvatarImage src={image || undefined} alt={name || "User"} />
                             <AvatarFallback>
                                 <Settings className="h-4 w-4 text-gray-500" />
                             </AvatarFallback>
@@ -56,7 +56,7 @@ export function UserSettings({ email, name, image, side = "bottom", align = "end
                     <DropdownMenuLabel>
                         <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={image || ""} alt={name || "User"} />
+                                <AvatarImage src={image || undefined} alt={name || "User"} />
                                 <AvatarFallback>{name?.[0] || "U"}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col space-y-1">

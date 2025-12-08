@@ -199,7 +199,7 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
                         <div key={student.id} className="bg-white p-4 rounded-lg border shadow-sm space-y-4">
                             <div className="flex items-center gap-3">
                                 <Avatar>
-                                    <AvatarImage src={student.image || ""} />
+                                    <AvatarImage src={student.image || undefined} />
                                     <AvatarFallback>{student.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div>
@@ -267,7 +267,7 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarImage src={student.image || ""} />
+                                                <AvatarImage src={student.image || undefined} />
                                                 <AvatarFallback>{student.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             <div>

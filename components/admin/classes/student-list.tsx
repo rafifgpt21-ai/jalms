@@ -78,7 +78,7 @@ export function StudentList({ classId, students }: StudentListProps) {
                             <TableRow key={student.id}>
                                 <TableCell>
                                     <Avatar>
-                                        <AvatarImage src={student.image || ""} />
+                                        <AvatarImage src={student.image || undefined} />
                                         <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                 </TableCell>

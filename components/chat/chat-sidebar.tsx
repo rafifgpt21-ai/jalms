@@ -128,7 +128,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                             )}
                                                         >
                                                             <Avatar>
-                                                                <AvatarImage src={otherParticipant?.image || ""} />
+                                                                <AvatarImage src={otherParticipant?.image || undefined} />
                                                                 <AvatarFallback>
                                                                     {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
                                                                 </AvatarFallback>
@@ -206,7 +206,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                             )}
                                                         >
                                                             <Avatar>
-                                                                <AvatarImage src={otherParticipant?.image || ""} />
+                                                                <AvatarImage src={otherParticipant?.image || undefined} />
                                                                 <AvatarFallback>
                                                                     {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
                                                                 </AvatarFallback>
@@ -273,7 +273,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                 )}
                                             >
                                                 <Avatar>
-                                                    <AvatarImage src={otherParticipant?.image || ""} />
+                                                    <AvatarImage src={otherParticipant?.image || undefined} />
                                                     <AvatarFallback>
                                                         {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
                                                     </AvatarFallback>
@@ -323,7 +323,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                     >
                                         <div className="relative">
                                             <Avatar>
-                                                <AvatarImage src={otherParticipant?.image || ""} />
+                                                <AvatarImage src={otherParticipant?.image || undefined} />
                                                 <AvatarFallback>
                                                     {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
                                                 </AvatarFallback>

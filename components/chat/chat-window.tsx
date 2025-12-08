@@ -123,7 +123,7 @@ export function ChatWindow({
             {/* Header */}
             <div className="flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
                 <Avatar>
-                    <AvatarImage src={otherParticipant?.image || ""} />
+                    <AvatarImage src={otherParticipant?.image || undefined} />
                     <AvatarFallback>
                         {otherParticipant?.name?.slice(0, 2).toUpperCase() || "??"}
                     </AvatarFallback>

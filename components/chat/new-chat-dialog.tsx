@@ -116,7 +116,7 @@ export function NewChatDialog({ open, onOpenChange, userId }: NewChatDialogProps
                                 >
                                     <div className="flex items-center gap-3">
                                         <Avatar>
-                                            <AvatarImage src={user.image || ""} />
+                                            <AvatarImage src={user.image || undefined} />
                                             <AvatarFallback>
                                                 {user.name.slice(0, 2).toUpperCase()}
                                             </AvatarFallback>

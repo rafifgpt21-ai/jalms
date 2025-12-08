@@ -73,7 +73,7 @@ export function AdminChatView({
                 <div className="flex -space-x-2 overflow-hidden">
                     {participants.map((p) => (
                         <Avatar key={p.id} className="inline-block border-2 border-background w-8 h-8">
-                            <AvatarImage src={p.image || ""} />
+                            <AvatarImage src={p.image || undefined} />
                             <AvatarFallback>{p.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                     ))}
@@ -108,7 +108,7 @@ export function AdminChatView({
                                     className="flex w-full justify-start gap-2"
                                 >
                                     <Avatar className="w-8 h-8 mt-1">
-                                        <AvatarImage src={message.sender.image || ""} />
+                                        <AvatarImage src={message.sender.image || undefined} />
                                         <AvatarFallback>{message.sender.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col max-w-[70%]">

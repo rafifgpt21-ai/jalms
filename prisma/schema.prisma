@@ -24,14 +24,14 @@ enum AttendanceStatus {
 }
 
 model User {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  name     String
-  email    String  @unique
-  password String?
-  image    String?
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String    @unique
+  password     String?
+  image        String?
   avatarConfig Json?
-  roles    Role[]  @default([STUDENT])
-  lastLoginAt DateTime?
+  roles        Role[]    @default([STUDENT])
+  lastLoginAt  DateTime?
 
   isActive Boolean @default(true)
 
@@ -124,8 +124,8 @@ model Subject {
 }
 
 model Course {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
-  name String
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
   reportName String? // Name to show in student reports
 
   // Optional link to Subject if needed later, but user wants simple name input
@@ -153,17 +153,17 @@ model Course {
 
   deletedAt DateTime?
 
-  schedules Schedule[]
-  materials Material[] // Keep this for backward compatibility or direct access if needed, but assignments are preferred
+  schedules           Schedule[]
+  materials           Material[] // Keep this for backward compatibility or direct access if needed, but assignments are preferred
   materialAssignments MaterialAssignment[]
 }
 
 model Material {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
   description String?
-  fileUrl    String
-  uploadedAt DateTime @default(now())
+  fileUrl     String
+  uploadedAt  DateTime @default(now())
 
   // Owner of the material
   teacherId String @db.ObjectId
@@ -181,7 +181,7 @@ model Material {
 model MaterialAssignment {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  materialId String @db.ObjectId
+  materialId String   @db.ObjectId
   material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
   courseId String @db.ObjectId
@@ -286,7 +286,7 @@ model Conversation {
   messages Message[]
 
   lastMessageAt DateTime @default(now())
-  
+
   initiatorId String? @db.ObjectId
 }
 
