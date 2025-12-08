@@ -341,3 +341,46 @@ export async function enrollClassToCourse(courseId: string, classId: string) {
         return { success: false, count: 0, error: "Failed to enroll class" }
     }
 }
+
+export async function enrollClassToClass(targetClassId: string, sourceClassId: string) {
+    try {
+        // 1. Get all students in the source class
+        const sourceEnrollments = await prisma.enrollment.findMany({
+            where: { classId: sourceClassId },
+            select: { studentId: true }
+        })
+
+        if (sourceEnrollments.length === 0) {
+            return { error: "No students found in the source class" }
+        }
+
+        const studentIdsToAdd = sourceEnrollments.map(e => e.studentId)
+
+        // 2. Get students in target class to avoid duplicates
+        const targetEnrollments = await prisma.enrollment.findMany({
+            where: { classId: targetClassId },
+            select: { studentId: true }
+        })
+
+        const currentStudentIds = new Set(targetEnrollments.map(e => e.studentId))
+        const newStudentIds = studentIdsToAdd.filter(id => !currentStudentIds.has(id))
+
+        if (newStudentIds.length === 0) {
+            return { message: "All students from the source class are already enrolled in the target class" }
+        }
+
+        // 3. Create new enrollments
+        await prisma.enrollment.createMany({
+            data: newStudentIds.map(studentId => ({
+                classId: targetClassId,
+                studentId: studentId
+            }))
+        })
+
+        revalidatePath(`/admin/classes/${targetClassId}`)
+        return { success: true, count: newStudentIds.length, error: undefined }
+    } catch (error) {
+        console.error("Error enrolling class to class:", error)
+        return { success: false, count: 0, error: "Failed to enroll class" }
+    }
+}

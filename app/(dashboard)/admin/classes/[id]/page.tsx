@@ -3,6 +3,7 @@ import { db as prisma } from "@/lib/db"
 import { getEnrolledStudents } from "@/lib/actions/enrollment.actions"
 import { StudentList } from "@/components/admin/classes/student-list"
 import { AddStudentModal } from "@/components/admin/classes/add-student-modal"
+import { AddClassToClassModal } from "@/components/admin/classes/add-class-to-class-modal"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -55,7 +56,10 @@ export default async function ClassWorkspacePage({ params }: ClassWorkspacePageP
 
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Enrolled Students ({students?.length || 0})</h2>
-                <AddStudentModal classId={id} />
+                <div className="flex gap-2">
+                    <AddClassToClassModal classId={id} />
+                    <AddStudentModal classId={id} />
+                </div>
             </div>
 
             <StudentList classId={id} students={students || []} />
