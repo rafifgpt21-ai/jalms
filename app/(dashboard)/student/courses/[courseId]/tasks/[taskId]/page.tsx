@@ -32,7 +32,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
     const wasLate = submission && assignment.dueDate && submission.submittedAt > assignment.dueDate
 
     return (
-        <div className="space-y-6 max-w-4xl mx-auto">
+        <div className="space-y-6">
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">{assignment.title}</h1>

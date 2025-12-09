@@ -59,7 +59,7 @@ export default async function DashboardLayout({
     }) || false;
 
     return (
-        <div className="flex h-[100dvh] flex-col">
+        <div className="flex h-dvh flex-col">
             <ChatNotificationProvider initialConversations={conversations} userId={session.user?.id || ""}>
                 <MobileHeaderProvider>
                     {/* Mobile Navigation */}

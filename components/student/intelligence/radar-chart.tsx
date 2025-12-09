@@ -66,7 +66,7 @@ export function IntelligenceRadarChart({ data }: IntelligenceRadarChartProps) {
             <CardContent>
                 <div className="h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                        <RadarChart cx="50%" cy="50%" outerRadius="50%" data={chartData}>
                             <PolarGrid />
                             <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
                             <PolarRadiusAxis angle={30} domain={[0, 100]} />

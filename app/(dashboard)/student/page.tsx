@@ -82,7 +82,7 @@ export default async function StudentDashboard() {
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <div className="font-semibold truncate flex-1 mr-2">{assignment.title}</div>
-                                                <div className="flex gap-1 flex-shrink-0">
+                                                <div className="flex gap-1 shrink-0">
                                                     {isSubmitted && (
                                                         <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full dark:bg-green-900 dark:text-green-300">
                                                             Submitted
