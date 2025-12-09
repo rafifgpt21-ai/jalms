@@ -65,8 +65,16 @@ export function ChatWindow({
     }, [messages]);
 
     // Polling and Mark Read effects
+    // Polling and Mark Read effects
     useEffect(() => {
         let isMounted = true;
+        let timeoutId: NodeJS.Timeout;
+
+        // Track the latest message timestamp to fetch only deltas
+        // Initialize with the last message's time or null
+        let lastMessageDate = messages.length > 0
+            ? new Date(messages[messages.length - 1].createdAt)
+            : undefined;
 
         const markRead = async () => {
             try {
@@ -81,38 +89,62 @@ export function ChatWindow({
         // Mark as read immediately on mount
         markRead();
 
-        // Helper to fetch latest messages
-        const fetchMessages = async () => {
-            try {
-                const latestMessages = await getMessages(conversationId);
-                if (isMounted && Array.isArray(latestMessages)) {
-                    setMessages(latestMessages as unknown as Message[]);
+        // Smart polling function
+        const pollMessages = async () => {
+            if (!isMounted) return;
 
-                    // Check if the latest message is unread by the current user
-                    // We only need to check the last one because usually that's the one triggering notification
-                    // But to be safe, we can check if any are unread
-                    const hasUnread = (latestMessages as unknown as Message[]).some(
+            // Determine polling interval based on visibility
+            // 3s if active, 15s if background/hidden
+            const isPageHidden = document.hidden;
+            const interval = isPageHidden ? 15000 : 3000;
+
+            try {
+                // Fetch only messages AFTER the last one we have
+                const newMessages = await getMessages(conversationId, lastMessageDate);
+
+                if (isMounted && Array.isArray(newMessages) && newMessages.length > 0) {
+                    setMessages(prev => {
+                        // Avoid duplicates just in case, though Date filter should handle it
+                        // Map existing IDs
+                        const existingIds = new Set(prev.map(m => m.id));
+                        const uniqueNewMessages = (newMessages as unknown as Message[]).filter(m => !existingIds.has(m.id));
+
+                        if (uniqueNewMessages.length === 0) return prev;
+
+                        return [...prev, ...uniqueNewMessages];
+                    });
+
+                    // Update cursor
+                    const lastMsg = newMessages[newMessages.length - 1] as unknown as Message;
+                    lastMessageDate = new Date(lastMsg.createdAt);
+
+                    // Check for unread in new messages to mark as read
+                    const hasUnread = (newMessages as unknown as Message[]).some(
                         msg => msg.sender.id !== currentUserId && !msg.readByIds.includes(currentUserId)
                     );
 
-                    if (hasUnread) {
-                        // Mark as read immediately
+                    if (hasUnread && !isPageHidden) {
+                        // Only mark read automatically if user is actually looking at the page
                         markRead();
                     }
                 }
             } catch (error) {
                 console.error("Failed to poll messages", error);
+            } finally {
+                if (isMounted) {
+                    timeoutId = setTimeout(pollMessages, interval);
+                }
             }
         };
 
-        // Poll every 3 seconds for real-time updates
-        const interval = setInterval(fetchMessages, 3000);
+        // Start polling loop
+        timeoutId = setTimeout(pollMessages, 3000);
 
         return () => {
             isMounted = false;
-            clearInterval(interval);
+            clearTimeout(timeoutId);
         };
-    }, [conversationId, refreshConversations]);
+    }, [conversationId, refreshConversations]); // Removing messages dependency to avoid re-triggering loop logic unnecessarily, using ref or local var for cursor
 
     // Update Mobile Header
     const { setHeader, resetHeader } = useMobileHeader()

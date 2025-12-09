@@ -59,7 +59,7 @@ export async function getConversations() {
     }
 }
 
-export async function getMessages(conversationId: string) {
+export async function getMessages(conversationId: string, after?: Date) {
     const session = await auth();
     if (!session?.user?.id) return [];
 
@@ -82,6 +82,11 @@ export async function getMessages(conversationId: string) {
         const messages = await db.message.findMany({
             where: {
                 conversationId,
+                ...(after && {
+                    createdAt: {
+                        gt: after,
+                    },
+                }),
             },
             include: {
                 sender: {
@@ -102,6 +107,75 @@ export async function getMessages(conversationId: string) {
     } catch (error) {
         console.error("Error fetching messages:", error);
         return [];
+    }
+}
+
+export async function getUnreadStatus() {
+    const session = await auth();
+    if (!session?.user?.id) return { hasUnread: false, unreadConversationIds: [], lastActivity: new Date(0) };
+
+    try {
+        // Find messages where the user is a participant of the conversation
+        // AND the user has NOT read the message
+        // This might be heavy if not indexed properly, but better than loading all convos + messages
+        // Optimization: We could just check Conversations where lastMessageAt > userLastSeen (not tracked yet)
+        // For now, let's look for conversations with unread messages.
+
+        // Approach: Find conversations user is in, then check if any message is unread.
+        // Or simpler: db.message.findFirst where ...
+
+        // Let's get "Conversations user is in" that have "Messages not read by user"
+        const unreadMessages = await db.message.findMany({
+            where: {
+                conversation: {
+                    participantIds: {
+                        has: session.user.id
+                    }
+                },
+                NOT: {
+                    readByIds: {
+                        has: session.user.id
+                    }
+                },
+                senderId: {
+                    not: session.user.id // Don't count own messages as unread (though they shouldn't be usually)
+                }
+            },
+            select: {
+                conversationId: true,
+                createdAt: true
+            },
+            distinct: ['conversationId'],
+            take: 20 // Don't need all of them, just enough to know
+        });
+
+        const hasUnread = unreadMessages.length > 0;
+        const unreadConversationIds = unreadMessages.map(m => m.conversationId);
+
+        // Get the very latest message timestamp across all user's conversations to track activity
+        // This helps client know if they need to refresh purely for ordering even if read
+        const lastActivity = await db.conversation.findFirst({
+            where: {
+                participantIds: {
+                    has: session.user.id
+                }
+            },
+            orderBy: {
+                lastMessageAt: 'desc'
+            },
+            select: {
+                lastMessageAt: true
+            }
+        });
+
+        return {
+            hasUnread,
+            unreadConversationIds,
+            lastActivity: lastActivity?.lastMessageAt || new Date(0)
+        };
+    } catch (error) {
+        console.error("Error getting unread status:", error);
+        return { hasUnread: false, unreadConversationIds: [], lastActivity: new Date(0) };
     }
 }
 

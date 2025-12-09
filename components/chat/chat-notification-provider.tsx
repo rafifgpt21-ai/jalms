@@ -69,10 +69,41 @@ export function ChatNotificationProvider({
     }, [initialConversations])
 
     useEffect(() => {
-        // Poll every 5 seconds
-        const interval = setInterval(refreshConversations, 5000)
-        return () => clearInterval(interval)
-    }, [refreshConversations])
+        // Lightweight polling for unread status
+        // Poll every 15 seconds (reduced from 5s heavy poll)
+        const pollUnread = async () => {
+            try {
+                // Determine the latest activity time we currently know of
+                const currentLatest = conversations.length > 0
+                    ? new Date(conversations[0].lastMessageAt).getTime()
+                    : 0;
+
+                // Calculate current unread status based on local state (re-calc logic from below)
+                const currentHasUnread = conversations?.some(conv => {
+                    const lastMessage = conv.messages && conv.messages[0];
+                    return lastMessage && userId && !lastMessage.readByIds?.includes(userId);
+                }) || false;
+
+                const status = await import("@/app/actions/chat").then(mod => mod.getUnreadStatus());
+                const serverTime = new Date(status.lastActivity).getTime();
+
+                // If server has newer activity OR unread status mismatch (e.g. read on other device), refresh
+                // Note: serverTime > currentLatest handles new messages
+                // status.hasUnread !== currentHasUnread handles "marked as read" updates (where timestamp might not change if just read receipt, 
+                // though usually read receipt updates happen via message update which changes updated at... wait, Conversation lastMessageAt might not change on Read.
+                // But if we mark as read, we usually don't update lastMessageAt.
+                // So mismatch check is crucial.
+                if (serverTime > currentLatest || status.hasUnread !== currentHasUnread) {
+                    await refreshConversations();
+                }
+            } catch (error) {
+                console.error("Failed to poll unread status", error);
+            }
+        };
+
+        const interval = setInterval(pollUnread, 15000);
+        return () => clearInterval(interval);
+    }, [conversations, refreshConversations, userId]) // Added dependencies needed for comparison logic
 
     const hasUnreadMessages = conversations?.some(conv => {
         const lastMessage = conv.messages && conv.messages[0];
