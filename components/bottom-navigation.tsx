@@ -125,7 +125,7 @@ export function BottomNavigation({
                             <Button
                                 variant="ghost"
                                 className={cn(
-                                    "w-full h-full rounded-none flex items-center justify-center transition-all duration-300",
+                                    "w-full h-full rounded-none flex items-center justify-center transition-all duration-200",
                                     open
                                         ? "bg-red-50 hover:bg-red-100 text-red-600"
                                         : "bg-blue-50 hover:bg-blue-100 text-blue-600"
@@ -136,7 +136,7 @@ export function BottomNavigation({
                                     "transition-transform duration-300 ease-in-out transform",
                                     open ? "rotate-90 scale-110" : "rotate-0 scale-100"
                                 )}>
-                                    {open ? <X className="h-12 w-12" /> : <Menu className="h-12 w-12" />}
+                                    {open ? <X className="h-10 w-10" /> : <Menu className="h-10 w-10" />}
                                 </div>
                             </Button>
                         </SheetTrigger>

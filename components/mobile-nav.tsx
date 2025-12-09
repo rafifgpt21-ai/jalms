@@ -1,17 +1,17 @@
 "use client"
 
 import { usePathname } from "next/navigation"
+import { useMobileHeader } from "@/components/mobile-header-context"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface MobileNavProps {
-    userRoles: any[] // Kept for consistency but seemingly unused in simplified logic? actually I removed userRoles usage in my previous replace, but I kept the prop in function signature. 
-    // Wait, in previous replace I wrote `export function MobileNav({ userRoles }: MobileNavProps)`.
-    // The simplified logic I wrote doesn't use `userRoles`. I can remove it.
-    // But layout.tsx passes it. I should keep it to avoid Type Error in layout. or just make it optional/ignore.
+    userRoles: any[]
 }
 
 
 export function MobileNav({ userRoles }: MobileNavProps) {
     const pathname = usePathname()
+    const { title, subtitle, image, leftAction } = useMobileHeader()
 
     const tabs = [
         {
@@ -48,10 +48,34 @@ export function MobileNav({ userRoles }: MobileNavProps) {
 
     const currentTab = tabs.find(tab => tab.isActive)
 
+    if (title) {
+        return (
+            <div className="md:hidden px-4 py-2 bg-white/80 backdrop-blur-md text-gray-900 flex items-center gap-3 sticky top-0 z-50 border-b border-gray-200 min-h-[56px]">
+                {leftAction}
+                {image && (
+                    <Avatar className="h-8 w-8 border border-gray-200">
+                        <AvatarImage src={image} />
+                        <AvatarFallback className="text-xs">{typeof title === 'string' ? title.slice(0, 2).toUpperCase() : '?'}</AvatarFallback>
+                    </Avatar>
+                )}
+                <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-sm truncate leading-tight">
+                        {title}
+                    </span>
+                    {subtitle && (
+                        <span className="text-xs text-gray-500 truncate leading-tight">
+                            {subtitle}
+                        </span>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
     if (!currentTab) return null
 
     return (
-        <div className="md:hidden px-4 py-3 bg-white/80 backdrop-blur-md text-gray-900 flex items-center justify-start sticky top-0 z-50 border-b border-gray-200">
+        <div className="md:hidden px-4 py-3 bg-white/80 backdrop-blur-md text-gray-900 flex items-center justify-start sticky top-0 z-50 border-b border-gray-200 h-[56px]">
             <span className="font-semibold text-sm truncate">
                 {currentTab.label}
             </span>

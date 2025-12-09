@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getMessages } from "@/app/actions/chat";
 import { db } from "@/lib/db";
 import { AdminChatView } from "@/components/admin/socials/admin-chat-view";
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 interface AdminChatPageProps {
     params: {
@@ -40,6 +41,7 @@ export default async function AdminChatPage({ params }: AdminChatPageProps) {
 
     return (
         <div className="h-full">
+            <MobileHeaderSetter title="Conversation Details" backLink="/admin/socials" />
             <AdminChatView
                 conversationId={conversationId}
                 initialMessages={messages}

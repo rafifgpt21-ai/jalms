@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useChatNotification } from "@/components/chat/chat-notification-provider"
+import { useMobileHeader } from "@/components/mobile-header-context"
 
 type Message = {
     id: string;
@@ -85,6 +86,17 @@ export function ChatWindow({
         };
         markRead();
     }, [conversationId, refreshConversations]);
+
+    // Update Mobile Header
+    const { setHeader, resetHeader } = useMobileHeader()
+    useEffect(() => {
+        setHeader({
+            title: otherParticipant?.nickname || otherParticipant?.name || "Unknown User",
+            subtitle: otherParticipant?.nickname ? otherParticipant?.name : otherParticipant?.email,
+            image: otherParticipant?.image
+        })
+        return () => resetHeader()
+    }, [otherParticipant, setHeader, resetHeader])
 
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();

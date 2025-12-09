@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import { getSemesters } from "@/lib/actions/academic-year.actions"
 import { SemesterList } from "@/components/admin/academic/semester-list"
 import { SemesterModal } from "@/components/admin/academic/semester-modal"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export const dynamic = "force-dynamic"
 
@@ -17,6 +18,7 @@ export default async function SemestersPage() {
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="Semester Manager" />
             <div className="flex items-center gap-2">
                 <SemesterModal />
             </div>

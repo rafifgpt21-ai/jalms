@@ -1,6 +1,7 @@
 import { getClasses, getHomeroomTeachers, getActiveTerms } from "@/lib/actions/class.actions"
 import { ClassList } from "@/components/admin/classes/class-list"
 import { ClassModal } from "@/components/admin/classes/class-modal"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export const dynamic = "force-dynamic"
 
@@ -31,6 +32,7 @@ export default async function ClassesPage() {
 
     return (
         <div>
+            <MobileHeaderSetter title="Classroom Manager" />
             <ClassList classes={classes} teachers={teachers} terms={terms} />
         </div>
     )

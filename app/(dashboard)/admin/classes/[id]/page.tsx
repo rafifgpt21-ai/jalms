@@ -7,6 +7,7 @@ import { AddClassToClassModal } from "@/components/admin/classes/add-class-to-cl
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 interface ClassWorkspacePageProps {
     params: {
@@ -39,7 +40,12 @@ export default async function ClassWorkspacePage({ params }: ClassWorkspacePageP
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
+            <MobileHeaderSetter
+                title={classData.name}
+                subtitle={`${classData.term.academicYear.name} - ${classData.term.type === "ODD" ? "Odd" : "Even"}`}
+                backLink="/admin/classes"
+            />
+            <div className="hidden md:flex items-center gap-4">
                 <Button variant="ghost" size="icon" asChild>
                     <Link href="/admin/classes">
                         <ArrowLeft className="h-4 w-4" />

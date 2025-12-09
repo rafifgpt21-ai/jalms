@@ -7,6 +7,7 @@ import Link from "next/link"
 import { UserToolbar } from "@/components/admin/users/user-toolbar"
 
 import { UserModal } from "@/components/admin/users/user-modal"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function UsersPage({
     searchParams,
@@ -41,7 +42,7 @@ export default async function UsersPage({
     if (isFiltered) {
         const result = await getUsers({
             page: currentPage,
-            limit: 1000, // Show all users for scrollable list
+            limit: 1000,
             search: query,
             role: role as any,
             status: status as any,
@@ -53,6 +54,7 @@ export default async function UsersPage({
 
     return (
         <div className="space-y-6 w-full">
+            <MobileHeaderSetter title="User Management" />
             <div className="flex items-center gap-2 w-full justify-end">
                 <Button asChild variant="outline" className="flex-1 md:flex-none">
                     <Link href="/admin/users/import">Import via Excel</Link>

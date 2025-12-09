@@ -5,6 +5,7 @@ import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { MobileNav } from "@/components/mobile-nav"
 import { BottomNavigation } from "@/components/bottom-navigation"
 import { ChatNotificationProvider } from "@/components/chat/chat-notification-provider"
+import { MobileHeaderProvider } from "@/components/mobile-header-context"
 
 import { getTeacherActiveCourses } from "@/lib/actions/teacher.actions"
 
@@ -59,53 +60,55 @@ export default async function DashboardLayout({
     return (
         <div className="flex h-screen flex-col">
             <ChatNotificationProvider initialConversations={conversations} userId={session.user?.id || ""}>
-                {/* Mobile Navigation */}
-                <div className="md:hidden">
-                    <MobileNav
-                        userRoles={userRoles}
-                    />
-                </div>
-
-                {/* Top Navigation Tabs (Desktop only) */}
-                <div className="hidden md:block!">
-                    <WorkspaceTabs
-                        roles={userRoles}
-                        userName={session.user?.name}
-                        userNickname={session.user?.nickname}
-                        userEmail={session.user?.email}
-                        userImage={session.user?.image}
-                        hasUnreadMessages={hasUnreadMessages}
-                    />
-                </div>
-
-                <div className="flex flex-1 overflow-hidden">
-                    {/* Sidebar (Desktop only) */}
-                    <div className="hidden md:flex!">
-                        <DashboardSidebar
+                <MobileHeaderProvider>
+                    {/* Mobile Navigation */}
+                    <div className="md:hidden">
+                        <MobileNav
                             userRoles={userRoles}
-                            courses={allCourses}
-                            conversations={conversations}
-                            userId={session.user?.id}
                         />
                     </div>
 
-                    {/* Main Content */}
-                    <main className="flex-1 p-4 md:p-8 bg-gray-50 overflow-y-auto pb-20 md:pb-8">
-                        {children}
-                    </main>
-                </div>
+                    {/* Top Navigation Tabs (Desktop only) */}
+                    <div className="hidden md:block!">
+                        <WorkspaceTabs
+                            roles={userRoles}
+                            userName={session.user?.name}
+                            userNickname={session.user?.nickname}
+                            userEmail={session.user?.email}
+                            userImage={session.user?.image}
+                            hasUnreadMessages={hasUnreadMessages}
+                        />
+                    </div>
 
-                <BottomNavigation
-                    roles={userRoles}
-                    hasUnreadMessages={hasUnreadMessages}
-                    courses={allCourses}
-                    userEmail={session.user?.email}
-                    userName={session.user?.name}
-                    userNickname={session.user?.nickname}
-                    userImage={session.user?.image}
-                    conversations={conversations}
-                    userId={session.user?.id}
-                />
+                    <div className="flex flex-1 overflow-hidden">
+                        {/* Sidebar (Desktop only) */}
+                        <div className="hidden md:flex!">
+                            <DashboardSidebar
+                                userRoles={userRoles}
+                                courses={allCourses}
+                                conversations={conversations}
+                                userId={session.user?.id}
+                            />
+                        </div>
+
+                        {/* Main Content */}
+                        <main className="flex-1 p-4 md:p-8 bg-gray-50 overflow-y-auto pb-20 md:pb-8">
+                            {children}
+                        </main>
+                    </div>
+
+                    <BottomNavigation
+                        roles={userRoles}
+                        hasUnreadMessages={hasUnreadMessages}
+                        courses={allCourses}
+                        userEmail={session.user?.email}
+                        userName={session.user?.name}
+                        userNickname={session.user?.nickname}
+                        userImage={session.user?.image}
+                        conversations={conversations}
+                        userId={session.user?.id}
+                    />
+                </MobileHeaderProvider>
             </ChatNotificationProvider>
         </div>
     )

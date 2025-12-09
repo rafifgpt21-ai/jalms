@@ -4,6 +4,7 @@ import { getUsers } from "@/lib/actions/user.actions"
 import { getSubjects } from "@/lib/actions/subject.actions"
 import { CourseList } from "@/components/admin/courses/course-list"
 import { CourseModal } from "@/components/admin/courses/course-modal"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 interface CoursesPageProps {
     searchParams: { [key: string]: string | string[] | undefined }
@@ -20,6 +21,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="Course Manager" />
             <CourseList
                 courses={courses as any}
                 teachers={teachers}

@@ -1,6 +1,7 @@
 import { getTeachersWithCourses } from "@/lib/actions/teacher.actions"
 import { TeacherScheduleList } from "@/components/admin/schedule/teacher-schedule-list"
 import { ScheduleSearch } from "@/components/admin/schedule/schedule-search"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export const dynamic = "force-dynamic"
 
@@ -19,6 +20,7 @@ export default async function SchedulePage({
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="Schedule Manager" />
             <div className="flex items-center gap-2">
                 <ScheduleSearch />
             </div>
