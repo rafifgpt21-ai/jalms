@@ -88,9 +88,17 @@ export function ChatWindow({
                 if (isMounted && Array.isArray(latestMessages)) {
                     setMessages(latestMessages as unknown as Message[]);
 
-                    // If we received new messages while looking at the screen, 
-                    // we might want to mark them as read too.
-                    // For now, simpler to just ensure we see them.
+                    // Check if the latest message is unread by the current user
+                    // We only need to check the last one because usually that's the one triggering notification
+                    // But to be safe, we can check if any are unread
+                    const hasUnread = (latestMessages as unknown as Message[]).some(
+                        msg => msg.sender.id !== currentUserId && !msg.readByIds.includes(currentUserId)
+                    );
+
+                    if (hasUnread) {
+                        // Mark as read immediately
+                        markRead();
+                    }
                 }
             } catch (error) {
                 console.error("Failed to poll messages", error);
