@@ -74,7 +74,7 @@ export default async function DashboardLayout({
                 </div>
 
                 {/* Top Navigation Tabs (Desktop only) */}
-                <div className="hidden md:!block">
+                <div className="hidden md:block!">
                     <WorkspaceTabs
                         roles={userRoles}
                         userName={session.user?.name}
@@ -87,7 +87,7 @@ export default async function DashboardLayout({
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar (Desktop only) */}
-                    <div className="hidden md:!flex">
+                    <div className="hidden md:flex!">
                         <DashboardSidebar
                             userRoles={userRoles}
                             courses={allCourses}

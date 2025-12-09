@@ -57,19 +57,13 @@ export async function GET(
 
         const { searchParams } = req.nextUrl;
         if (searchParams.get("download") === "true") {
-            // Extract original filename: remove timestamp prefix (digits followed by underscore)
-            // Format is: Date.now() + "_" + filename.replaceAll(" ", "_")
-            let downloadFilename = filename;
-            // The filename here is derived from path.join, so it might just be the filename if flat.
-            // If it's a path, we only care about the basename for the header
             const basename = path.basename(filename);
+            let downloadFilename = basename;
+            // Try to remove timestamp prefix if present (format: timestamp_filename)
             const match = basename.match(/^\d+_(.+)$/);
             if (match && match[1]) {
                 downloadFilename = match[1];
-            } else {
-                downloadFilename = basename;
             }
-
             headers["Content-Disposition"] = `attachment; filename="${downloadFilename}"`;
         }
 

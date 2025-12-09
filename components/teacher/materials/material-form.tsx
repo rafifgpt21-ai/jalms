@@ -75,7 +75,7 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
 
             // If a new file is selected, upload it first
             if (selectedFile) {
-                const uploadRes = await startUpload([selectedFile])
+                const uploadRes = await startUpload([selectedFile], "materials")
                 if (!uploadRes || !uploadRes[0]) {
                     throw new Error("Failed to upload file")
                 }

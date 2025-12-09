@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
 
         const formData = await req.formData();
         const file = formData.get("file") as File;
+        const folder = formData.get("folder") as string || "";
 
         if (!file) {
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
         const filename = Date.now() + "_" + file.name.replaceAll(" ", "_");
 
         // Ensure uploads directory exists
-        const uploadDir = path.join(process.cwd(), "uploads");
+        const uploadDir = path.join(process.cwd(), "uploads", folder);
         try {
             await mkdir(uploadDir, { recursive: true });
         } catch (e) {
@@ -33,8 +34,10 @@ export async function POST(req: NextRequest) {
         await writeFile(filepath, buffer);
 
         // Return the URL that will be used to access the file
-        // We'll create a route handler at /api/files/[...path] to serve these
-        const url = `/api/files/${filename}`;
+        // Route handler at /api/files/[...path] will serve these
+        // If folder is provided, path is folder/filename
+        const fileRoutePath = folder ? `${folder}/${filename}` : filename;
+        const url = `/api/files/${fileRoutePath}`;
 
         return NextResponse.json({ url, name: filename });
     } catch (error) {

@@ -222,7 +222,7 @@ export default function TaskWorkspacePage() {
             </Card>
 
             {/* Student List - Desktop Table */}
-            <div className="hidden md:!block">
+            <div className="hidden md:block!">
                 <Card>
                     <CardContent className="p-0">
                         <Table>
@@ -365,7 +365,7 @@ export default function TaskWorkspacePage() {
             </div>
 
             {/* Student List - Mobile Cards */}
-            <div className="md:!hidden space-y-4">
+            <div className="md:hidden! space-y-4">
                 {students.map((student: any) => {
                     const submission = submissions.find((s: any) => s.studentId === student.id)
                     const isSubmitted = !!submission

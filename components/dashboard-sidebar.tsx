@@ -132,7 +132,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                 className={cn(
                                     "flex items-center justify-center p-3 rounded-md transition-all duration-200 relative group",
                                     isActive
-                                        ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
+                                        ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
                                         : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                 )}
                             >
@@ -168,7 +168,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                 className={cn(
                     "flex items-center gap-3 rounded-md transition-all duration-200 relative overflow-hidden px-4 py-3 text-base",
                     isActive
-                        ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
+                        ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
                         : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                 )}
             >
@@ -274,7 +274,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                                     className={cn(
                                                         "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
                                                         pathname.includes("/tasks")
-                                                            ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
+                                                            ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
                                                             : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                                     )}
                                                 >
@@ -319,7 +319,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                             className={cn(
                                                 "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
                                                 pathname.includes("/tasks")
-                                                    ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
+                                                    ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
                                                     : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                             )}
                                         >
@@ -443,7 +443,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                                     className={cn(
                                                         "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
                                                         pathname.includes("/tasks")
-                                                            ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
+                                                            ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
                                                             : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                                     )}
                                                 >
@@ -479,7 +479,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                             className={cn(
                                                 "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
                                                 pathname.includes("/tasks")
-                                                    ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
+                                                    ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
                                                     : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                             )}
                                         >

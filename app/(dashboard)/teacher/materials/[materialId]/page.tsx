@@ -49,11 +49,17 @@ export default async function MaterialViewPage({ params }: { params: Promise<{ m
             </div>
 
             <div className="flex-1 border rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900">
-                <iframe
-                    src={material.fileUrl}
-                    className="w-full h-full"
-                    title={material.title}
-                />
+                {material.fileUrl ? (
+                    <iframe
+                        src={material.fileUrl}
+                        className="w-full h-full"
+                        title={material.title}
+                    />
+                ) : (
+                    <div className="flex items-center justify-center w-full h-full text-muted-foreground">
+                        No file available
+                    </div>
+                )}
             </div>
         </div>
     )

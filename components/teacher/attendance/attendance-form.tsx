@@ -253,7 +253,7 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
                 </div>
 
                 {/* Desktop View: Table */}
-                <div className="hidden md:!block border rounded-lg bg-white shadow-sm overflow-hidden">
+                <div className="hidden md:block! border rounded-lg bg-white shadow-sm overflow-hidden">
                     <Table>
                         <TableHeader>
                             <TableRow>

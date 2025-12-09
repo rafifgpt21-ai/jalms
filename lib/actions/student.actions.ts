@@ -3,6 +3,9 @@
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
 import { revalidatePath } from "next/cache"
+import { UTApi } from "uploadthing/server"
+import { unlink } from "fs/promises"
+import path from "path"
 
 export async function getStudentCourses() {
     try {
@@ -460,8 +463,9 @@ export async function submitAssignment(assignmentId: string, content: string, at
     }
 }
 
-import { UTApi } from "uploadthing/server"
-
+// utapi is instantiated at module level if needed, but since we are refactoring, let's keep it clean
+// We need to instantiate it once. Let's do it at top or keep it here but remove the import.
+// Actually, let's just make sure we only have one simple instantiation.
 const utapi = new UTApi()
 
 export async function deleteSubmissionFile(assignmentId: string, fileUrl: string) {
@@ -485,10 +489,30 @@ export async function deleteSubmissionFile(assignmentId: string, fileUrl: string
             })
         }
 
-        // 2. Delete from UploadThing
-        const fileKey = fileUrl.split("/").pop()
-        if (fileKey) {
-            await utapi.deleteFiles(fileKey)
+        // 2. Delete from UploadThing or Local Storage
+        if (fileUrl.startsWith("/api/files/")) {
+            // Local file deletion
+            try {
+                // Remove /api/files/ prefix to get the relative path
+                const relativePath = fileUrl.replace(/^\/api\/files\//, "")
+
+                // Construct full path: process.cwd() + /uploads + /relativePath
+                // Note: route.ts serves files from process.cwd() + /uploads
+                const fullPath = path.join(process.cwd(), "uploads", relativePath)
+
+                // We should probably check if it exists before unlinking to avoid error, 
+                // but unlink might throw if not found anyway, which we catch below.
+                await unlink(fullPath)
+            } catch (fsError) {
+                console.error("Error deleting local file:", fsError)
+                // Continue execution to update DB even if file delete fails (e.g. file already gone)
+            }
+        } else {
+            // UploadThing deletion
+            const fileKey = fileUrl.split("/").pop()
+            if (fileKey) {
+                await utapi.deleteFiles(fileKey)
+            }
         }
 
         return { success: true }

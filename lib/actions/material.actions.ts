@@ -4,6 +4,8 @@ import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
 import { revalidatePath } from "next/cache"
 import { UTApi } from "uploadthing/server"
+import { unlink } from "fs/promises"
+import path from "path"
 
 const utapi = new UTApi()
 
@@ -21,10 +23,22 @@ export async function deleteMaterialFile(materialId: string, fileUrl: string) {
         }
 
         // Extract file key from URL
-        const fileKey = fileUrl.split("/").pop()
-
-        if (fileKey) {
-            await utapi.deleteFiles(fileKey)
+        // Local File Deletion
+        if (fileUrl.startsWith("/api/files/")) {
+            try {
+                // Remove /api/files/ prefix
+                const relativePath = fileUrl.replace(/^\/api\/files\//, "")
+                const fullPath = path.join(process.cwd(), "uploads", relativePath)
+                await unlink(fullPath)
+            } catch (error) {
+                console.error("Error deleting local file:", error)
+            }
+        } else {
+            // UploadThing Deletion
+            const fileKey = fileUrl.split("/").pop()
+            if (fileKey) {
+                await utapi.deleteFiles(fileKey)
+            }
         }
 
         await prisma.material.update({
@@ -222,9 +236,30 @@ export async function deleteMaterial(materialId: string) {
             return { success: false, error: "Unauthorized or material not found" }
         }
 
+        // Delete associated file if it exists
+        if (material.fileUrl) {
+            if (material.fileUrl.startsWith("/api/files/")) {
+                try {
+                    const relativePath = material.fileUrl.replace(/^\/api\/files\//, "")
+                    const fullPath = path.join(process.cwd(), "uploads", relativePath)
+                    await unlink(fullPath)
+                } catch (error) {
+                    console.error("Error deleting local file:", error)
+                }
+            } else {
+                const fileKey = material.fileUrl.split("/").pop()
+                if (fileKey) {
+                    await utapi.deleteFiles(fileKey)
+                }
+            }
+        }
+
         await prisma.material.update({
             where: { id: materialId },
-            data: { deletedAt: new Date() }
+            data: {
+                deletedAt: new Date(),
+                fileUrl: "" // Clear the file URL since we deleted the file
+            }
         })
 
         revalidatePath("/teacher/materials")

@@ -77,7 +77,7 @@ export function WorkspaceTabs({ roles, userName, userNickname, userEmail, userIm
 
     return (
 
-        <div className="relative border-b bg-white/80 backdrop-blur-md px-6 py-1 flex items-center justify-between z-10 sticky top-0 gap-4">
+        <div className="relative border-b bg-white/80 backdrop-blur-md px-6 py-1 flex items-center justify-between z-10 top-0 gap-4">
             {/* Branding */}
             <div className="flex items-center gap-2 min-w-fit">
                 <div className="flex items-center justify-center">

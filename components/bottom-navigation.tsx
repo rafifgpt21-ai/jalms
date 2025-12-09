@@ -88,7 +88,7 @@ export function BottomNavigation({ roles, hasUnreadMessages: initialHasUnread = 
     if (visibleTabs.length === 0) return null
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[100] pb-safe">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-100 pb-safe">
             <div className="flex items-center justify-around h-16">
                 {visibleTabs.map((tab) => {
                     const Icon = tab.icon

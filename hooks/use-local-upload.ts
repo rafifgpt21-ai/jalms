@@ -2,14 +2,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 interface UseLocalUploadReturn {
-    startUpload: (files: File[]) => Promise<{ url: string; name: string }[] | undefined>;
+    startUpload: (files: File[], folder?: string) => Promise<{ url: string; name: string }[] | undefined>;
     isUploading: boolean;
 }
 
 export function useLocalUpload(): UseLocalUploadReturn {
     const [isUploading, setIsUploading] = useState(false);
 
-    const startUpload = async (files: File[]) => {
+    const startUpload = async (files: File[], folder: string = "") => {
         setIsUploading(true);
         const uploadedFiles: { url: string; name: string }[] = [];
 
@@ -17,6 +17,9 @@ export function useLocalUpload(): UseLocalUploadReturn {
             for (const file of files) {
                 const formData = new FormData();
                 formData.append("file", file);
+                if (folder) {
+                    formData.append("folder", folder);
+                }
 
                 const response = await fetch("/api/upload", {
                     method: "POST",

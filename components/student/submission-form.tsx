@@ -8,7 +8,7 @@ import { submitAssignment, deleteSubmissionFile } from "@/lib/actions/student.ac
 import { Loader2, Paperclip, FileText, Trash, Link as LinkIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
-import { useUploadThing } from "@/lib/uploadthing"
+import { useLocalUpload } from "@/hooks/use-local-upload"
 
 import {
     AlertDialog,
@@ -38,19 +38,7 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
     const [showLateConfirmation, setShowLateConfirmation] = useState(false)
     const { toast } = useToast()
 
-    const { startUpload, isUploading } = useUploadThing("assignmentSubmission", {
-        onClientUploadComplete: (res) => {
-            // This is now handled manually in the submit function, 
-            // but we can leave this empty or use it for logging.
-        },
-        onUploadError: (error: Error) => {
-            toast({
-                title: "Upload failed",
-                description: error.message,
-                variant: "destructive",
-            })
-        },
-    })
+    const { startUpload, isUploading } = useLocalUpload()
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -70,7 +58,7 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
 
             // 1. Upload file if selected
             if (selectedFile) {
-                const res = await startUpload([selectedFile])
+                const res = await startUpload([selectedFile], "tasks")
                 if (res && res[0]) {
                     finalAttachmentUrl = res[0].url
                 } else {
@@ -216,7 +204,7 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
                     {(selectedFile || attachmentUrl) && (
                         <div className="flex items-center justify-between p-3 border rounded-md bg-muted/50">
                             <div className="flex items-center gap-2 overflow-hidden">
-                                <FileText className="h-4 w-4 flex-shrink-0 text-blue-500" />
+                                <FileText className="h-4 w-4 shrink-0 text-blue-500" />
                                 <div className="flex flex-col overflow-hidden">
                                     <span className="text-sm font-medium truncate">
                                         {selectedFile ? selectedFile.name : "Attached File"}

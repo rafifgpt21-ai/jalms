@@ -64,7 +64,7 @@ export function AdminChatView({
     return (
         <div className="flex flex-col h-[calc(100vh-100px)] bg-background border rounded-lg overflow-hidden">
             {/* Header */}
-            <div className="flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+            <div className="flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
                 <Button variant="ghost" size="icon" asChild className="mr-2">
                     <Link href="/admin/socials">
                         <ArrowLeft className="w-4 h-4" />

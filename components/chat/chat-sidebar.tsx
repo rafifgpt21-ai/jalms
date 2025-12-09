@@ -318,7 +318,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                 ? "hover:bg-sidebar-accent border-sidebar-border"
                                                 : "hover:bg-muted/50 border-b border-border/40",
                                             isActive && (isSidebar
-                                                ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400"
+                                                ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400"
                                                 : "bg-muted"
                                             )
                                         )}
