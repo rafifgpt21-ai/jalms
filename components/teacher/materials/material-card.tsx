@@ -114,7 +114,7 @@ export function MaterialCard({ material, isTeacher = false, courseId }: Material
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <a href={material.fileUrl} target="_blank" rel="noopener noreferrer" download>
+                            <a href={`${material.fileUrl}?download=true`} target="_blank" rel="noopener noreferrer">
                                 <Download className="mr-2 h-4 w-4" />
                                 Download
                             </a>
@@ -181,7 +181,7 @@ export function MaterialCard({ material, isTeacher = false, courseId }: Material
                     </Link>
                 </Button>
                 <Button size="sm" asChild>
-                    <a href={material.fileUrl} target="_blank" rel="noopener noreferrer" download>
+                    <a href={`${material.fileUrl}?download=true`} target="_blank" rel="noopener noreferrer">
                         <Download className="mr-2 h-4 w-4" />
                         Download
                     </a>

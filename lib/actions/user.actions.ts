@@ -262,6 +262,7 @@ export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
         return { success: true, error: undefined }
     } catch (error) {
         console.error("Error updating avatar:", error)
+        return { success: false, error: "Failed to update avatar" }
     }
 }
 

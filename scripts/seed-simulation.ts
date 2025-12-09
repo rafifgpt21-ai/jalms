@@ -191,7 +191,7 @@ async function simulateCoursesAndTransactions(term: any, cls: any, students: any
                 // 5% Late/Excused
                 // 5% Skipped
                 const rand = Math.random()
-                let status = AttendanceStatus.PRESENT
+                let status: AttendanceStatus = AttendanceStatus.PRESENT
                 if (rand > 0.95) status = AttendanceStatus.ABSENT
                 else if (rand > 0.90) status = AttendanceStatus.EXCUSED
                 else if (rand > 0.88) status = AttendanceStatus.SKIPPED

@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useUploadThing } from "@/lib/uploadthing"
+// import { useUploadThing } from "@/lib/uploadthing"
+import { useLocalUpload } from "@/hooks/use-local-upload"
 import { createMaterial, updateMaterial, deleteMaterialFile } from "@/lib/actions/material.actions"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -55,7 +56,8 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [existingFileUrl, setExistingFileUrl] = useState(initialData?.fileUrl || "")
 
-    const { startUpload } = useUploadThing("courseAttachment")
+    // const { startUpload } = useUploadThing("courseAttachment")
+    const { startUpload, isUploading } = useLocalUpload()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -77,9 +79,8 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                 if (!uploadRes || !uploadRes[0]) {
                     throw new Error("Failed to upload file")
                 }
-                // Use ufsUrl if available (new version), otherwise fallback to url (deprecated) or appUrl
-                // @ts-ignore - ufsUrl might not be in the type definition yet
-                fileUrl = uploadRes[0].ufsUrl || uploadRes[0].url || uploadRes[0].appUrl
+                // Local upload returns { url, name }
+                fileUrl = uploadRes[0].url
             }
 
             if (!fileUrl) {
@@ -189,7 +190,7 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                                                 type="button"
                                                 variant="destructive"
                                                 size="sm"
-                                                disabled={isSubmitting}
+                                                disabled={isSubmitting || isUploading}
                                             >
                                                 {isSubmitting ? (
                                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -203,18 +204,13 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete the file from our servers.
+                                                    This action cannot be undone. This will permanently delete the file from our servers (simulated).
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                 <AlertDialogAction
                                                     onClick={async (e) => {
-                                                        // Prevent dialog from closing immediately if we want to show loading state
-                                                        // But AlertDialogAction closes automatically. 
-                                                        // For better UX with async, we might want to handle it differently, 
-                                                        // but standard usage is fine for now.
-
                                                         setIsSubmitting(true)
                                                         try {
                                                             if (initialData?.id) {
@@ -252,6 +248,7 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                                         accept=".pdf"
                                         onChange={handleFileChange}
                                         className="cursor-pointer"
+                                        disabled={isUploading || isSubmitting}
                                     />
                                 </div>
                             )}
@@ -274,12 +271,12 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                         type="button"
                         variant="outline"
                         onClick={() => router.back()}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploading}
                     >
                         Cancel
                     </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button type="submit" disabled={isSubmitting || isUploading}>
+                        {(isSubmitting || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {initialData ? "Update Material" : "Create Material"}
                     </Button>
                 </div>

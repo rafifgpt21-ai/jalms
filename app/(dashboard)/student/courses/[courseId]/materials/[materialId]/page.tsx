@@ -46,7 +46,7 @@ export default async function StudentMaterialViewPage({ params }: { params: Prom
                     </div>
                 </div>
                 <Button asChild>
-                    <a href={material.fileUrl} download target="_blank" rel="noopener noreferrer">
+                    <a href={`${material.fileUrl}?download=true`} target="_blank" rel="noopener noreferrer">
                         <Download className="mr-2 h-4 w-4" />
                         Download
                     </a>
