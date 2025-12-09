@@ -133,9 +133,9 @@ export function ChatWindow({
     };
 
     return (
-        <div className="flex flex-col h-full bg-background">
+        <div className="flex flex-col h-[calc(100dvh-9rem)] md:h-full bg-background">
             {/* Header */}
-            <div className="flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
+            <div className="hidden md:flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
                 <Avatar>
                     <AvatarImage src={otherParticipant?.image || undefined} />
                     <AvatarFallback>
