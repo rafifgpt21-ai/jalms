@@ -37,7 +37,7 @@ const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
     code: z.string().min(1, "Code is required"),
     description: z.string().optional(),
-    intelligenceTypes: z.array(z.nativeEnum(IntelligenceType)).default([]),
+    intelligenceTypes: z.array(z.nativeEnum(IntelligenceType)),
 })
 
 interface SubjectFormProps {
@@ -62,7 +62,7 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
     const [isPending, setIsPending] = useState(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as any,
         defaultValues: {
             name: "",
             code: "",
@@ -171,7 +171,7 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
                         <FormField
                             control={form.control}
                             name="intelligenceTypes"
-                            render={() => (
+                            render={({ field }) => (
                                 <FormItem>
                                     <div className="mb-4">
                                         <FormLabel className="text-base">Multiple Intelligences</FormLabel>
@@ -182,37 +182,28 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
                                     <ScrollArea className="h-[200px] border rounded-md p-4">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {Object.entries(INTELLIGENCE_LABELS).map(([key, label]) => (
-                                                <FormField
+                                                <FormItem
                                                     key={key}
-                                                    control={form.control}
-                                                    name="intelligenceTypes"
-                                                    render={({ field }) => {
-                                                        return (
-                                                            <FormItem
-                                                                key={key}
-                                                                className="flex flex-row items-start space-x-3 space-y-0"
-                                                            >
-                                                                <FormControl>
-                                                                    <Checkbox
-                                                                        checked={field.value?.includes(key as IntelligenceType)}
-                                                                        onCheckedChange={(checked) => {
-                                                                            return checked
-                                                                                ? field.onChange([...field.value, key])
-                                                                                : field.onChange(
-                                                                                    field.value?.filter(
-                                                                                        (value) => value !== key
-                                                                                    )
-                                                                                )
-                                                                        }}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormLabel className="font-normal cursor-pointer">
-                                                                    {label}
-                                                                </FormLabel>
-                                                            </FormItem>
-                                                        )
-                                                    }}
-                                                />
+                                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                                >
+                                                    <FormControl>
+                                                        <Checkbox
+                                                            checked={field.value?.includes(key as IntelligenceType)}
+                                                            onCheckedChange={(checked) => {
+                                                                return checked
+                                                                    ? field.onChange([...(field.value || []), key])
+                                                                    : field.onChange(
+                                                                        (field.value || []).filter(
+                                                                            (value) => value !== key
+                                                                        )
+                                                                    )
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal cursor-pointer">
+                                                        {label}
+                                                    </FormLabel>
+                                                </FormItem>
                                             ))}
                                         </div>
                                     </ScrollArea>

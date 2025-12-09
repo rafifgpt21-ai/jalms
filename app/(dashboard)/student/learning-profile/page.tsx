@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 export default async function LearningProfilePage() {
     const user = await getUser()
 
-    if (!user) {
+    if (!user || !user.id) {
         redirect("/auth/signin")
     }
 
