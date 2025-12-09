@@ -64,7 +64,47 @@ export function ChatWindow({
         }
     }, [messages]);
 
-    // ... Polling and Mark Read effects ...
+    // Polling and Mark Read effects
+    useEffect(() => {
+        let isMounted = true;
+
+        const markRead = async () => {
+            try {
+                await markConversationAsRead(conversationId);
+                // Refresh context to update global unread count/indicators
+                refreshConversations();
+            } catch (error) {
+                console.error("Failed to mark conversation as read", error);
+            }
+        };
+
+        // Mark as read immediately on mount
+        markRead();
+
+        // Helper to fetch latest messages
+        const fetchMessages = async () => {
+            try {
+                const latestMessages = await getMessages(conversationId);
+                if (isMounted && Array.isArray(latestMessages)) {
+                    setMessages(latestMessages as unknown as Message[]);
+
+                    // If we received new messages while looking at the screen, 
+                    // we might want to mark them as read too.
+                    // For now, simpler to just ensure we see them.
+                }
+            } catch (error) {
+                console.error("Failed to poll messages", error);
+            }
+        };
+
+        // Poll every 3 seconds for real-time updates
+        const interval = setInterval(fetchMessages, 3000);
+
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
+    }, [conversationId, refreshConversations]);
 
     // Update Mobile Header
     const { setHeader, resetHeader } = useMobileHeader()
