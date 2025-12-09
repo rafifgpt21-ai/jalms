@@ -2,7 +2,7 @@
 
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
-import { AssignmentType } from "@prisma/client"
+import { AssignmentType, IntelligenceType, Submission } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 export async function getTeachersWithCourses(search: string = "") {
@@ -91,6 +91,7 @@ export async function createAssignment(data: {
     maxPoints: number
     isExtraCredit: boolean
     latePenalty: number
+    intelligenceTypes?: IntelligenceType[]
 }) {
     try {
         const assignment = await prisma.assignment.create({
@@ -103,6 +104,7 @@ export async function createAssignment(data: {
                 maxPoints: data.maxPoints,
                 isExtraCredit: data.isExtraCredit,
                 latePenalty: data.latePenalty,
+                intelligenceTypes: data.intelligenceTypes || []
             }
         })
 
@@ -139,6 +141,7 @@ export async function getAssignmentDetails(assignmentId: string) {
             include: {
                 course: {
                     include: {
+                        subject: true,
                         students: {
                             orderBy: { name: "asc" }
                         }
@@ -183,9 +186,7 @@ export async function updateSubmissionScore(
                 // If un-grading (score is null)
                 if (score === null) {
                     // Check if submission has any content
-                    // Note: Using 'as any' to bypass potential type issues if types aren't regenerated yet, 
-                    // but schema confirms these fields exist.
-                    const s = sub as any
+                    const s = sub as Submission
                     const hasContent = s.submissionUrl || s.attachmentUrl || s.link || s.feedback
 
                     if (!hasContent) {
@@ -266,6 +267,7 @@ export async function updateAssignment(data: {
     maxPoints: number
     isExtraCredit: boolean
     latePenalty: number
+    intelligenceTypes?: IntelligenceType[]
 }) {
     try {
         const assignment = await prisma.assignment.update({
@@ -278,6 +280,7 @@ export async function updateAssignment(data: {
                 maxPoints: data.maxPoints,
                 isExtraCredit: data.isExtraCredit,
                 latePenalty: data.latePenalty,
+                intelligenceTypes: data.intelligenceTypes || [],
             },
         })
 
@@ -313,6 +316,7 @@ export async function deleteAssignment(assignmentId: string) {
         return { error: "Failed to delete assignment" }
     }
 }
+
 
 export async function getCourseGradebook(courseId: string) {
     try {
@@ -562,8 +566,6 @@ export async function getTeacherDashboardStats() {
                         lt: tomorrow
                     },
                     deletedAt: { isSet: false },
-                    // topic: { not: null } // We want the record even if topic is null, to check presence?
-                    // Actually, we just need the topic.
                 },
                 select: { topic: true }
             })

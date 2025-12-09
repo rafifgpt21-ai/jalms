@@ -47,28 +47,32 @@ import { Button } from "@/components/ui/button"
 import { createCourse, updateCourse } from "@/lib/actions/course.actions"
 import { toast } from "sonner"
 import { Plus, Check, ChevronsUpDown } from "lucide-react"
+import { Subject } from "@prisma/client"
 
 const formSchema = z.object({
     name: z.string().min(1, "Course name is required"),
     reportName: z.string().optional(),
     teacherId: z.string().min(1, "Teacher is required"),
     termId: z.string().min(1, "Semester is required"),
+    subjectId: z.string().optional(),
 })
 
 interface CourseModalProps {
     teachers: { id: string; name: string }[]
     terms: { id: string; academicYear: { name: string }; type: string; isActive: boolean }[]
+    subjects: Subject[]
     initialData?: any
     open?: boolean
     onOpenChange?: (open: boolean) => void
     showTrigger?: boolean
 }
 
-export function CourseModal({ teachers, terms, initialData, open: controlledOpen, onOpenChange, showTrigger = true }: CourseModalProps) {
+export function CourseModal({ teachers, terms, subjects, initialData, open: controlledOpen, onOpenChange, showTrigger = true }: CourseModalProps) {
     const [internalOpen, setInternalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [openCombobox, setOpenCombobox] = useState(false)
     const [teacherOpen, setTeacherOpen] = useState(false)
+    const [subjectOpen, setSubjectOpen] = useState(false)
 
     const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen
     const setOpen = onOpenChange || setInternalOpen
@@ -82,6 +86,7 @@ export function CourseModal({ teachers, terms, initialData, open: controlledOpen
             reportName: "",
             teacherId: "",
             termId: "",
+            subjectId: "",
         },
     })
 
@@ -92,6 +97,7 @@ export function CourseModal({ teachers, terms, initialData, open: controlledOpen
                 reportName: initialData.reportName || "",
                 teacherId: initialData.teacherId,
                 termId: initialData.termId,
+                subjectId: initialData.subjectId || "",
             })
         } else {
             form.reset({
@@ -99,6 +105,7 @@ export function CourseModal({ teachers, terms, initialData, open: controlledOpen
                 reportName: "",
                 teacherId: "",
                 termId: activeTerm?.id || "",
+                subjectId: "",
             })
         }
     }, [initialData, terms, activeTerm, form])
@@ -172,6 +179,70 @@ export function CourseModal({ teachers, terms, initialData, open: controlledOpen
                                 </FormItem>
                             )}
                         />
+
+                        {/* Subject Selection */}
+                        <FormField
+                            control={form.control}
+                            name="subjectId"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Subject (Optional)</FormLabel>
+                                    <Popover open={subjectOpen} onOpenChange={setSubjectOpen}>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    className={cn(
+                                                        "w-full justify-between",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {field.value
+                                                        ? subjects.find(
+                                                            (s) => s.id === field.value
+                                                        )?.name
+                                                        : "Select subject"}
+                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[400px] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Search subject..." />
+                                                <CommandList>
+                                                    <CommandEmpty>No subject found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {subjects.map((subject) => (
+                                                            <CommandItem
+                                                                value={subject.name}
+                                                                key={subject.id}
+                                                                onSelect={() => {
+                                                                    form.setValue("subjectId", subject.id)
+                                                                    setSubjectOpen(false)
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        subject.id === field.value
+                                                                            ? "opacity-100"
+                                                                            : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {subject.name} ({subject.code})
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
                         <FormField
                             control={form.control}
                             name="teacherId"

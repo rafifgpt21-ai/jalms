@@ -1,6 +1,6 @@
 import { TaskForm } from "@/components/teacher/task-form"
 import { getAssignmentDetails } from "@/lib/actions/teacher.actions"
-import { redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 
 interface EditTaskPageProps {
     params: Promise<{
@@ -17,13 +17,18 @@ export default async function EditTaskPage(props: EditTaskPageProps) {
         taskId
     } = params;
 
-    const { assignment, error } = await getAssignmentDetails(taskId)
+    // getAssignmentDetails includes course and subject
+    const { assignment } = await getAssignmentDetails(taskId)
 
-    if (error || !assignment) {
-        redirect(`/teacher/courses/${courseId}`)
+    if (!assignment) {
+        notFound()
     }
 
     return (
-        <TaskForm courseId={courseId} assignment={assignment} />
+        <TaskForm
+            courseId={courseId}
+            initialData={assignment as any}
+            course={assignment.course as any}
+        />
     )
 }

@@ -22,7 +22,9 @@ import {
     GraduationCap,
     Clock,
     MessageSquare,
-    Plus
+    Plus,
+    PieChart,
+    Library
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -196,6 +198,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                     <NavItem href="/admin" icon={LayoutDashboard} label="Dashboard" active={pathname === "/admin"} />
                     <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname.startsWith("/admin/users")} />
                     <NavItem href="/admin/classes" icon={School} label="Classrooms" active={pathname.startsWith("/admin/classes")} />
+                    <NavItem href="/admin/subjects" icon={Library} label="Subjects" active={pathname.startsWith("/admin/subjects")} />
                     <NavItem href="/admin/courses" icon={BookOpen} label="Courses" active={pathname.startsWith("/admin/courses")} />
                     <NavItem href="/admin/semesters" icon={CalendarRange} label="Semesters" active={pathname.startsWith("/admin/semesters")} />
                     <NavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname.startsWith("/admin/schedule")} />
@@ -378,6 +381,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                 <div className="space-y-4">
                     <div className="space-y-1">
                         <NavItem href="/student" icon={LayoutDashboard} label="Dashboard" active={pathname === "/student"} />
+                        <NavItem href="/student/learning-profile" icon={PieChart} label="Learning Profile" active={pathname === "/student/learning-profile"} />
                         <NavItem href="/student/attendance" icon={Clock} label="Attendance" active={pathname === "/student/attendance"} />
                         <NavItem href="/student/grades" icon={GraduationCap} label="Grades" active={pathname === "/student/grades"} />
                     </div>

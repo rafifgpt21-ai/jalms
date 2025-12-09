@@ -113,11 +113,26 @@ model Class {
   deletedAt DateTime?
 }
 
+
+enum IntelligenceType {
+  LINGUISTIC
+  LOGICAL_MATHEMATICAL
+  SPATIAL
+  BODILY_KINESTHETIC
+  MUSICAL
+  INTERPERSONAL
+  INTRAPERSONAL
+  NATURALIST
+  EXISTENTIAL
+}
+
 model Subject {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String // "Biology"
   code        String // "BIO"
   description String?
+  
+  intelligenceTypes IntelligenceType[]
 
   courses Course[]
 
@@ -229,6 +244,8 @@ model Assignment {
   maxPoints     Int            @default(100)
   isExtraCredit Boolean        @default(false)
   latePenalty   Int            @default(0) // Percentage 0-100
+  
+  intelligenceTypes IntelligenceType[]
 
   courseId String @db.ObjectId
   course   Course @relation(fields: [courseId], references: [id])

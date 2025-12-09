@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 
-import { Course, User, Term, AcademicYear } from "@prisma/client"
+import { Course, User, Term, AcademicYear, Subject } from "@prisma/client"
 import {
     Table,
     TableBody,
@@ -43,13 +43,15 @@ interface CourseListProps {
     courses: (Course & {
         teacher: User;
         term: Term & { academicYear: AcademicYear };
+        subject: Subject | null;
         _count: { students: number };
     })[]
     teachers: { id: string; name: string }[]
     terms: { id: string; academicYear: { name: string }; type: string; isActive: boolean }[]
+    subjects: Subject[]
 }
 
-export function CourseList({ courses, teachers, terms }: CourseListProps) {
+export function CourseList({ courses, teachers, terms, subjects }: CourseListProps) {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingCourse, setEditingCourse] = useState<any>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -104,7 +106,7 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
         <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4 w-full">
                 <div className="flex-shrink-0">
-                    <CourseModal teachers={teachers} terms={terms} />
+                    <CourseModal teachers={teachers} terms={terms} subjects={subjects} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
@@ -137,6 +139,7 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Course Name</TableHead>
+                            <TableHead>Subject</TableHead>
                             <TableHead className="max-md:hidden">Teacher</TableHead>
                             <TableHead className="max-lg:hidden">Semester</TableHead>
                             <TableHead className="max-sm:hidden">Students</TableHead>
@@ -146,7 +149,7 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
                     <TableBody>
                         {filteredCourses.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                                     No courses found.
                                 </TableCell>
                             </TableRow>
@@ -155,6 +158,9 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
                                 <TableRow key={course.id}>
                                     <TableCell className="font-medium">
                                         {course.name}
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground text-sm">
+                                        {course.subject?.name || "-"}
                                     </TableCell>
                                     <TableCell className="max-md:hidden">{course.teacher.name}</TableCell>
                                     <TableCell className="max-lg:hidden">
@@ -202,6 +208,7 @@ export function CourseList({ courses, teachers, terms }: CourseListProps) {
             <CourseModal
                 teachers={teachers}
                 terms={terms}
+                subjects={subjects}
                 initialData={editingCourse}
                 open={isModalOpen}
                 onOpenChange={setIsModalOpen}

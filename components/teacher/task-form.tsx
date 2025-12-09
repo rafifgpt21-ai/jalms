@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
 import { Loader2, Trash2, ArrowLeft } from "lucide-react"
-import { AssignmentType } from "@prisma/client"
+import { AssignmentType, IntelligenceType } from "@prisma/client"
 import { format } from "date-fns"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -24,6 +24,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
     Select,
     SelectContent,
@@ -45,6 +48,18 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { createAssignment, updateAssignment, deleteAssignment } from "@/lib/actions/teacher.actions"
 
+const INTELLIGENCE_LABELS: Record<IntelligenceType, string> = {
+    LINGUISTIC: "Linguistic-Verbal",
+    LOGICAL_MATHEMATICAL: "Logical-Mathematical",
+    SPATIAL: "Visual-Spatial",
+    BODILY_KINESTHETIC: "Bodily-Kinesthetic",
+    MUSICAL: "Musical-Rhythmic",
+    INTERPERSONAL: "Interpersonal",
+    INTRAPERSONAL: "Intrapersonal",
+    NATURALIST: "Naturalist",
+    EXISTENTIAL: "Existential",
+}
+
 const formSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
@@ -53,44 +68,77 @@ const formSchema = z.object({
     maxPoints: z.coerce.number().min(0),
     isExtraCredit: z.boolean().default(false),
     latePenalty: z.coerce.number().min(0).max(100).default(0),
+    intelligenceTypes: z.array(z.nativeEnum(IntelligenceType)).optional(),
 })
 
 interface TaskFormProps {
     courseId?: string
-    assignment?: any // If provided, we are in EDIT mode
+    initialData?: any // Assignment
+    course?: any // Course with Subject
+    assignment?: any // Legacy alias for initialData
 }
 
-export function TaskForm({ courseId, assignment }: TaskFormProps) {
+export function TaskForm({ courseId, initialData, assignment, course }: TaskFormProps) {
+    // Handle alias
+    const data = initialData || assignment
+    const effectiveCourseId = courseId || data?.courseId
+
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
-    const isEditMode = !!assignment
+    const isEditMode = !!data
 
-    // If in edit mode, use the assignment's courseId for the "back" link
-    const effectiveCourseId = courseId || assignment?.courseId
+    // State for customizing intelligence types
+    const [customizeIntelligence, setCustomizeIntelligence] = useState(false)
+
+    // Determine default tags from course subject
+    const subjectTags: IntelligenceType[] = course?.subject?.intelligenceTypes || []
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema) as any,
         defaultValues: {
-            title: assignment?.title || "",
-            description: assignment?.description || "",
-            type: assignment?.type || "SUBMISSION",
-            maxPoints: assignment?.maxPoints || 100,
-            isExtraCredit: assignment?.isExtraCredit || false,
-            latePenalty: assignment?.latePenalty || 0,
-            dueDate: assignment?.dueDate ? format(new Date(assignment.dueDate), "yyyy-MM-dd'T'HH:mm") : "",
+            title: data?.title || "",
+            description: data?.description || "",
+            type: data?.type || "SUBMISSION",
+            maxPoints: data?.maxPoints || 100,
+            isExtraCredit: data?.isExtraCredit || false,
+            latePenalty: data?.latePenalty || 0,
+            dueDate: data?.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd'T'HH:mm") : "",
+            intelligenceTypes: data?.intelligenceTypes || [], // Initialize with saved tags
         },
     })
+
+    // If editing and we have tags that differ from subject tags (or if we have tags and no subject), we might want to default "customize" to true
+    // Logic: If assignment has tags, assume customized. If empty, rely on logic -> BUT empty array means "no override" usually?
+    // Wait, requirement: "Assignment tags are optional overrides. If has no tags, inherits."
+    // So if data.intelligenceTypes is valid and length > 0, we turn on customize.
+    // If length is 0, we can assume it's inheriting (unless user explicitly cleared them, but for now 0 means inherit).
+
+    useEffect(() => {
+        if (data?.intelligenceTypes && data.intelligenceTypes.length > 0) {
+            setCustomizeIntelligence(true)
+        }
+    }, [data])
 
     const watchType = form.watch("type")
 
     function onSubmit(values: z.infer<typeof formSchema>) {
+        // If customization is OFF, send empty array (or undefined handled by backend?)
+        // Backend logic: "stores tags". Profile calculation logic will check Assignment tags first.
+        // If customization is turned OFF by user, we should clear the tags in the submission.
+        // So if !customizeIntelligence, we set intelligenceTypes = []. 
+        // Wait, if I send [], does backend treat it as "no override" or "no intelligences"?
+        // Requirement: "If an assignment has no tags, it inherits from its subject."
+        // So saving [] means "Inherit". That works.
+
+        const intelligenceTypesPayload = customizeIntelligence ? values.intelligenceTypes : []
+
         startTransition(async () => {
             try {
                 let result;
 
                 if (isEditMode) {
                     result = await updateAssignment({
-                        assignmentId: assignment.id,
+                        assignmentId: data.id,
                         title: values.title,
                         description: values.description,
                         type: values.type as AssignmentType,
@@ -98,6 +146,7 @@ export function TaskForm({ courseId, assignment }: TaskFormProps) {
                         maxPoints: values.maxPoints,
                         isExtraCredit: values.isExtraCredit,
                         latePenalty: values.latePenalty,
+                        intelligenceTypes: intelligenceTypesPayload,
                     })
                 } else {
                     if (!effectiveCourseId) {
@@ -113,6 +162,7 @@ export function TaskForm({ courseId, assignment }: TaskFormProps) {
                         maxPoints: values.maxPoints,
                         isExtraCredit: values.isExtraCredit,
                         latePenalty: values.latePenalty,
+                        intelligenceTypes: intelligenceTypesPayload,
                     })
                 }
 
@@ -135,7 +185,7 @@ export function TaskForm({ courseId, assignment }: TaskFormProps) {
     const handleDelete = async () => {
         startTransition(async () => {
             try {
-                const result = await deleteAssignment(assignment.id)
+                const result = await deleteAssignment(data.id)
                 if (result.error) {
                     toast.error(result.error)
                 } else {
@@ -151,10 +201,7 @@ export function TaskForm({ courseId, assignment }: TaskFormProps) {
 
     return (
         <div className="max-w-4xl mx-auto">
-
-
             <Card>
-
                 <CardContent>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -285,6 +332,92 @@ export function TaskForm({ courseId, assignment }: TaskFormProps) {
                                 )}
                             />
 
+                            {/* Intelligence Profiling Section */}
+                            <div className="space-y-4 rounded-md border p-4">
+                                <div className="flex flex-row items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <FormLabel className="text-base">Intelligence Profile</FormLabel>
+                                        <FormDescription>
+                                            Tag this assignment with Multiple Intelligences for student learning profiles.
+                                        </FormDescription>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Switch
+                                            checked={customizeIntelligence}
+                                            onCheckedChange={setCustomizeIntelligence}
+                                        />
+                                        <span className="text-sm font-medium">Customize</span>
+                                    </div>
+                                </div>
+
+                                {!customizeIntelligence ? (
+                                    <div className="mt-2 text-sm text-muted-foreground">
+                                        Using Subject Defaults:{" "}
+                                        {subjectTags.length > 0 ? (
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {subjectTags.map(tag => (
+                                                    <Badge key={tag} variant="secondary">
+                                                        {INTELLIGENCE_LABELS[tag] || tag}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="italic">No subject tags set.</span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="mt-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="intelligenceTypes"
+                                            render={() => (
+                                                <FormItem>
+                                                    <ScrollArea className="h-[200px] border rounded-md p-4">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            {Object.entries(INTELLIGENCE_LABELS).map(([key, label]) => (
+                                                                <FormField
+                                                                    key={key}
+                                                                    control={form.control}
+                                                                    name="intelligenceTypes"
+                                                                    render={({ field }) => {
+                                                                        return (
+                                                                            <FormItem
+                                                                                key={key}
+                                                                                className="flex flex-row items-start space-x-3 space-y-0"
+                                                                            >
+                                                                                <FormControl>
+                                                                                    <Checkbox
+                                                                                        checked={field.value?.includes(key as IntelligenceType)}
+                                                                                        onCheckedChange={(checked) => {
+                                                                                            const current = field.value || []
+                                                                                            return checked
+                                                                                                ? field.onChange([...current, key])
+                                                                                                : field.onChange(
+                                                                                                    current.filter(
+                                                                                                        (value) => value !== key
+                                                                                                    )
+                                                                                                )
+                                                                                        }}
+                                                                                    />
+                                                                                </FormControl>
+                                                                                <FormLabel className="font-normal cursor-pointer">
+                                                                                    {label}
+                                                                                </FormLabel>
+                                                                            </FormItem>
+                                                                        )
+                                                                    }}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </ScrollArea>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex items-center justify-between pt-4 border-t">
                                 {isEditMode ? (
                                     <AlertDialog>
@@ -315,7 +448,7 @@ export function TaskForm({ courseId, assignment }: TaskFormProps) {
 
                                 <div className="flex gap-2">
                                     <Button type="button" variant="outline" asChild>
-                                        <Link href={isEditMode ? `/teacher/courses/${effectiveCourseId}/tasks/${assignment.id}` : `/teacher/courses/${effectiveCourseId}`}>
+                                        <Link href={isEditMode ? `/teacher/courses/${effectiveCourseId}/tasks/${data.id}` : `/teacher/courses/${effectiveCourseId}`}>
                                             Cancel
                                         </Link>
                                     </Button>

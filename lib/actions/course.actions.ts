@@ -27,6 +27,7 @@ export async function getCourses(options: { showAll?: boolean } = {}) {
                 term: {
                     include: { academicYear: true }
                 },
+                subject: true,
                 _count: {
                     select: { students: true }
                 }
@@ -52,6 +53,7 @@ export async function getCourse(id: string) {
                 term: {
                     include: { academicYear: true }
                 },
+                subject: true,
                 students: true
             }
         })
@@ -62,14 +64,15 @@ export async function getCourse(id: string) {
     }
 }
 
-export async function createCourse(data: { name: string; reportName?: string; teacherId: string; termId: string }) {
+export async function createCourse(data: { name: string; reportName?: string; teacherId: string; termId: string; subjectId?: string }) {
     try {
         await prisma.course.create({
             data: {
                 name: data.name,
                 reportName: data.reportName,
                 teacherId: data.teacherId,
-                termId: data.termId
+                termId: data.termId,
+                subjectId: data.subjectId || null
             }
         })
 
@@ -81,7 +84,7 @@ export async function createCourse(data: { name: string; reportName?: string; te
     }
 }
 
-export async function updateCourse(id: string, data: { name: string; reportName?: string; teacherId: string; termId: string }) {
+export async function updateCourse(id: string, data: { name: string; reportName?: string; teacherId: string; termId: string; subjectId?: string }) {
     try {
         await prisma.course.update({
             where: { id },
@@ -89,7 +92,8 @@ export async function updateCourse(id: string, data: { name: string; reportName?
                 name: data.name,
                 reportName: data.reportName,
                 teacherId: data.teacherId,
-                termId: data.termId
+                termId: data.termId,
+                subjectId: data.subjectId || null
             }
         })
 
