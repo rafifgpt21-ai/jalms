@@ -63,13 +63,6 @@ export default async function DashboardLayout({
                 <div className="md:hidden">
                     <MobileNav
                         userRoles={userRoles}
-                        courses={allCourses}
-                        userEmail={session.user?.email}
-                        userName={session.user?.name}
-                        userNickname={session.user?.nickname}
-                        userImage={session.user?.image}
-                        conversations={conversations}
-                        userId={session.user?.id}
                     />
                 </div>
 
@@ -102,7 +95,17 @@ export default async function DashboardLayout({
                     </main>
                 </div>
 
-                <BottomNavigation roles={userRoles} hasUnreadMessages={hasUnreadMessages} />
+                <BottomNavigation
+                    roles={userRoles}
+                    hasUnreadMessages={hasUnreadMessages}
+                    courses={allCourses}
+                    userEmail={session.user?.email}
+                    userName={session.user?.name}
+                    userNickname={session.user?.nickname}
+                    userImage={session.user?.image}
+                    conversations={conversations}
+                    userId={session.user?.id}
+                />
             </ChatNotificationProvider>
         </div>
     )

@@ -34,9 +34,10 @@ interface UserSettingsProps {
     image?: string | null
     side?: "top" | "bottom" | "left" | "right"
     align?: "start" | "center" | "end"
+    triggerVariant?: "icon" | "card"
 }
 
-export function UserSettings({ email, name, nickname, image, side = "bottom", align = "end" }: UserSettingsProps) {
+export function UserSettings({ email, name, nickname, image, side = "bottom", align = "end", triggerVariant = "icon" }: UserSettingsProps) {
     const [showLogoutDialog, setShowLogoutDialog] = useState(false)
     const [showPasswordDialog, setShowPasswordDialog] = useState(false)
     const [showAvatarDialog, setShowAvatarDialog] = useState(false)
@@ -46,14 +47,33 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 p-0" suppressHydrationWarning>
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={image || undefined} alt={name || "User"} />
-                            <AvatarFallback>
-                                <Settings className="h-4 w-4 text-gray-500" />
-                            </AvatarFallback>
-                        </Avatar>
-                    </Button>
+                    {triggerVariant === "card" ? (
+                        <button className="flex items-center gap-3 w-full p-2 hover:bg-gray-100 rounded-lg transition-colors text-left outline-none">
+                            <Avatar className="h-10 w-10 border border-gray-200">
+                                <AvatarImage src={image || undefined} alt={name || "User"} />
+                                <AvatarFallback className="bg-orange-100 text-orange-600 font-semibold">
+                                    {name?.[0] || "U"}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <span className="text-sm font-semibold text-gray-900 truncate">
+                                    {nickname || name || "User"}
+                                </span>
+                                <span className="text-xs text-gray-500 truncate">
+                                    {email}
+                                </span>
+                            </div>
+                        </button>
+                    ) : (
+                        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 p-0" suppressHydrationWarning>
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={image || undefined} alt={name || "User"} />
+                                <AvatarFallback>
+                                    <Settings className="h-4 w-4 text-gray-500" />
+                                </AvatarFallback>
+                            </Avatar>
+                        </Button>
+                    )}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side={side} align={align} className="w-56">
                     <DropdownMenuLabel>

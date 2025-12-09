@@ -1,142 +1,60 @@
 "use client"
 
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Menu, ChevronDown } from "lucide-react"
-import { SidebarNav } from "@/components/dashboard-sidebar"
-import { ChatSidebar } from "@/components/chat/chat-sidebar"
-import { Role } from "@prisma/client"
-import { useState, useEffect } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
-
-
-import { UserSettings } from "@/components/user-settings"
-
-import { useChatNotification } from "@/components/chat/chat-notification-provider"
+import { usePathname } from "next/navigation"
 
 interface MobileNavProps {
-    userRoles: Role[]
-    courses?: any[]
-    userEmail?: string | null
-    userName?: string | null
-    userNickname?: string | null
-    userImage?: string | null
-    conversations?: any[]
-    userId?: string
+    userRoles: any[] // Kept for consistency but seemingly unused in simplified logic? actually I removed userRoles usage in my previous replace, but I kept the prop in function signature. 
+    // Wait, in previous replace I wrote `export function MobileNav({ userRoles }: MobileNavProps)`.
+    // The simplified logic I wrote doesn't use `userRoles`. I can remove it.
+    // But layout.tsx passes it. I should keep it to avoid Type Error in layout. or just make it optional/ignore.
 }
 
-export function MobileNav({ userRoles, courses, userEmail, userName, userNickname, userImage, conversations: initialConversations = [], userId }: MobileNavProps) {
-    const [open, setOpen] = useState(false)
-    const pathname = usePathname()
-    const router = useRouter()
-    const isSocials = pathname.startsWith("/socials")
 
-    // Use context
-    const { conversations, hasUnreadMessages } = useChatNotification()
-    const activeConversations = conversations.length > 0 ? conversations : initialConversations
+export function MobileNav({ userRoles }: MobileNavProps) {
+    const pathname = usePathname()
 
     const tabs = [
         {
             label: "Admin Workspace",
             href: "/admin",
-            role: Role.ADMIN,
             isActive: pathname.startsWith("/admin"),
         },
         {
             label: "Teaching Workspace",
             href: "/teacher",
-            role: Role.SUBJECT_TEACHER,
             isActive: pathname.startsWith("/teacher"),
         },
         {
             label: "Homeroom Workspace",
             href: "/homeroom",
-            role: Role.HOMEROOM_TEACHER,
             isActive: pathname.startsWith("/homeroom"),
         },
         {
             label: "Student Workspace",
             href: "/student",
-            role: Role.STUDENT,
             isActive: pathname.startsWith("/student"),
         },
         {
             label: "Family Workspace",
             href: "/parent",
-            role: Role.PARENT,
             isActive: pathname.startsWith("/parent"),
         },
         {
             label: "Socials",
             href: "/socials",
-            role: Role.STUDENT, // Visible to all, but using a role for filter logic if needed
             isActive: pathname.startsWith("/socials"),
         },
     ]
 
+    const currentTab = tabs.find(tab => tab.isActive)
 
-
-    const visibleTabs = tabs.filter((tab) => {
-        if (tab.href === "/socials") return true; // Always show Socials
-        return userRoles.includes(tab.role);
-    })
-    const currentTab = visibleTabs.find(tab => tab.isActive) || visibleTabs[0]
+    if (!currentTab) return null
 
     return (
-        <div className="md:hidden px-4 py-2 bg-white/80 backdrop-blur-md text-gray-900 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-                <Sheet open={open} onOpenChange={setOpen} modal={false}>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-gray-900 hover:bg-gray-100 -ml-2" suppressHydrationWarning>
-                            <Menu className="h-6 w-6" />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="w-72 bg-sidebar text-sidebar-foreground border-r-sidebar-border p-0">
-                        <div className="flex flex-col h-full">
-                            <div className="p-6 border-b border-sidebar-border">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <img src="/arsync.svg" alt="Logo" className="h-12 w-auto" />
-                                    <SheetTitle className="sr-only">ARSYNC</SheetTitle>
-                                </div>
-                                <SheetDescription className="text-xs text-muted-foreground">School Management System</SheetDescription>
-                            </div>
-
-
-
-                            <div className="flex-1 overflow-y-auto">
-                                {isSocials && userId ? (
-                                    <ChatSidebar
-                                        initialConversations={activeConversations}
-                                        userId={userId}
-                                        variant="sidebar"
-                                    />
-                                ) : (
-                                    <div className="px-4 py-2">
-                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block px-2">
-                                            Menu
-                                        </label>
-                                        <SidebarNav userRoles={userRoles} onNavigate={() => setOpen(false)} courses={courses} isMobile={true} hasUnreadMessages={hasUnreadMessages} />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </SheetContent>
-                </Sheet>
-
-                {/* Current Workspace Title (Visible in Top Bar) */}
-                <span className="font-semibold text-sm truncate max-w-[200px]">
-                    {currentTab?.label}
-                </span>
-            </div>
-
-            <UserSettings email={userEmail} name={userName} nickname={userNickname} image={userImage} />
+        <div className="md:hidden px-4 py-3 bg-white/80 backdrop-blur-md text-gray-900 flex items-center justify-start sticky top-0 z-50 border-b border-gray-200">
+            <span className="font-semibold text-sm truncate">
+                {currentTab.label}
+            </span>
         </div>
     )
 }

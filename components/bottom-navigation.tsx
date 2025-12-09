@@ -12,19 +12,45 @@ import {
     Home,
     GraduationCap,
     Users,
-    MessageSquare
+    MessageSquare,
+    Menu,
+    X
 } from "lucide-react"
 
 import { useChatNotification } from "@/components/chat/chat-notification-provider"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { SidebarNav } from "@/components/dashboard-sidebar"
+import { ChatSidebar } from "@/components/chat/chat-sidebar"
+import { UserSettings } from "@/components/user-settings"
 
 interface BottomNavigationProps {
     roles: Role[]
     hasUnreadMessages?: boolean
+    courses?: any[]
+    userEmail?: string | null
+    userName?: string | null
+    userNickname?: string | null
+    userImage?: string | null
+    conversations?: any[]
+    userId?: string
 }
 
-export function BottomNavigation({ roles, hasUnreadMessages: initialHasUnread = false }: BottomNavigationProps) {
+export function BottomNavigation({
+    roles,
+    hasUnreadMessages: initialHasUnread = false,
+    courses,
+    userEmail,
+    userName,
+    userNickname,
+    userImage,
+    conversations: initialConversations = [],
+    userId
+}: BottomNavigationProps) {
     const pathname = usePathname()
     const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
+    const [open, setOpen] = useState(false)
+    const isSocials = pathname.startsWith("/socials")
 
     // Reset navigating state when pathname changes
     if (navigatingTo === pathname) {
@@ -32,8 +58,10 @@ export function BottomNavigation({ roles, hasUnreadMessages: initialHasUnread = 
     }
 
     // Use context
-    const { hasUnreadMessages: contextHasUnread } = useChatNotification()
+    const { conversations, hasUnreadMessages: contextHasUnread } = useChatNotification()
     const hasUnreadMessages = contextHasUnread || initialHasUnread
+    const activeConversations = conversations.length > 0 ? conversations : initialConversations
+
 
     const tabs = [
         {
@@ -89,37 +117,105 @@ export function BottomNavigation({ roles, hasUnreadMessages: initialHasUnread = 
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-100 pb-safe">
-            <div className="flex items-center justify-around h-16">
-                {visibleTabs.map((tab) => {
-                    const Icon = tab.icon
-                    const hasBadge = (tab as any).hasBadge
+            <div className="flex items-center h-16">
+                {/* Fixed Menu Button (Left) */}
+                <div className="flex-none w-16 border-r border-gray-100 flex items-center justify-center h-full p-0">
+                    <Sheet open={open} onOpenChange={setOpen} modal={false}>
+                        <SheetTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                className={cn(
+                                    "w-full h-full rounded-none flex items-center justify-center transition-all duration-300",
+                                    open
+                                        ? "bg-red-50 hover:bg-red-100 text-red-600"
+                                        : "bg-blue-50 hover:bg-blue-100 text-blue-600"
+                                )}
+                                suppressHydrationWarning
+                            >
+                                <div className={cn(
+                                    "transition-transform duration-300 ease-in-out transform",
+                                    open ? "rotate-90 scale-110" : "rotate-0 scale-100"
+                                )}>
+                                    {open ? <X className="h-12 w-12" /> : <Menu className="h-12 w-12" />}
+                                </div>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-[85vw] sm:w-80 bg-sidebar text-sidebar-foreground border-r-sidebar-border p-0 flex flex-col h-full inset-y-0 left-0">
+                            {/* User Profile Header */}
+                            <div className="p-4 border-b border-sidebar-border bg-sidebar-accent/10">
+                                <SheetTitle className="sr-only">User Menu</SheetTitle>
+                                <SheetDescription className="sr-only">User navigation and settings</SheetDescription>
+                                <UserSettings
+                                    email={userEmail}
+                                    name={userName}
+                                    nickname={userNickname}
+                                    image={userImage}
+                                    triggerVariant="card"
+                                    side="bottom"
+                                    align="start"
+                                />
+                            </div>
 
-                    return (
-                        <Link
-                            key={tab.href}
-                            href={tab.href}
-                            onClick={() => {
-                                if (pathname !== tab.href) {
-                                    setNavigatingTo(tab.href)
-                                }
-                            }}
-                            className={cn(
-                                "flex flex-col items-center justify-center w-full h-full space-y-1 relative",
-                                tab.isActive
-                                    ? "text-blue-600"
-                                    : "text-gray-500 hover:text-gray-900"
-                            )}
-                        >
-                            <div className="relative">
-                                <Icon className={cn("h-6 w-6", tab.isActive && "fill-current")} />
-                                {hasBadge && (
-                                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white" />
+                            {/* Sidebar Content */}
+                            <div className="flex-1 overflow-y-auto min-h-0">
+                                {isSocials && userId ? (
+                                    <ChatSidebar
+                                        initialConversations={activeConversations}
+                                        userId={userId}
+                                        variant="sidebar"
+                                    />
+                                ) : (
+                                    <div className="px-4 py-2">
+                                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block px-2">
+                                            Menu
+                                        </label>
+                                        <SidebarNav
+                                            userRoles={roles}
+                                            onNavigate={() => setOpen(false)}
+                                            courses={courses}
+                                            isMobile={true}
+                                            hasUnreadMessages={hasUnreadMessages}
+                                        />
+                                    </div>
                                 )}
                             </div>
-                            <span className="sr-only">{tab.label}</span>
-                        </Link>
-                    )
-                })}
+                        </SheetContent>
+                    </Sheet>
+                </div>
+
+                {/* Scrollable Navigation Items (Right) */}
+                <div className="flex-1 overflow-x-auto flex items-center justify-start px-2 gap-4 h-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    {visibleTabs.map((tab) => {
+                        const Icon = tab.icon
+                        const hasBadge = (tab as any).hasBadge
+
+                        return (
+                            <Link
+                                key={tab.href}
+                                href={tab.href}
+                                onClick={() => {
+                                    if (pathname !== tab.href) {
+                                        setNavigatingTo(tab.href)
+                                    }
+                                }}
+                                className={cn(
+                                    "flex flex-col items-center justify-center min-w-16 h-full space-y-1 relative transition-colors select-none",
+                                    tab.isActive
+                                        ? "text-blue-600"
+                                        : "text-gray-500 hover:text-gray-900"
+                                )}
+                            >
+                                <div className="relative">
+                                    <Icon className={cn("h-6 w-6", tab.isActive && "fill-current")} />
+                                    {hasBadge && (
+                                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white" />
+                                    )}
+                                </div>
+                                <span className="sr-only">{tab.label}</span>
+                            </Link>
+                        )
+                    })}
+                </div>
             </div>
         </div>
     )
