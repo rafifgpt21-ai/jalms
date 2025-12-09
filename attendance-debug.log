@@ -130,3 +130,9 @@
 2025-12-05T08:53:46.231Z: skipAllSessions: Skipping session for course 69320a203b980c889cb3a3fa period 5
 2025-12-05T08:53:46.242Z: skipAllSessions: Skipping session for course 69320a203b980c889cb3a3fa period 6
 2025-12-05T08:53:46.254Z: skipAllSessions: Successfully skipped 6 sessions
+2025-12-09T22:42:13.107Z: skipAllSessions called for: 6936667b5b2354cb30ad6e86, Fri Dec 05 2025 07:00:00 GMT+0700 (Western Indonesia Time)
+2025-12-09T22:42:13.129Z: skipAllSessions: Found 3 schedules to skip
+2025-12-09T22:42:13.130Z: skipAllSessions: Skipping session for course 6936e7c79634c1c4e06007a0 period 4
+2025-12-09T22:42:13.187Z: skipAllSessions: Skipping session for course 6936e7c79634c1c4e06007a0 period 5
+2025-12-09T22:42:13.235Z: skipAllSessions: Skipping session for course 6936e7c79634c1c4e06007a0 period 6
+2025-12-09T22:42:13.283Z: skipAllSessions: Successfully skipped 3 sessions

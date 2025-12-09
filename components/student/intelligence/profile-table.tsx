@@ -78,7 +78,7 @@ export function IntelligenceProfileTable({ data }: IntelligenceProfileTableProps
                                         <div className="flex flex-col">
                                             <span>{INTELLIGENCE_LABELS[item.type]}</span>
                                             {/* Mobile description */}
-                                            <span className="md:hidden text-xs text-muted-foreground mt-1 line-clamp-2">
+                                            <span className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                                 {INTELLIGENCE_DESCRIPTIONS[item.type]}
                                             </span>
                                         </div>

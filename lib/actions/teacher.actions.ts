@@ -547,14 +547,24 @@ export async function getTeacherDashboardStats() {
                 course: {
                     include: {
                         class: true,
-                        subject: true
+                        subject: true,
+                        term: true // Include term to check dates
                     }
                 }
             }
         })
 
+        // Filter valid schedules based on term dates
+        const validClassesToday = rawClassesToday.filter(schedule => {
+            const term = schedule.course.term
+            // Ensure we compare just dates or handle time correctly
+            // Assuming startDate and endDate are set to midnight or relevant boundaries
+            const targetDate = new Date(today)
+            return targetDate >= term.startDate && targetDate <= term.endDate
+        })
+
         // Fetch topics for each class
-        const classesToday = await Promise.all(rawClassesToday.map(async (schedule) => {
+        const classesToday = await Promise.all(validClassesToday.map(async (schedule) => {
             // Find an attendance record for this course, date, and period that has a topic
             // We use findFirst because all students in the same session should have the same topic
             const attendance = await prisma.attendance.findFirst({
