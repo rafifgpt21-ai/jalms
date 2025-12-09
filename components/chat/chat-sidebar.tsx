@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { NewChatDialog } from "./new-chat-dialog";
+import { MobileHeaderSetter } from "@/components/mobile-header-setter";
 import {
     Popover,
     PopoverContent,
@@ -65,9 +66,96 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
         return displayName.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
+
+
+    const headerButtons = (
+        <>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500">
+                        <Search className="h-5 w-5" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="end" className="w-[calc(100vw-32px)] p-0 bg-background border shadow-lg mt-2">
+                    <div className="p-4 space-y-4">
+                        <div className="relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search chats..."
+                                className="pl-8 bg-muted/50"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+                        <div className="max-h-[300px] overflow-y-auto">
+                            {filteredConversations.length === 0 ? (
+                                <div className="p-4 text-center text-muted-foreground text-sm">
+                                    No conversations found.
+                                </div>
+                            ) : (
+                                <div className="flex flex-col">
+                                    {filteredConversations.map((conv) => {
+                                        const otherParticipant = conv.participants.find((p) => p.id !== userId);
+                                        const lastMessage = conv.messages[0];
+                                        const isActive = pathname === `/socials/${conv.id}`;
+
+                                        return (
+                                            <Link
+                                                key={conv.id}
+                                                href={`/socials/${conv.id}`}
+                                                className={cn(
+                                                    "flex items-center gap-3 p-3 transition-colors hover:bg-muted/50 rounded-md",
+                                                    isActive && "bg-muted"
+                                                )}
+                                            >
+                                                <Avatar>
+                                                    <AvatarImage src={otherParticipant?.image || undefined} />
+                                                    <AvatarFallback>
+                                                        {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="font-medium truncate">
+                                                            {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
+                                                        </span>
+                                                        {lastMessage && (
+                                                            <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                                                                {formatDistanceToNow(new Date(lastMessage.createdAt), {
+                                                                    addSuffix: false,
+                                                                })}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm truncate text-muted-foreground">
+                                                        {lastMessage ? lastMessage.content : "No messages yet"}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </PopoverContent>
+            </Popover>
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500" onClick={() => setIsNewChatOpen(true)}>
+                <Plus className="h-5 w-5" />
+            </Button>
+        </>
+    );
+
     return (
         <div className={cn("flex flex-col h-full", isSidebar && "text-sidebar-foreground")}>
-            <div className={cn("p-4 flex items-center justify-end gap-2", !isSidebar && "border-b", isCollapsed && "flex-col space-y-4 px-2")}>
+            {isSidebar && pathname === "/socials" && (
+                <MobileHeaderSetter
+                    title="Socials"
+                    rightAction={headerButtons}
+                />
+            )}
+            <div className={cn("p-4 flex items-center justify-end gap-2", !isSidebar && "border-b", isCollapsed && "flex-col space-y-4 px-2", isSidebar && "hidden md:flex")}>
                 {isCollapsed ? (
                     <>
                         <TooltipProvider>

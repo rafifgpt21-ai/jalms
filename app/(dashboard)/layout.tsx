@@ -6,6 +6,7 @@ import { MobileNav } from "@/components/mobile-nav"
 import { BottomNavigation } from "@/components/bottom-navigation"
 import { ChatNotificationProvider } from "@/components/chat/chat-notification-provider"
 import { MobileHeaderProvider } from "@/components/mobile-header-context"
+import { DashboardContent } from "@/components/dashboard-content"
 
 import { getTeacherActiveCourses } from "@/lib/actions/teacher.actions"
 
@@ -58,7 +59,7 @@ export default async function DashboardLayout({
     }) || false;
 
     return (
-        <div className="flex h-screen flex-col">
+        <div className="flex h-[100dvh] flex-col">
             <ChatNotificationProvider initialConversations={conversations} userId={session.user?.id || ""}>
                 <MobileHeaderProvider>
                     {/* Mobile Navigation */}
@@ -92,9 +93,9 @@ export default async function DashboardLayout({
                         </div>
 
                         {/* Main Content */}
-                        <main className="flex-1 p-1.5 md:p-8 bg-gray-50 overflow-y-auto pb-20 md:pb-8">
+                        <DashboardContent>
                             {children}
-                        </main>
+                        </DashboardContent>
                     </div>
 
                     <BottomNavigation

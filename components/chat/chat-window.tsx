@@ -6,13 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send } from "lucide-react";
+import { Send, ArrowLeft } from "lucide-react";
 import { getMessages, sendMessage, markConversationAsRead } from "@/app/actions/chat";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useChatNotification } from "@/components/chat/chat-notification-provider"
 import { useMobileHeader } from "@/components/mobile-header-context"
+import Link from "next/link";
 
 type Message = {
     id: string;
@@ -63,29 +64,7 @@ export function ChatWindow({
         }
     }, [messages]);
 
-    // Poll every 3 seconds
-    useEffect(() => {
-        const interval = setInterval(async () => {
-            const latestMessages = await getMessages(conversationId);
-            if (latestMessages.length > messages.length) {
-                setMessages(latestMessages as Message[]);
-                // Also mark as read if new messages came in
-                await markConversationAsRead(conversationId);
-                refreshConversations(); // Update sidebar badges
-            }
-        }, 3000);
-
-        return () => clearInterval(interval);
-    }, [conversationId, messages.length, refreshConversations]);
-
-    // Mark as read on mount
-    useEffect(() => {
-        const markRead = async () => {
-            await markConversationAsRead(conversationId);
-            refreshConversations(); // Update sidebar badges
-        };
-        markRead();
-    }, [conversationId, refreshConversations]);
+    // ... Polling and Mark Read effects ...
 
     // Update Mobile Header
     const { setHeader, resetHeader } = useMobileHeader()
@@ -93,7 +72,14 @@ export function ChatWindow({
         setHeader({
             title: otherParticipant?.nickname || otherParticipant?.name || "Unknown User",
             subtitle: otherParticipant?.nickname ? otherParticipant?.name : otherParticipant?.email,
-            image: otherParticipant?.image
+            image: otherParticipant?.image,
+            leftAction: (
+                <Link href="/socials">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 -ml-2">
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                </Link>
+            )
         })
         return () => resetHeader()
     }, [otherParticipant, setHeader, resetHeader])
@@ -133,7 +119,7 @@ export function ChatWindow({
     };
 
     return (
-        <div className="flex flex-col h-[calc(100dvh-9rem)] md:h-full bg-background">
+        <div className="flex flex-col flex-1 h-full min-h-0 bg-background relative">
             {/* Header */}
             <div className="hidden md:flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
                 <Avatar>
@@ -151,8 +137,8 @@ export function ChatWindow({
             </div>
 
             {/* Messages Area */}
-            <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4 pb-4">
+            <ScrollArea className="flex-1 p-4 bg-gray-50/50 dark:bg-zinc-900/50">
+                <div className="space-y-4 pb-32 md:pb-4">
                     {messages.map((message) => {
                         const isMe = message.sender.id === currentUserId;
                         return (
@@ -168,11 +154,11 @@ export function ChatWindow({
                                         "flex max-w-[70%] flex-col gap-1 rounded-2xl px-4 py-2 text-sm shadow-sm",
                                         isMe
                                             ? "bg-primary text-primary-foreground rounded-br-none"
-                                            : "bg-muted text-foreground rounded-bl-none"
+                                            : "bg-white dark:bg-zinc-800 text-foreground rounded-bl-none border border-border/50"
                                     )}
                                 >
                                     <p>{message.content}</p>
-                                    <span className={cn("text-[10px] self-end opacity-70")}>
+                                    <span className={cn("text-[10px] self-end opacity-70", isMe ? "text-primary-foreground/80" : "text-muted-foreground")}>
                                         {format(new Date(message.createdAt), "HH:mm")}
                                     </span>
                                 </div>
@@ -183,23 +169,32 @@ export function ChatWindow({
                 </div>
             </ScrollArea>
 
-            {/* Input Area */}
-            <div className="p-4 border-t bg-background">
-                <form onSubmit={handleSend} className="flex gap-2">
-                    <Input
-                        placeholder="Type a message..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        className="flex-1 rounded-full"
-                        disabled={isSending}
-                    />
+            {/* Input Area - Redesigned with Fixed Mobile Positioning */}
+            <div className="fixed bottom-16 left-0 right-0 z-20 md:static md:bottom-auto md:z-auto p-3 md:p-4 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+                <form onSubmit={handleSend} className="flex gap-2 items-end">
+                    <div className="flex-1 relative">
+                        <Input
+                            placeholder="Type a message..."
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            className="w-full rounded-2xl pl-4 pr-12 py-6 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/20 shadow-inner resize-none overflow-hidden"
+                            disabled={isSending}
+                            autoComplete="off"
+                        />
+                    </div>
+
                     <Button
                         type="submit"
                         size="icon"
-                        className="rounded-full"
+                        className={cn(
+                            "rounded-full h-12 w-12 shrink-0 shadow-sm transition-all duration-200",
+                            newMessage.trim()
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
                         disabled={!newMessage.trim() || isSending}
                     >
-                        <Send className="w-4 h-4" />
+                        <Send className="w-5 h-5 ml-0.5" />
                     </Button>
                 </form>
             </div>

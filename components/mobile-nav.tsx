@@ -11,7 +11,7 @@ interface MobileNavProps {
 
 export function MobileNav({ userRoles }: MobileNavProps) {
     const pathname = usePathname()
-    const { title, subtitle, image, leftAction } = useMobileHeader()
+    const { title, subtitle, image, leftAction, rightAction } = useMobileHeader()
 
     const tabs = [
         {
@@ -58,7 +58,7 @@ export function MobileNav({ userRoles }: MobileNavProps) {
                         <AvatarFallback className="text-xs">{typeof title === 'string' ? title.slice(0, 2).toUpperCase() : '?'}</AvatarFallback>
                     </Avatar>
                 )}
-                <div className="flex flex-col min-w-0">
+                <div className="flex flex-col min-w-0 flex-1">
                     <span className="font-semibold text-sm truncate leading-tight">
                         {title}
                     </span>
@@ -68,6 +68,11 @@ export function MobileNav({ userRoles }: MobileNavProps) {
                         </span>
                     )}
                 </div>
+                {rightAction && (
+                    <div className="flex items-center gap-1 -mr-2">
+                        {rightAction}
+                    </div>
+                )}
             </div>
         )
     }

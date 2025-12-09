@@ -7,6 +7,7 @@ interface MobileHeaderState {
     subtitle?: ReactNode | string
     image?: string | null
     leftAction?: ReactNode
+    rightAction?: ReactNode
 }
 
 interface MobileHeaderContextType extends MobileHeaderState {
@@ -22,6 +23,7 @@ export function MobileHeaderProvider({ children }: { children: ReactNode }) {
         subtitle: null,
         image: null,
         leftAction: null,
+        rightAction: null,
     })
 
     const setHeader = useCallback((newState: MobileHeaderState) => {
@@ -34,6 +36,7 @@ export function MobileHeaderProvider({ children }: { children: ReactNode }) {
             subtitle: null,
             image: null,
             leftAction: null,
+            rightAction: null,
         })
     }, [])
 

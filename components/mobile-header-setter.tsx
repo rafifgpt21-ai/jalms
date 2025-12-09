@@ -11,9 +11,10 @@ interface MobileHeaderSetterProps {
     subtitle?: string
     image?: string | null
     backLink?: string
+    rightAction?: React.ReactNode
 }
 
-export function MobileHeaderSetter({ title, subtitle, image, backLink }: MobileHeaderSetterProps) {
+export function MobileHeaderSetter({ title, subtitle, image, backLink, rightAction }: MobileHeaderSetterProps) {
     const { setHeader, resetHeader } = useMobileHeader()
 
     useEffect(() => {
@@ -29,10 +30,11 @@ export function MobileHeaderSetter({ title, subtitle, image, backLink }: MobileH
             title,
             subtitle,
             image,
-            leftAction
+            leftAction,
+            rightAction
         })
         return () => resetHeader()
-    }, [title, subtitle, image, backLink, setHeader, resetHeader])
+    }, [title, subtitle, image, backLink, rightAction, setHeader, resetHeader])
 
     return null
 }
