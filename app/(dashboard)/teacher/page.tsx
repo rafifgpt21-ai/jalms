@@ -23,7 +23,7 @@ export default async function TeacherDashboard() {
         <div className="space-y-6">
             <MobileHeaderSetter title="Teacher Dashboard" />
             {/* Classes Today Widget */}
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-100 dark:border-blue-900">
+            <Card className="bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-100 dark:border-blue-900">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-lg flex items-center">
                         <Calendar className="mr-2 h-5 w-5 text-blue-600" />

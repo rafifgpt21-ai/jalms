@@ -5,6 +5,9 @@ import { Role, Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import bcrypt from "bcryptjs"
 import { auth } from "@/auth"
+import { writeFile, mkdir, unlink } from "fs/promises"
+import path from "path"
+import { existsSync } from "fs"
 
 export async function getUser() {
     const session = await auth()
@@ -249,6 +252,12 @@ export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
             return { error: "Unauthorized" }
         }
 
+        // Get current user to check for old avatar
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { image: true }
+        })
+
         await prisma.user.update({
             where: { id: session.user.id },
             data: {
@@ -257,7 +266,17 @@ export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
             }
         })
 
-        revalidatePath("/admin/users")
+        // Delete old avatar if it exists and update was successful
+        if (currentUser?.image && currentUser.image.startsWith("/api/files/avatar/")) {
+            const oldFilename = currentUser.image.split("/").pop()
+            if (oldFilename) {
+                const oldPath = path.join(process.cwd(), "uploads", "avatar", oldFilename)
+                if (existsSync(oldPath)) {
+                    await unlink(oldPath).catch(console.error)
+                }
+            }
+        }
+
         revalidatePath("/admin/users")
         return { success: true, error: undefined }
     } catch (error) {
@@ -283,5 +302,74 @@ export async function updateNickname(nickname: string) {
     } catch (error) {
         console.error("Error updating nickname:", error)
         return { error: "Failed to update nickname" }
+    }
+}
+
+
+export async function uploadAvatarImage(formData: FormData) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) {
+            return { error: "Unauthorized" }
+        }
+
+        const file = formData.get("file") as File
+        if (!file) {
+            return { error: "No file provided" }
+        }
+
+        const bytes = await file.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+
+        // Create avatar directory if it doesn't exist
+        const uploadDir = path.join(process.cwd(), "uploads", "avatar")
+        if (!existsSync(uploadDir)) {
+            await mkdir(uploadDir, { recursive: true })
+        }
+
+        // Generate filename
+        const filename = `${session.user.id}-${Date.now()}.jpg`
+        const filepath = path.join(uploadDir, filename)
+
+        // Get current user to check for old avatar
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { image: true }
+        })
+
+        // Save file
+        await writeFile(filepath, buffer)
+
+        // Upload path for public access
+        const publicUrl = `/api/files/avatar/${filename}`
+
+        // Update user
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: {
+                image: publicUrl,
+                avatarConfig: undefined // Clear dicebear config if using custom image
+            }
+        })
+
+        // Delete old avatar if it exists and update was successful
+        if (currentUser?.image && currentUser.image.startsWith("/api/files/avatar/")) {
+            const oldFilename = currentUser.image.split("/").pop()
+            if (oldFilename) {
+                const oldPath = path.join(process.cwd(), "uploads", "avatar", oldFilename)
+                // Avoid deleting the NEW file if for some reason the name collision happened (unlikely with timestamp)
+                if (oldPath !== filepath && existsSync(oldPath)) {
+                    await unlink(oldPath).catch(console.error)
+                }
+            }
+        }
+
+        revalidatePath("/admin/users")
+        revalidatePath("/")
+
+        return { success: true, imageUrl: publicUrl }
+    } catch (error) {
+        console.error("Error uploading avatar:", error)
+        return { error: "Failed to upload avatar" }
     }
 }
