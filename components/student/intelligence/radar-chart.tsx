@@ -44,13 +44,48 @@ export function IntelligenceRadarChart({ data }: IntelligenceRadarChartProps) {
     }
 
     // Transform data for Recharts
-    // Ensure all axes are present even if score is 0
+    // Non-linear scale implementation:
+    // 0-75 score maps to 0-50 radius (compressed)
+    // 75-100 score maps to 50-100 radius (expanded)
+    const transformScore = (score: number) => {
+        if (score <= 75) {
+            return score * (50 / 75)
+        }
+        return 50 + (score - 75) * (50 / 25)
+    }
+
+    // Calculate ticks for the axis
+    // We want to show lines for 25, 50, 75, 100
+    const scoreTicks = [25, 50, 75, 100]
+    const radiusTicks = scoreTicks.map(transformScore)
+
+    // Helper to format tick value back to score label
+    const formatTick = (value: number) => {
+        // Reverse transform for display
+        // Though since we know the specific ticks we are plotting, we can perhaps just map them back
+        // But Recharts might pass intermediate values if we are not careful.
+        // However, with explicit `ticks` prop, it should only call for those.
+
+        // Find closest score tick
+        if (value === 0) return "0"
+
+        // Check for our specific tick values with some tolerance for float precision
+        if (Math.abs(value - transformScore(25)) < 0.1) return "25"
+        if (Math.abs(value - transformScore(50)) < 0.1) return "50"
+        if (Math.abs(value - 50) < 0.1) return "75"
+        if (Math.abs(value - 100) < 0.1) return "100"
+
+        return ""
+    }
+
     const allTypes = Object.keys(INTELLIGENCE_LABELS) as IntelligenceType[]
     const chartData = allTypes.map(type => {
         const found = data.find(d => d.type === type)
+        const score = found ? found.score : 0
         return {
             subject: INTELLIGENCE_LABELS[type],
-            score: found ? found.score : 0,
+            score: score,
+            visualScore: transformScore(score),
             fullMark: 100
         }
     })
@@ -66,18 +101,30 @@ export function IntelligenceRadarChart({ data }: IntelligenceRadarChartProps) {
             <CardContent>
                 <div className="h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="50%" data={chartData}>
+                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={chartData}>
                             <PolarGrid />
                             <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
-                            <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                            <PolarRadiusAxis
+                                angle={30}
+                                domain={[0, 100]}
+                                ticks={radiusTicks as any}
+                                tick={false}
+                                axisLine={false}
+                            />
                             <Radar
                                 name="Score"
-                                dataKey="score"
+                                dataKey="visualScore"
                                 stroke="#8884d8"
                                 fill="#8884d8"
                                 fillOpacity={0.6}
                             />
-                            <Tooltip />
+                            <Tooltip
+                                formatter={(value: number, name: string, props: any) => {
+                                    // Can access the original score from payload
+                                    const originalScore = props.payload.score;
+                                    return [originalScore, name];
+                                }}
+                            />
                         </RadarChart>
                     </ResponsiveContainer>
                 </div>

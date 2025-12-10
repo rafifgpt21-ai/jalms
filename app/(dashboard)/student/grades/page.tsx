@@ -6,6 +6,7 @@ import { SemesterSelector } from "@/components/student/grades/semester-selector"
 import { GradeStatistics } from "@/components/student/grades/grade-statistics"
 import { GradeHistoryChart } from "@/components/student/grades/grade-history-chart"
 import { GradesTable } from "@/components/student/grades/grades-table"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function StudentGradesPage({
     searchParams,
@@ -42,6 +43,7 @@ export default async function StudentGradesPage({
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="My Grades" />
             <h1 className="text-3xl font-bold">My Grades</h1>
 
             <GradeHistoryChart history={history} />

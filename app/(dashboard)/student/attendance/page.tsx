@@ -3,6 +3,7 @@ import { db as prisma } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function StudentAttendancePage() {
     const user = await getUser()
@@ -42,6 +43,7 @@ export default async function StudentAttendancePage() {
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="My Attendance" />
             <h1 className="text-3xl font-bold">My Attendance</h1>
 
             {/* Summary Cards */}

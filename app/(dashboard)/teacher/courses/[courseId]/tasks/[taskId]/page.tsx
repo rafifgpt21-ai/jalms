@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default function TaskWorkspacePage() {
     const params = useParams()
@@ -155,6 +156,11 @@ export default function TaskWorkspacePage() {
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter
+                title={`Grading: ${assignment.title}`}
+                subtitle={assignment.course.name}
+                backLink="/teacher"
+            />
             {/* Header Card */}
             <Card>
                 <div className="p-4 flex flex-row justify-between items-center gap-4">

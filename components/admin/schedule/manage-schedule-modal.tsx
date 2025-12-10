@@ -35,7 +35,9 @@ type CourseWithDetails = Course & {
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-const PERIODS = [1, 2, 3, 4, 5, 6]
+import { getPeriodLabel } from "@/lib/helpers/period-label"
+
+const PERIODS = [0, 1, 2, 3, 4, 5, 6, 7]
 
 export function ManageScheduleModal({ teacherId, teacherName }: ManageScheduleModalProps) {
     const [open, setOpen] = useState(false)
@@ -139,7 +141,7 @@ export function ManageScheduleModal({ teacherId, teacherName }: ManageScheduleMo
                         {PERIODS.map(period => (
                             <Fragment key={period}>
                                 <div className="font-bold flex items-center justify-center bg-gray-50 rounded">
-                                    {period}
+                                    {getPeriodLabel(period)} {/* Using getPeriodLabel for display */}
                                 </div>
                                 {DAYS.map((day, dayIndex) => {
                                     const assignedCourse = getCourseAtSlot(dayIndex, period)

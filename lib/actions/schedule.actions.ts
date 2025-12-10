@@ -92,6 +92,7 @@ export async function updateSchedule(
         }
 
         revalidatePath("/admin/schedule")
+        revalidatePath("/admin/schedule/overview")
         return { success: true }
     } catch (error) {
         console.error("Error updating schedule:", error)
@@ -213,6 +214,7 @@ export async function saveTeacherSchedule(
         await Promise.all(promises)
 
         revalidatePath("/admin/schedule")
+        revalidatePath("/admin/schedule/overview")
         revalidatePath(`/admin/schedule/${teacherId}`)
 
         return { success: true }
@@ -251,5 +253,40 @@ export async function getConflictingCourses(teacherId: string, day: number, peri
     } catch (error) {
         console.error("Error checking conflicting courses:", error)
         return { error: "Failed to check conflicts", conflictingCourseIds: [] }
+    }
+}
+
+export async function getMasterSchedule() {
+    try {
+        const schedules = await prisma.schedule.findMany({
+            where: {
+                deletedAt: { isSet: false },
+                course: {
+                    term: { isActive: true },
+                    deletedAt: { isSet: false }
+                }
+            },
+            include: {
+                course: {
+                    include: {
+                        teacher: {
+                            select: {
+                                id: true,
+                                name: true,
+                                nickname: true,
+                                image: true
+                            }
+                        },
+                        class: true,
+                        subject: true
+                    }
+                }
+            }
+        })
+
+        return { schedules }
+    } catch (error) {
+        console.error("Error fetching master schedule:", error)
+        return { error: "Failed to fetch master schedule" }
     }
 }

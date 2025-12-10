@@ -1,8 +1,10 @@
 import { getStudentDashboardStats } from "@/lib/actions/student.actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { Calendar, Clock, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +19,7 @@ export default async function StudentDashboard() {
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="Student Dashboard" />
             <h1 className="text-3xl font-bold">Student Dashboard</h1>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -35,7 +38,7 @@ export default async function StudentDashboard() {
                                     <div key={slot.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border">
                                         <div>
                                             <div className="font-semibold">{slot.course.reportName || slot.course.name}</div>
-                                            <div className="text-sm text-gray-500">Period {slot.period}</div>
+                                            <div className="text-sm text-gray-500">{getPeriodLabel(slot.period)}</div>
                                             {slot.topic && (
                                                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">
                                                     {slot.topic}

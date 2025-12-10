@@ -39,8 +39,10 @@ type CourseWithDetails = Course & {
     term: Term & { academicYear: AcademicYear };
 }
 
+import { getPeriodLabel } from "@/lib/helpers/period-label"
+
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-const PERIODS = [1, 2, 3, 4, 5, 6]
+const PERIODS = [0, 1, 2, 3, 4, 5, 6, 7]
 
 interface ScheduleGridProps {
     teacherId: string
@@ -159,7 +161,7 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
 
                         return (
                             <div key={period} className="bg-white p-3 rounded-lg border shadow-sm flex items-center gap-4">
-                                <div className="font-bold text-lg text-gray-500 w-8 text-center">{period}</div>
+                                <div className="font-bold text-sm text-gray-500 w-16 text-center">{getPeriodLabel(period)}</div>
                                 <div className="flex-1">
                                     <ScheduleSlot
                                         dayIndex={selectedDay}
@@ -191,8 +193,8 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
                     {/* Grid */}
                     {PERIODS.map(period => (
                         <Fragment key={period}>
-                            <div className="font-bold flex items-center justify-center bg-gray-50 rounded min-h-[100px]">
-                                {period}
+                            <div className="font-bold flex items-center justify-center bg-gray-50 rounded min-h-[100px] text-xs uppercase px-1 text-center">
+                                {getPeriodLabel(period)}
                             </div>
                             {DAYS.map((day, dayIndex) => {
                                 const courseId = getCourseIdAtSlot(dayIndex, period)
@@ -227,7 +229,12 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
                                 The following conflicts prevent saving the schedule:
                                 <ul className="mt-2 list-disc list-inside space-y-1 text-gray-700 max-h-[200px] overflow-y-auto">
                                     {conflictDetails.map((detail, index) => (
-                                        <li key={index}>{detail}</li>
+                                        <li key={index}>
+                                            {/* Using regex to replace simple numbers with "Period X" if needed, 
+                                                but for now just passing string. The backend string formatter might need update too if consistency matters 
+                                            */}
+                                            {detail.replace(/Period 0/, "Morning").replace(/Period 7/, "Night")}
+                                        </li>
                                     ))}
                                 </ul>
                             </div>

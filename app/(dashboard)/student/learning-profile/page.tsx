@@ -3,6 +3,7 @@ import { getUser } from "@/lib/actions/user.actions"
 import { redirect } from "next/navigation"
 import { IntelligenceRadarChart } from "@/components/student/intelligence/radar-chart"
 import { IntelligenceProfileTable } from "@/components/student/intelligence/profile-table"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export const dynamic = "force-dynamic"
 
@@ -21,6 +22,7 @@ export default async function LearningProfilePage() {
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="Learning Profile" />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <IntelligenceRadarChart data={profile || []} />
                 {/* We can add another chart or summary here if needed, or just let the table take full width below */}

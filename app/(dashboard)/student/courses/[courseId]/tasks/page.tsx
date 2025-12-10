@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { format } from "date-fns"
 import { CheckCircle, Clock, AlertCircle, FileText } from "lucide-react"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function StudentCourseTasksPage({ params }: { params: Promise<{ courseId: string }> }) {
     const { courseId } = await params
@@ -47,6 +48,7 @@ export default async function StudentCourseTasksPage({ params }: { params: Promi
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="Course Tasks" backLink="/student" />
             <h1 className="text-2xl font-bold">Course Tasks</h1>
 
             <div className="grid gap-4">

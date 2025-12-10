@@ -1,6 +1,8 @@
 import { auth } from "@/auth"
 import { getCourseAttendance } from "@/lib/actions/attendance.actions"
 import { AttendanceForm } from "@/components/teacher/attendance/attendance-form"
+import { Badge } from "@/components/ui/badge"
+import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -33,7 +35,11 @@ export default async function CourseAttendanceSessionPage({
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-bold tracking-tight">Attendance Session</h1>
+                    <Badge variant="outline">{getPeriodLabel(period)}</Badge>
+                </div>
                 <div className="flex items-center gap-4">
                     <Link href={`/teacher/attendance?date=${format(date, "yyyy-MM-dd")}`}>
                         <Button variant="ghost" size="icon">

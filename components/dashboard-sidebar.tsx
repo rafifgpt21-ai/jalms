@@ -24,7 +24,8 @@ import {
     MessageSquare,
     Plus,
     PieChart,
-    Library
+    Library,
+    Table
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -201,7 +202,8 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                     <NavItem href="/admin/subjects" icon={Library} label="Subjects" active={pathname.startsWith("/admin/subjects")} />
                     <NavItem href="/admin/courses" icon={BookOpen} label="Courses" active={pathname.startsWith("/admin/courses")} />
                     <NavItem href="/admin/semesters" icon={CalendarRange} label="Semesters" active={pathname.startsWith("/admin/semesters")} />
-                    <NavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname.startsWith("/admin/schedule")} />
+                    <NavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname === "/admin/schedule" || pathname.startsWith("/admin/schedule/") && !pathname.includes("overview")} />
+                    <NavItem href="/admin/schedule/overview" icon={Table} label="Master Timetable" active={pathname.startsWith("/admin/schedule/overview")} />
                     <NavItem href="/admin/socials" icon={MessageSquare} label="Socials Monitoring" active={pathname.startsWith("/admin/socials")} hasBadge={hasUnreadMessages} />
                 </div>
             )}
@@ -554,6 +556,7 @@ export function DashboardSidebar({ userRoles, courses, conversations: initialCon
                         userId={userId}
                         variant="sidebar"
                         isCollapsed={isCollapsed}
+                        headerMode="show"
                     />
                 ) : (
                     <div className={cn("p-4", isCollapsed && "p-2")}>

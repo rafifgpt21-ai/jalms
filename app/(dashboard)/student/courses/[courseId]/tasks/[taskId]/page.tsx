@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { SubmissionForm } from "@/components/student/submission-form"
 import { CheckCircle, AlertCircle, Clock, FileText } from "lucide-react"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function StudentTaskDetailPage({ params }: { params: Promise<{ taskId: string }> }) {
     const { taskId } = await params
@@ -33,10 +34,15 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter
+                title={assignment.title}
+                subtitle={assignment.course.name}
+                backLink={`/student/courses/${assignment.courseId}/tasks`}
+            />
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">{assignment.title}</h1>
-                    <div className="text-gray-500 mt-1">{assignment.course.name}</div>
+                    <h1 className="text-3xl font-bold hidden md:block">{assignment.title}</h1>
+                    <div className="text-gray-500 mt-1 hidden md:block">{assignment.course.name}</div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                     {assignment.type !== 'NON_SUBMISSION' && (

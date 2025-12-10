@@ -21,6 +21,7 @@ export function SocialsMainView({ initialConversations, userId }: SocialsMainVie
                     initialConversations={activeConversations}
                     userId={userId}
                     variant="sidebar"
+                    headerMode="hide"
                 />
             </div>
 

@@ -4,7 +4,9 @@ import { BookOpen, Users, FileText, Clock, CheckCircle, Plus, Calendar } from "l
 import Link from "next/link"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
+import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { Button } from "@/components/ui/button"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +21,7 @@ export default async function TeacherDashboard() {
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="Teacher Dashboard" />
             {/* Classes Today Widget */}
             <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-100 dark:border-blue-900">
                 <CardHeader className="pb-2">
@@ -35,7 +38,7 @@ export default async function TeacherDashboard() {
                         {classesToday?.map((schedule: any) => (
                             <div key={schedule.id} className="min-w-[200px] p-3 bg-white dark:bg-card rounded-lg border shadow-sm">
                                 <div className="flex justify-between items-start mb-2">
-                                    <Badge variant="secondary" className="font-mono">Period {schedule.period}</Badge>
+                                    <Badge variant="secondary" className="font-mono">{getPeriodLabel(schedule.period)}</Badge>
                                 </div>
                                 <h3 className="font-semibold truncate">{schedule.course.class?.name || schedule.course.name}</h3>
                                 <p className="text-sm text-muted-foreground truncate">{schedule.topic || "-"}</p>

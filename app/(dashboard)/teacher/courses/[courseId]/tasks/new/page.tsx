@@ -1,6 +1,7 @@
 import { TaskForm } from "@/components/teacher/task-form"
 import { getCourse } from "@/lib/actions/course.actions"
 import { notFound } from "next/navigation"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 interface AddTaskPageProps {
     params: Promise<{
@@ -19,6 +20,9 @@ export default async function AddTaskPage(props: AddTaskPageProps) {
     }
 
     return (
-        <TaskForm courseId={courseId} course={course as any} />
+        <>
+            <MobileHeaderSetter title="Create New Task" backLink="/teacher" />
+            <TaskForm courseId={courseId} course={course as any} />
+        </>
     )
 }

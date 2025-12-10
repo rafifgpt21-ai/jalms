@@ -3,10 +3,12 @@ import { getDailySchedule } from "@/lib/actions/attendance.actions"
 import { DateNavigator } from "@/components/teacher/attendance/date-navigator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 import { SkipSessionButton } from "@/components/teacher/attendance/skip-session-button"
 import { SkipAllButton } from "@/components/teacher/attendance/skip-all-button"
@@ -27,6 +29,7 @@ export default async function AttendancePage({
 
     return (
         <div className="space-y-6">
+            <MobileHeaderSetter title="Attendance Manager" />
             <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Attendance</h1>
@@ -62,7 +65,7 @@ export default async function AttendancePage({
                             <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start">
                                     <Badge variant="outline" className="mb-2">
-                                        Period {schedule.period}
+                                        {getPeriodLabel(schedule.period)}
                                     </Badge>
                                     <div className="flex items-center gap-1">
                                         {schedule.isSkipped ? (

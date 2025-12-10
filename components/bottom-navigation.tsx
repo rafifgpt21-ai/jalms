@@ -163,6 +163,8 @@ export function BottomNavigation({
                                         initialConversations={activeConversations}
                                         userId={userId}
                                         variant="sidebar"
+                                        disableMobileHeader={true}
+                                        headerMode="show"
                                     />
                                 ) : (
                                     <div className="px-4 py-2">
