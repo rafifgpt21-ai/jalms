@@ -25,7 +25,8 @@ import {
     Plus,
     PieChart,
     Library,
-    Table
+    Table,
+    FileQuestion
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -214,6 +215,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                     <div className="space-y-1">
                         <NavItem href="/teacher" icon={LayoutDashboard} label="Dashboard" active={pathname === "/teacher"} />
                         <NavItem href="/teacher/attendance" icon={Clock} label="Daily Attendance" active={pathname === "/teacher/attendance"} />
+                        <NavItem href="/teacher/quiz-manager" icon={FileQuestion} label="Quiz Manager" active={pathname.startsWith("/teacher/quiz-manager")} />
                         <NavItem href="/teacher/materials" icon={FileText} label="Study Materials" active={pathname === "/teacher/materials"} />
                     </div>
 

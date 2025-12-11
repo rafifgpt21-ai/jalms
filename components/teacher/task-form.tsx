@@ -63,12 +63,14 @@ const INTELLIGENCE_LABELS: Record<IntelligenceType, string> = {
 const formSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
-    type: z.enum(["SUBMISSION", "NON_SUBMISSION"]),
+    type: z.enum(["SUBMISSION", "NON_SUBMISSION", "QUIZ"]),
     dueDate: z.string().optional(),
     maxPoints: z.coerce.number().min(0),
     isExtraCredit: z.boolean().default(false),
     latePenalty: z.coerce.number().min(0).max(100).default(0),
     intelligenceTypes: z.array(z.nativeEnum(IntelligenceType)).optional(),
+    quizId: z.string().optional(),
+    showGradeAfterSubmission: z.boolean().default(true)
 })
 
 interface TaskFormProps {
@@ -76,9 +78,10 @@ interface TaskFormProps {
     initialData?: any // Assignment
     course?: any // Course with Subject
     assignment?: any // Legacy alias for initialData
+    quizzes?: any[] // List of quizzes for selection
 }
 
-export function TaskForm({ courseId, initialData, assignment, course }: TaskFormProps) {
+export function TaskForm({ courseId, initialData, assignment, course, quizzes = [] }: TaskFormProps) {
     // Handle alias
     const data = initialData || assignment
     const effectiveCourseId = courseId || data?.courseId
@@ -104,6 +107,8 @@ export function TaskForm({ courseId, initialData, assignment, course }: TaskForm
             latePenalty: data?.latePenalty || 0,
             dueDate: data?.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd'T'HH:mm") : "",
             intelligenceTypes: data?.intelligenceTypes || [], // Initialize with saved tags
+            quizId: data?.quizId || undefined,
+            showGradeAfterSubmission: data?.showGradeAfterSubmission ?? true,
         },
     })
 
@@ -147,6 +152,8 @@ export function TaskForm({ courseId, initialData, assignment, course }: TaskForm
                         isExtraCredit: values.isExtraCredit,
                         latePenalty: values.latePenalty,
                         intelligenceTypes: intelligenceTypesPayload,
+                        quizId: values.quizId,
+                        showGradeAfterSubmission: values.showGradeAfterSubmission,
                     })
                 } else {
                     if (!effectiveCourseId) {
@@ -163,6 +170,8 @@ export function TaskForm({ courseId, initialData, assignment, course }: TaskForm
                         isExtraCredit: values.isExtraCredit,
                         latePenalty: values.latePenalty,
                         intelligenceTypes: intelligenceTypesPayload,
+                        quizId: values.quizId,
+                        showGradeAfterSubmission: values.showGradeAfterSubmission,
                     })
                 }
 
@@ -253,12 +262,66 @@ export function TaskForm({ courseId, initialData, assignment, course }: TaskForm
                                                 <SelectContent>
                                                     <SelectItem value="SUBMISSION">Submission</SelectItem>
                                                     <SelectItem value="NON_SUBMISSION">Non-Submission</SelectItem>
+                                                    <SelectItem value="QUIZ">Quiz</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+
+                                {watchType === "QUIZ" && (
+                                    <FormField
+                                        control={form.control}
+                                        name="quizId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Select Quiz</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Choose a quiz" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {quizzes.map((q) => (
+                                                            <SelectItem key={q.id} value={q.id}>
+                                                                {q.title}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>
+                                                    Choose a quiz from your Quiz Manager.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
+                                {watchType === "QUIZ" && (
+                                    <FormField
+                                        control={form.control}
+                                        name="showGradeAfterSubmission"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Show Grade Immediately</FormLabel>
+                                                    <FormDescription>
+                                                        Show score to students after submission.
+                                                    </FormDescription>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
 
                                 <FormField
                                     control={form.control}
@@ -275,7 +338,7 @@ export function TaskForm({ courseId, initialData, assignment, course }: TaskForm
                                 />
                             </div>
 
-                            {watchType === "SUBMISSION" && (
+                            {(watchType === "SUBMISSION" || watchType === "QUIZ") && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <FormField
                                         control={form.control}

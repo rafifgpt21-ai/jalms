@@ -105,7 +105,7 @@ export async function getStudentDashboardStats() {
                     deletedAt: { isSet: false }
                 },
                 deletedAt: { isSet: false },
-                type: "SUBMISSION",
+                type: { in: ["SUBMISSION", "QUIZ"] },
                 OR: [
                     { dueDate: { gte: new Date() } },
                     {
@@ -519,5 +519,96 @@ export async function deleteSubmissionFile(assignmentId: string, fileUrl: string
     } catch (error) {
         console.error("Error deleting submission file:", error)
         return { error: "Failed to delete file" }
+    }
+}
+
+export async function submitQuizAttempt(assignmentId: string, answers: Record<string, string>) {
+    try {
+        const user = await getUser()
+        if (!user || !user.id) return { error: "Unauthorized" }
+
+        // 1. Fetch Assignment and Quiz with Correct Answers
+        const assignment = await prisma.assignment.findUnique({
+            where: { id: assignmentId },
+            include: {
+                quiz: {
+                    include: {
+                        questions: {
+                            include: {
+                                choices: true
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        if (!assignment || !assignment.quiz) return { error: "Quiz not found" }
+
+        // 2. Calculate Score
+        let correctCount = 0
+        let totalQuestions = assignment.quiz.questions.length
+
+        // If no questions, score is 0 or 100? Assume 0.
+        if (totalQuestions === 0) return { error: "Quiz has no questions" }
+
+        assignment.quiz.questions.forEach(q => {
+            // Find the correct choice ID
+            const correctChoice = q.choices.find(c => c.isCorrect)
+            // Check student answer (which should be choiceId)
+            // The key in 'answers' is questionId
+            const studentAnswerId = answers[q.id]
+
+            if (correctChoice && studentAnswerId === correctChoice.id) {
+                correctCount++
+            }
+        })
+
+        const score = (correctCount / totalQuestions) * 100
+        const roundedScore = Math.round(score * 10) / 10 // 1 decimal
+
+        // 3. Save Submission
+        // Check for existing to forbid re-submission? Or update?
+        // Usually quizzes are one-time or allow retries. Let's assume one-time or overwrite for now.
+        const existing = await prisma.submission.findFirst({
+            where: {
+                assignmentId,
+                studentId: user.id,
+                deletedAt: { isSet: false }
+            }
+        })
+
+        if (existing) {
+            // If already graded, maybe prevent? But user might want to retake if allowed. 
+            // For safety, let's update.
+            await prisma.submission.update({
+                where: { id: existing.id },
+                data: {
+                    grade: roundedScore,
+                    submittedAt: new Date(),
+                    // Store answers as generic json in feedback or new field? 
+                    // Schema doesn't have 'answers' field. 
+                    // We could stick it in 'submissionUrl' as JSON string if we really want to persist their choices.
+                    submissionUrl: JSON.stringify(answers), // Storing answers as JSON string
+                }
+            })
+        } else {
+            await prisma.submission.create({
+                data: {
+                    assignmentId,
+                    studentId: user.id,
+                    grade: roundedScore,
+                    submittedAt: new Date(),
+                    submissionUrl: JSON.stringify(answers),
+                }
+            })
+        }
+
+        revalidatePath(`/student/courses/${assignment.courseId}/tasks/${assignmentId}`)
+        return { success: true, grade: roundedScore }
+
+    } catch (error) {
+        console.error("Error submitting quiz:", error)
+        return { error: "Failed to submit quiz" }
     }
 }

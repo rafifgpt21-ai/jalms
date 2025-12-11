@@ -33,9 +33,11 @@ export default async function StudentCourseTasksPage({ params }: { params: Promi
         const isSubmitted = !!submission
         const isLate = assignment.dueDate && new Date() > new Date(assignment.dueDate) && !isSubmitted
         const isGraded = submission?.grade !== null && submission?.grade !== undefined
+        // Determine if we should show the grade
+        const showGrade = assignment.type !== 'QUIZ' || assignment.showGradeAfterSubmission
 
         let status = "To Do"
-        if (isGraded) status = "Graded"
+        if (isGraded && showGrade) status = "Graded"
         else if (isSubmitted) status = "Submitted"
         else if (isLate) status = "Missing"
 

@@ -1,5 +1,6 @@
 import { TaskForm } from "@/components/teacher/task-form"
 import { getAssignmentDetails } from "@/lib/actions/teacher.actions"
+import { getQuizzes } from "@/lib/actions/quiz.actions"
 import { notFound } from "next/navigation"
 
 interface EditTaskPageProps {
@@ -19,6 +20,7 @@ export default async function EditTaskPage(props: EditTaskPageProps) {
 
     // getAssignmentDetails includes course and subject
     const { assignment } = await getAssignmentDetails(taskId)
+    const { quizzes } = await getQuizzes()
 
     if (!assignment) {
         notFound()
@@ -29,6 +31,7 @@ export default async function EditTaskPage(props: EditTaskPageProps) {
             courseId={courseId}
             initialData={assignment as any}
             course={assignment.course as any}
+            quizzes={quizzes || []}
         />
     )
 }

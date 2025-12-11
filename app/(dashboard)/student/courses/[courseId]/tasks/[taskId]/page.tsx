@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { SubmissionForm } from "@/components/student/submission-form"
+import { QuizPlayer } from "@/components/student/quiz/quiz-player"
 import { CheckCircle, AlertCircle, Clock, FileText } from "lucide-react"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
@@ -75,7 +76,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                     </CardContent>
                 </Card>
 
-                {isGraded && (
+                {(isGraded && (assignment.showGradeAfterSubmission || assignment.type !== 'QUIZ')) && (
                     <Card className="border-green-200 bg-green-50 dark:bg-green-900/10">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
@@ -105,6 +106,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                         <CardTitle>Your Work</CardTitle>
                     </CardHeader>
                     <CardContent>
+
                         {assignment.type === 'SUBMISSION' ? (
                             isGraded ? (
                                 <div className="space-y-4">
@@ -136,6 +138,14 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                                     isLate={isLate || (!!wasLate)}
                                 />
                             )
+                        ) : assignment.type === 'QUIZ' && assignment.quizId ? (
+                            <QuizPlayer
+                                quizId={assignment.quizId}
+                                assignmentId={assignment.id}
+                                initialAnswers={submission?.submissionUrl ? JSON.parse(submission.submissionUrl) : undefined}
+                                isReadOnly={!!submission}
+                                showGradeAfterSubmission={assignment.showGradeAfterSubmission}
+                            />
                         ) : (
                             <div className="text-center py-6 text-gray-500">
                                 <p>No submission required for this task.</p>

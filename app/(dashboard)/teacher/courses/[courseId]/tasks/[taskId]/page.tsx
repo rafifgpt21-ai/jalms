@@ -238,7 +238,7 @@ export default function TaskWorkspacePage() {
                                     <TableHead>Status</TableHead>
                                     <TableHead>Submission</TableHead>
                                     <TableHead className="w-[200px]">Score</TableHead>
-                                    <TableHead className="w-[100px]">Action</TableHead>
+                                    {assignment.type !== 'QUIZ' && <TableHead className="w-[100px]">Action</TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -253,7 +253,7 @@ export default function TaskWorkspacePage() {
                                         <TableRow key={student.id}>
                                             <TableCell className="font-medium">{student.name}</TableCell>
                                             <TableCell>
-                                                {assignment.type === "SUBMISSION" && (
+                                                {(assignment.type === "SUBMISSION" || assignment.type === "QUIZ") && (
                                                     <div className="flex items-center gap-2">
                                                         {scores[student.id] !== undefined ? (
                                                             <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
@@ -309,6 +309,7 @@ export default function TaskWorkspacePage() {
                                                         max="100"
                                                         value={scores[student.id] ?? ""}
                                                         onChange={(e) => handleScoreChange(student.id, e.target.value)}
+                                                        disabled={assignment.type === 'QUIZ'}
                                                         className={cn(
                                                             "w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
                                                             isExtraCredit ? "border-green-500 focus-visible:ring-green-500" : ""
@@ -332,28 +333,30 @@ export default function TaskWorkspacePage() {
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                {dirty[student.id] ? (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => saveScore(student.id)}
-                                                        disabled={isPending}
-                                                    >
-                                                        <Save className="h-4 w-4" />
-                                                    </Button>
-                                                ) : scores[student.id] !== undefined && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => setUnGradeId(student.id)}
-                                                        disabled={isPending}
-                                                        title="Un-grade"
-                                                    >
-                                                        <RotateCcw className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                                                    </Button>
-                                                )}
-                                            </TableCell>
+                                            {assignment.type !== 'QUIZ' && (
+                                                <TableCell>
+                                                    {dirty[student.id] ? (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() => saveScore(student.id)}
+                                                            disabled={isPending}
+                                                        >
+                                                            <Save className="h-4 w-4" />
+                                                        </Button>
+                                                    ) : scores[student.id] !== undefined && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() => setUnGradeId(student.id)}
+                                                            disabled={isPending}
+                                                            title="Un-grade"
+                                                        >
+                                                            <RotateCcw className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                                        </Button>
+                                                    )}
+                                                </TableCell>
+                                            )}
                                         </TableRow>
                                     )
                                 })}
@@ -386,7 +389,7 @@ export default function TaskWorkspacePage() {
                                     <div>
                                         <div className="font-medium">{student.name}</div>
                                         <div className="mt-1">
-                                            {assignment.type === "SUBMISSION" && (
+                                            {(assignment.type === "SUBMISSION" || assignment.type === "QUIZ") && (
                                                 <div className="flex items-center gap-2">
                                                     {scores[student.id] !== undefined ? (
                                                         <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
@@ -442,6 +445,7 @@ export default function TaskWorkspacePage() {
                                                 max="100"
                                                 value={scores[student.id] ?? ""}
                                                 onChange={(e) => handleScoreChange(student.id, e.target.value)}
+                                                disabled={assignment.type === 'QUIZ'}
                                                 className={cn(
                                                     "h-10 text-lg w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
                                                     isExtraCredit ? "border-green-500 focus-visible:ring-green-500" : ""
@@ -465,26 +469,28 @@ export default function TaskWorkspacePage() {
                                             )}
                                         </div>
                                     </div>
-                                    {dirty[student.id] ? (
-                                        <Button
-                                            size="default"
-                                            variant="default"
-                                            onClick={() => saveScore(student.id)}
-                                            disabled={isPending}
-                                            className="h-10 w-10 p-0 rounded-full"
-                                        >
-                                            <Save className="h-5 w-5" />
-                                        </Button>
-                                    ) : scores[student.id] !== undefined && (
-                                        <Button
-                                            size="default"
-                                            variant="outline"
-                                            onClick={() => setUnGradeId(student.id)}
-                                            disabled={isPending}
-                                            className="h-10 w-10 p-0 rounded-full"
-                                        >
-                                            <RotateCcw className="h-5 w-5 text-muted-foreground" />
-                                        </Button>
+                                    {assignment.type !== 'QUIZ' && (
+                                        dirty[student.id] ? (
+                                            <Button
+                                                size="default"
+                                                variant="default"
+                                                onClick={() => saveScore(student.id)}
+                                                disabled={isPending}
+                                                className="h-10 w-10 p-0 rounded-full"
+                                            >
+                                                <Save className="h-5 w-5" />
+                                            </Button>
+                                        ) : scores[student.id] !== undefined && (
+                                            <Button
+                                                size="default"
+                                                variant="outline"
+                                                onClick={() => setUnGradeId(student.id)}
+                                                disabled={isPending}
+                                                className="h-10 w-10 p-0 rounded-full"
+                                            >
+                                                <RotateCcw className="h-5 w-5 text-muted-foreground" />
+                                            </Button>
+                                        )
                                     )}
                                 </div>
                             </CardContent>

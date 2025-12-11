@@ -59,6 +59,7 @@ model User {
   deletedAt DateTime?
 
   materials Material[] @relation("TeacherMaterials")
+  quizzes   Quiz[]     @relation("TeacherQuizzes")
 
   conversations   Conversation[] @relation(fields: [conversationIds], references: [id])
   conversationIds String[]       @db.ObjectId
@@ -233,6 +234,7 @@ model Enrollment {
 enum AssignmentType {
   SUBMISSION
   NON_SUBMISSION
+  QUIZ
 }
 
 model Assignment {
@@ -251,6 +253,11 @@ model Assignment {
   course   Course @relation(fields: [courseId], references: [id])
 
   submissions Submission[]
+
+  quizId String? @db.ObjectId
+  quiz   Quiz?   @relation(fields: [quizId], references: [id])
+
+  showGradeAfterSubmission Boolean @default(true)
 
   deletedAt DateTime?
 }
@@ -320,4 +327,44 @@ model Message {
   sender   User   @relation(fields: [senderId], references: [id])
 
   readByIds String[] @db.ObjectId // For read receipts if needed later
+}
+
+model Quiz {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  teacherId   String   @db.ObjectId
+  teacher     User     @relation("TeacherQuizzes", fields: [teacherId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions   QuizQuestion[]
+  assignments Assignment[]
+
+  deletedAt   DateTime?
+}
+
+model QuizQuestion {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  text      String
+  imageUrl  String?
+  order     Int      @default(0)
+
+  quizId    String   @db.ObjectId
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  choices   QuizChoice[]
+}
+
+model QuizChoice {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  
+  text       String
+  imageUrl   String?
+  isCorrect  Boolean      @default(false)
+  order      Int          @default(0)
+
+  questionId String       @db.ObjectId
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }

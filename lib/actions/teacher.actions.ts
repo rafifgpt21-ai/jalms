@@ -83,6 +83,7 @@ export async function getTeacherActiveCourses(teacherId: string) {
 }
 
 export async function createAssignment(data: {
+    quizId: any
     title: string
     description?: string
     courseId: string
@@ -92,6 +93,7 @@ export async function createAssignment(data: {
     isExtraCredit: boolean
     latePenalty: number
     intelligenceTypes?: IntelligenceType[]
+    showGradeAfterSubmission?: boolean
 }) {
     try {
         const assignment = await prisma.assignment.create({
@@ -104,7 +106,9 @@ export async function createAssignment(data: {
                 maxPoints: data.maxPoints,
                 isExtraCredit: data.isExtraCredit,
                 latePenalty: data.latePenalty,
-                intelligenceTypes: data.intelligenceTypes || []
+                intelligenceTypes: data.intelligenceTypes || [],
+                quizId: data.quizId,
+                showGradeAfterSubmission: data.showGradeAfterSubmission ?? true,
             }
         })
 
@@ -259,6 +263,7 @@ export async function updateSubmissionScore(
 }
 
 export async function updateAssignment(data: {
+    quizId: any
     assignmentId: string
     title: string
     description?: string
@@ -268,6 +273,7 @@ export async function updateAssignment(data: {
     isExtraCredit: boolean
     latePenalty: number
     intelligenceTypes?: IntelligenceType[]
+    showGradeAfterSubmission?: boolean
 }) {
     try {
         const assignment = await prisma.assignment.update({
@@ -281,6 +287,8 @@ export async function updateAssignment(data: {
                 isExtraCredit: data.isExtraCredit,
                 latePenalty: data.latePenalty,
                 intelligenceTypes: data.intelligenceTypes || [],
+                quizId: data.quizId,
+                showGradeAfterSubmission: data.showGradeAfterSubmission ?? true,
             },
         })
 
