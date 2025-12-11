@@ -83,7 +83,7 @@ export async function getTeacherActiveCourses(teacherId: string) {
 }
 
 export async function createAssignment(data: {
-    quizId: any
+    quizId?: any
     title: string
     description?: string
     courseId: string
@@ -263,7 +263,7 @@ export async function updateSubmissionScore(
 }
 
 export async function updateAssignment(data: {
-    quizId: any
+    quizId?: any
     assignmentId: string
     title: string
     description?: string

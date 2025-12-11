@@ -120,40 +120,17 @@ export async function deleteQuiz(quizId: string) {
         if (!session?.user?.id) return { error: "Unauthorized" };
 
         const quiz = await db.quiz.findUnique({
-            where: { id: quizId },
-            include: {
-                questions: {
-                    include: { choices: true }
-                }
-            }
+            where: { id: quizId }
         });
 
         if (!quiz) return { error: "Quiz not found" };
         if (quiz.teacherId !== session.user.id) return { error: "Unauthorized" };
 
-        // Collect all images to delete from questions and choices
-        const imagesToDelete: string[] = [];
-        quiz.questions.forEach(q => {
-            if (q.imageUrl) imagesToDelete.push(q.imageUrl);
-            q.choices.forEach(c => {
-                if (c.imageUrl) imagesToDelete.push(c.imageUrl);
-            });
-        });
-
-        if (imagesToDelete.length > 0) {
-            await deleteQuizImages(imagesToDelete);
-        }
-
-        // Decouple assignments and delete quiz
-        await db.$transaction([
-            db.assignment.updateMany({
-                where: { quizId: quizId },
-                data: { quizId: null } // Or handle as needed, but safely decoupling is best
-            }),
-            db.quiz.delete({
-                where: { id: quizId }
-            })
-        ]);
+        // Soft delete
+        await db.quiz.update({
+            where: { id: quizId },
+            data: { deletedAt: new Date() }
+        })
 
         revalidatePath("/teacher/quiz-manager")
         return { success: true }
@@ -161,6 +138,33 @@ export async function deleteQuiz(quizId: string) {
     } catch (error) {
         console.error("Error deleting quiz:", error)
         return { error: "Failed to delete quiz" }
+    }
+}
+
+export async function restoreQuiz(quizId: string) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { error: "Unauthorized" };
+
+        const quiz = await db.quiz.findUnique({
+            where: { id: quizId }
+        });
+
+        if (!quiz) return { error: "Quiz not found" };
+        if (quiz.teacherId !== session.user.id) return { error: "Unauthorized" };
+
+        // Restore
+        await db.quiz.update({
+            where: { id: quizId },
+            data: { deletedAt: null }
+        })
+
+        revalidatePath("/teacher/quiz-manager")
+        return { success: true }
+
+    } catch (error) {
+        console.error("Error restoring quiz:", error)
+        return { error: "Failed to restore quiz" }
     }
 }
 
@@ -254,7 +258,7 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
                     } else {
                         await tx.quizChoice.create({
                             data: {
-                                questionId: data.id,
+                                questionId: data.id!,
                                 text: choice.text,
                                 imageUrl: choice.imageUrl,
                                 isCorrect: choice.isCorrect,

@@ -40,7 +40,6 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
     const [questions, setQuestions] = useState<Question[]>([])
     const [loading, setLoading] = useState(true)
     const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers || {})
-    const [currentStep, setCurrentStep] = useState(0)
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
 
@@ -96,128 +95,100 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
         return <div className="text-center p-8">No questions in this quiz.</div>
     }
 
-    const currentQuestion = questions[currentStep]
-    const isLastQuestion = currentStep === questions.length - 1
-
     return (
-        <div className="space-y-6 max-w-2xl mx-auto">
-            {/* Progress / Step Indicator */}
-            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                <span>Question {currentStep + 1} of {questions.length}</span>
-            </div>
-
-            <Card>
-                <CardContent className="p-6 space-y-6">
-                    {/* Question */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium leading-relaxed">
-                            {currentQuestion.text}
-                        </h3>
-                        {currentQuestion.imageUrl && (
-                            <div className="w-full rounded-md overflow-hidden bg-muted border">
-                                <Image
-                                    src={currentQuestion.imageUrl}
-                                    alt="Question Image"
-                                    width={0}
-                                    height={0}
-                                    sizes="100vw"
-                                    className="w-full h-auto"
-                                    priority
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Choices */}
-                    <RadioGroup
-                        value={answers[currentQuestion.id] || ""}
-                        onValueChange={(val) => handleAnswer(currentQuestion.id, val)}
-                        disabled={isReadOnly}
-                        className="space-y-3"
-                    >
-                        {currentQuestion.choices.map((choice) => {
-                            const hasImage = !!choice.imageUrl
-                            return (
-                                <div
-                                    key={choice.id}
-                                    onClick={() => handleAnswer(currentQuestion.id, choice.id)}
-                                    className={cn(
-                                        "flex space-x-3 space-y-0 rounded-md border p-4 transition-all cursor-pointer",
-                                        answers[currentQuestion.id] === choice.id
-                                            ? 'bg-primary/10 border-primary ring-2 ring-primary ring-offset-2'
-                                            : 'hover:bg-muted/50 border-input',
-                                        hasImage ? "items-start" : "items-center"
-                                    )}
-                                >
-                                    <RadioGroupItem
-                                        value={choice.id}
-                                        id={choice.id}
-                                        className="sr-only" // Hide the actual radio button visually
-                                    />
-                                    <Label htmlFor={choice.id} className="flex-1 cursor-pointer font-normal grid gap-2 pointer-events-none">
-                                        <span className="leading-normal font-medium">{choice.text}</span>
-                                        {choice.imageUrl && (
-                                            <div className="relative w-full aspect-video rounded-sm overflow-hidden border">
+        <div className="space-y-8 max-w-3xl mx-auto pb-12">
+            <div className="space-y-6">
+                {questions.map((question, index) => (
+                    <Card key={question.id} className="overflow-hidden">
+                        <CardContent className="p-6 space-y-6">
+                            {/* Question Header */}
+                            <div className="space-y-4">
+                                <div className="flex gap-3">
+                                    <span className="flex-none flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-medium text-sm">
+                                        {index + 1}
+                                    </span>
+                                    <div className="space-y-4 flex-1">
+                                        <h3 className="text-lg font-medium leading-relaxed pt-0.5">
+                                            {question.text}
+                                        </h3>
+                                        {question.imageUrl && (
+                                            <div className="w-full rounded-md overflow-hidden bg-muted border">
                                                 <Image
-                                                    src={choice.imageUrl}
-                                                    alt="Choice Image"
-                                                    fill
-                                                    className="object-cover"
+                                                    src={question.imageUrl}
+                                                    alt="Question Image"
+                                                    width={0}
+                                                    height={0}
+                                                    sizes="100vw"
+                                                    className="w-full h-auto"
+                                                    priority={index < 2}
                                                 />
                                             </div>
                                         )}
-                                    </Label>
+                                    </div>
                                 </div>
-                            )
-                        })}
-                    </RadioGroup>
-                </CardContent>
-            </Card>
+                            </div>
 
-            {/* Navigation */}
-            <div className="flex justify-between pt-2">
-                <Button
-                    variant="outline"
-                    onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-                    disabled={currentStep === 0 || isPending}
-                >
-                    Previous
-                </Button>
-
-                {isLastQuestion ? (
-                    !isReadOnly ? (
-                        <Button onClick={handleSubmit} disabled={isPending}>
-                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Submit Quiz
-                        </Button>
-                    ) : (
-                        <div className="text-sm text-muted-foreground flex items-center">
-                            Quiz Completed
-                        </div>
-                    )
-                ) : (
-                    <Button onClick={() => setCurrentStep(prev => Math.min(questions.length - 1, prev + 1))}>
-                        Next
-                    </Button>
-                )}
+                            {/* Choices */}
+                            <RadioGroup
+                                value={answers[question.id] || ""}
+                                onValueChange={(val) => handleAnswer(question.id, val)}
+                                disabled={isReadOnly}
+                                className="space-y-3 pl-11"
+                            >
+                                {question.choices.map((choice) => {
+                                    const hasImage = !!choice.imageUrl
+                                    return (
+                                        <div
+                                            key={choice.id}
+                                            onClick={() => handleAnswer(question.id, choice.id)}
+                                            className={cn(
+                                                "flex space-x-3 space-y-0 rounded-md border p-4 transition-all cursor-pointer",
+                                                answers[question.id] === choice.id
+                                                    ? 'bg-primary/10 border-primary ring-2 ring-primary ring-offset-2'
+                                                    : 'hover:bg-muted/50 border-input',
+                                                hasImage ? "items-start" : "items-center"
+                                            )}
+                                        >
+                                            <RadioGroupItem
+                                                value={choice.id}
+                                                id={choice.id}
+                                                className="sr-only"
+                                            />
+                                            <Label htmlFor={choice.id} className="flex-1 cursor-pointer font-normal grid gap-2 pointer-events-none">
+                                                <span className="leading-normal font-medium">{choice.text}</span>
+                                                {choice.imageUrl && (
+                                                    <div className="relative w-full aspect-video rounded-sm overflow-hidden border">
+                                                        <Image
+                                                            src={choice.imageUrl}
+                                                            alt="Choice Image"
+                                                            fill
+                                                            className="object-cover"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </Label>
+                                        </div>
+                                    )
+                                })}
+                            </RadioGroup>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
 
-            {/* Quick Navigation (Optional) */}
-            <div className="flex flex-wrap gap-2 justify-center mt-6">
-                {questions.map((_, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => setCurrentStep(idx)}
-                        className={`w-8 h-8 rounded-full text-xs flex items-center justify-center transition-colors ${idx === currentStep
-                            ? 'bg-primary text-primary-foreground'
-                            : answers[questions[idx].id]
-                                ? 'bg-primary/20 text-primary hover:bg-primary/30'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }`}
-                    >
-                        {idx + 1}
-                    </button>
-                ))}
+            {/* Submit Action */}
+            <div className="flex justify-end pt-6 border-t mt-4">
+                {!isReadOnly ? (
+                    <Button onClick={handleSubmit} disabled={isPending} size="lg" className="w-full sm:w-auto min-w-[200px]">
+                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Submit Quiz
+                    </Button>
+                ) : (
+                    <div className="flex items-center gap-2 text-muted-foreground bg-muted px-4 py-2 rounded-md">
+                        <CheckCircle className="h-5 w-5" />
+                        <span>Quiz Completed</span>
+                    </div>
+                )}
             </div>
         </div>
     )

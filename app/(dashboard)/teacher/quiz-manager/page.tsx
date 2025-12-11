@@ -1,4 +1,6 @@
 import { getQuizzes } from "@/lib/actions/quiz.actions"
+
+export const dynamic = "force-dynamic"
 import { CreateQuizDialog } from "@/components/teacher/quiz/create-quiz-dialog"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
