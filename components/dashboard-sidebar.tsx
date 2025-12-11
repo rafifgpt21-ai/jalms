@@ -277,13 +277,13 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                                 <div
                                                     className={cn(
                                                         "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
-                                                        pathname.includes("/tasks")
+                                                        pathname.includes("/tasks") && !pathname.includes("/tasks-summary")
                                                             ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
                                                             : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                                     )}
                                                 >
-                                                    <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-blue-600 dark:text-blue-400")} />
-                                                    {pathname.includes("/tasks") && (
+                                                    <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && "text-blue-600 dark:text-blue-400")} />
+                                                    {pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && (
                                                         <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-blue-500" />
                                                     )}
                                                 </div>
@@ -322,16 +322,16 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                             onClick={() => setTasksExpanded(!tasksExpanded)}
                                             className={cn(
                                                 "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
-                                                pathname.includes("/tasks")
+                                                pathname.includes("/tasks") && !pathname.includes("/tasks-summary")
                                                     ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
                                                     : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                             )}
                                         >
-                                            {pathname.includes("/tasks") && (
+                                            {pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && (
                                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/50" />
                                             )}
                                             <div className="flex items-center gap-3">
-                                                <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-blue-600 dark:text-blue-400")} />
+                                                <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && "text-blue-600 dark:text-blue-400")} />
                                                 <span>Tasks</span>
                                             </div>
                                             <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
@@ -366,6 +366,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                 )}
                             </div>
 
+                            <NavItem href={`/teacher/courses/${selectedCourseId}/tasks-summary`} icon={Table} label="Tasks Summary" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/tasks-summary`)} />
                             <NavItem href={`/teacher/courses/${selectedCourseId}/attendance`} icon={Clock} label="Attendance" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/attendance`)} />
                             <NavItem href={`/teacher/courses/${selectedCourseId}/gradebook`} icon={GraduationCap} label="Gradebook" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/gradebook`)} />
                         </div>

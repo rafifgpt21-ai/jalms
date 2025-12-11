@@ -37,6 +37,9 @@ export async function getTeachersWithCourses(search: string = "") {
                         },
                         class: true,
                         subject: true,
+                        schedules: {
+                            where: { deletedAt: { isSet: false } }
+                        },
                         _count: {
                             select: { students: true }
                         }
@@ -624,5 +627,96 @@ export async function getTeacherDashboardStats() {
     } catch (error) {
         console.error("Error fetching dashboard stats:", error)
         return { error: "Failed to fetch dashboard stats" }
+    }
+}
+
+export async function getCourseTaskSummary(courseId: string) {
+    try {
+        const sessionUser = await getUser()
+
+        if (!sessionUser?.id) return { error: "Unauthorized - No User" }
+
+        // Fetch full user to check roles
+        const user = await prisma.user.findUnique({
+            where: { id: sessionUser.id },
+            select: { id: true, roles: true }
+        })
+
+        if (!user) return { error: "User not found" }
+
+        const course = await prisma.course.findUnique({
+            where: { id: courseId },
+            include: {
+                students: {
+                    orderBy: { name: 'asc' }
+                },
+                assignments: {
+                    where: { deletedAt: { isSet: false } },
+                    orderBy: { dueDate: 'asc' },
+                    include: {
+                        submissions: {
+                            where: { deletedAt: { isSet: false } }
+                        }
+                    }
+                }
+            }
+        })
+
+        if (!course) return { error: "Course not found" }
+
+        const isTeacher = course.teacherId === user.id
+        const isAdmin = user.roles.includes("ADMIN")
+
+        if (!isTeacher && !isAdmin) {
+            return { error: "Unauthorized - Teacher Mismatch" }
+        }
+
+        const summaryData = course.students.map(student => {
+            const studentTasks = course.assignments.map(assignment => {
+                const submission = assignment.submissions.find(s => s.studentId === student.id)
+
+                let status: "MISSING" | "SUBMITTED" | "GRADED" | "PENDING" = "PENDING"
+
+                if (submission) {
+                    if (submission.grade !== null) {
+                        status = "GRADED"
+                    } else {
+                        status = "SUBMITTED"
+                    }
+                } else {
+                    const now = new Date()
+                    if (assignment.dueDate && now > assignment.dueDate) {
+                        status = "MISSING"
+                    } else {
+                        status = "PENDING"
+                    }
+                }
+
+                return {
+                    assignmentId: assignment.id,
+                    assignmentTitle: assignment.title,
+                    status,
+                    grade: submission?.grade ?? null,
+                    maxPoints: assignment.maxPoints
+                }
+            })
+
+            return {
+                studentId: student.id,
+                studentName: student.name,
+                studentAvatar: student.image,
+                tasks: studentTasks
+            }
+        })
+
+        return {
+            data: summaryData,
+            assignments: course.assignments.map(a => ({ id: a.id, title: a.title, dueDate: a.dueDate })),
+            courseName: course.name
+        }
+
+    } catch (error) {
+        console.error("Error fetching task summary:", error)
+        return { error: "Failed to fetch task summary" }
     }
 }
