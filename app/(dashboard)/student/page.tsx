@@ -20,7 +20,6 @@ export default async function StudentDashboard() {
     return (
         <div className="space-y-6">
             <MobileHeaderSetter title="Student Dashboard" />
-            <h1 className="text-3xl font-bold">Student Dashboard</h1>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {/* Today's Schedule */}

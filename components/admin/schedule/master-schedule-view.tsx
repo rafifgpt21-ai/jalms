@@ -153,9 +153,11 @@ export function MasterScheduleView({ schedules }: MasterScheduleViewProps) {
                                                             <div className="font-semibold text-xs line-clamp-2" title={schedule.course.name}>
                                                                 {schedule.course.name}
                                                             </div>
-                                                            <Badge variant="outline" className="w-fit mx-auto text-[10px] bg-white whitespace-nowrap">
-                                                                {schedule.course.class?.name || "No Class"}
-                                                            </Badge>
+                                                            {schedule.course.class?.name && (
+                                                                <Badge variant="outline" className="w-fit mx-auto text-[10px] bg-white whitespace-nowrap">
+                                                                    {schedule.course.class.name}
+                                                                </Badge>
+                                                            )}
                                                             {schedule.course.subject && (
                                                                 <span className="text-[10px] text-gray-500 line-clamp-1">
                                                                     {schedule.course.subject.code}
