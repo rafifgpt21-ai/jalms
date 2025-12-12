@@ -514,26 +514,48 @@ export async function getTeacherDashboardStats() {
             }
         })
 
-        // 3. Get Upcoming Assignments (next 5)
-        const upcomingAssignments = await prisma.assignment.findMany({
+        // 3. Get All Assignments (for Dashboard Widget) - replacing upcomingAssignments
+        const allAssignments = await prisma.assignment.findMany({
             where: {
                 course: {
                     teacherId,
-                    term: { isActive: true }
+                    term: { isActive: true },
+                    deletedAt: { isSet: false },
                 },
                 deletedAt: { isSet: false },
-                dueDate: {
-                    gte: new Date()
-                }
             },
-            take: 5,
             orderBy: { dueDate: 'asc' },
             include: {
-                course: true,
-                _count: {
-                    select: { submissions: true }
+                course: {
+                    select: {
+                        id: true,
+                        name: true,
+                        // Get total students in course for "Total"
+                        _count: {
+                            select: { students: true }
+                        }
+                    }
+                },
+                // Get graded submissions count
+                submissions: {
+                    where: {
+                        grade: { not: null },
+                        deletedAt: { isSet: false }
+                    },
+                    select: { id: true }
                 }
             }
+        })
+
+        // 3.1 Get Active Courses for Filter
+        const activeCourses = await prisma.course.findMany({
+            where: {
+                teacherId,
+                term: { isActive: true },
+                deletedAt: { isSet: false }
+            },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' }
         })
 
         // 4. Get Classes Today with Topics
@@ -620,7 +642,8 @@ export async function getTeacherDashboardStats() {
                 ungraded: ungradedCount
             },
             recentSubmissions,
-            upcomingAssignments,
+            allAssignments,
+            activeCourses,
             classesToday
         }
 

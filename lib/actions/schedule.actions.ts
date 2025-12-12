@@ -293,3 +293,33 @@ export async function getMasterSchedule() {
         return { error: "Failed to fetch master schedule" }
     }
 }
+
+export async function getStudentSchedule(studentId: string) {
+    try {
+        const courses = await prisma.course.findMany({
+            where: {
+                studentIds: { has: studentId },
+                deletedAt: { isSet: false },
+                term: { isActive: true }
+            },
+            include: {
+                schedules: {
+                    where: { deletedAt: { isSet: false } }
+                },
+                teacher: {
+                    select: {
+                        name: true,
+                        nickname: true
+                    }
+                },
+                subject: true,
+                class: true
+            }
+        })
+
+        return { courses }
+    } catch (error) {
+        console.error("Error fetching student schedule:", error)
+        return { error: "Failed to fetch schedule" }
+    }
+}

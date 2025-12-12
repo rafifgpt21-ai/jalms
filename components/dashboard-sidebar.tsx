@@ -58,12 +58,13 @@ interface SidebarNavProps {
     userRoles: Role[]
     isCollapsed?: boolean
     onNavigate?: () => void
-    courses?: any[]
+    teacherCourses?: any[]
+    studentCourses?: any[]
     isMobile?: boolean
     hasUnreadMessages?: boolean
 }
 
-export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], isMobile = false, hasUnreadMessages = false }: SidebarNavProps) {
+export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses = [], studentCourses = [], isMobile = false, hasUnreadMessages = false }: SidebarNavProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
@@ -81,14 +82,19 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
 
     // Auto-select course based on URL
     useEffect(() => {
-        if (pathname.startsWith("/teacher/courses/") || pathname.startsWith("/student/courses/")) {
+        if (pathname.startsWith("/teacher/courses/")) {
             const courseId = pathname.split("/")[3]
-            if (courseId && courses.some(c => c.id === courseId)) {
+            if (courseId && teacherCourses.some(c => c.id === courseId)) {
                 setSelectedCourseId(courseId)
-                setTasksExpanded(true) // Expand tasks by default when in a course
+                setTasksExpanded(true)
+            }
+        } else if (pathname.startsWith("/student/courses/")) {
+            const courseId = pathname.split("/")[3]
+            if (courseId && studentCourses.some(c => c.id === courseId)) {
+                setSelectedCourseId(courseId)
             }
         }
-    }, [pathname, courses])
+    }, [pathname, teacherCourses, studentCourses])
 
     // Fetch assignments when course changes or path changes (to catch updates after navigation)
     useEffect(() => {
@@ -230,7 +236,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                 <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                     <DropdownMenuLabel>Select Course</DropdownMenuLabel>
                                     <DropdownMenuSeparator className="bg-sidebar-border" />
-                                    {courses.map(course => (
+                                    {teacherCourses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
@@ -256,7 +262,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                     <SelectValue placeholder="Select Course" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {courses.map(course => (
+                                    {teacherCourses.map(course => (
                                         <SelectItem key={course.id} value={course.id}>
                                             {course.name}
                                         </SelectItem>
@@ -389,6 +395,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                         <NavItem href="/student/learning-profile" icon={PieChart} label="Learning Profile" active={pathname === "/student/learning-profile"} />
                         <NavItem href="/student/attendance" icon={Clock} label="Attendance" active={pathname === "/student/attendance"} />
                         <NavItem href="/student/grades" icon={GraduationCap} label="Grades" active={pathname === "/student/grades"} />
+                        <NavItem href="/student/schedule" icon={Calendar} label="Schedule" active={pathname === "/student/schedule"} />
                     </div>
 
                     {isCollapsed ? (
@@ -402,7 +409,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                 <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                     <DropdownMenuLabel>Select Course</DropdownMenuLabel>
                                     <DropdownMenuSeparator className="bg-sidebar-border" />
-                                    {courses.map(course => (
+                                    {studentCourses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
@@ -426,7 +433,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
                                     <SelectValue placeholder="Select Course" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {courses.map(course => (
+                                    {studentCourses.map(course => (
                                         <SelectItem key={course.id} value={course.id}>
                                             {course.name}
                                         </SelectItem>
@@ -529,12 +536,13 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, courses = [], i
 
 interface DashboardSidebarProps {
     userRoles: Role[]
-    courses?: any[]
+    teacherCourses?: any[]
+    studentCourses?: any[]
     conversations?: any[]
     userId?: string
 }
 
-export function DashboardSidebar({ userRoles, courses, conversations: initialConversations = [], userId }: DashboardSidebarProps) {
+export function DashboardSidebar({ userRoles, teacherCourses, studentCourses, conversations: initialConversations = [], userId }: DashboardSidebarProps) {
     const [isCollapsed, setIsCollapsed] = useState(false)
     const pathname = usePathname()
     const isSocials = pathname.startsWith("/socials")
@@ -563,7 +571,9 @@ export function DashboardSidebar({ userRoles, courses, conversations: initialCon
                     />
                 ) : (
                     <div className={cn("p-4", isCollapsed && "p-2")}>
-                        <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} courses={courses} hasUnreadMessages={hasUnreadMessages} />
+                        <div className={cn("p-4", isCollapsed && "p-2")}>
+                            <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} teacherCourses={teacherCourses} studentCourses={studentCourses} hasUnreadMessages={hasUnreadMessages} />
+                        </div>
                     </div>
                 )}
             </div>

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { Button } from "@/components/ui/button"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { DashboardTaskWidget } from "@/components/teacher/dashboard-task-widget"
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export default async function TeacherDashboard() {
         return <div className="p-6">Error loading dashboard: {data.error}</div>
     }
 
-    const { stats, recentSubmissions, upcomingAssignments, classesToday } = data
+    const { stats, recentSubmissions, allAssignments, activeCourses, classesToday } = data
 
     return (
         <div className="space-y-6">
@@ -87,13 +88,14 @@ export default async function TeacherDashboard() {
                 </Card>
             </div>
 
+
             <div className="grid gap-4 md:grid-cols-2">
                 {/* Recent Submissions */}
-                <Card className="col-span-1">
+                <Card className="col-span-1 h-[400px] flex flex-col">
                     <CardHeader>
                         <CardTitle>Recent Submissions</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex-1 overflow-auto pr-2">
                         <div className="space-y-4">
                             {recentSubmissions?.length === 0 && (
                                 <p className="text-sm text-muted-foreground">No recent submissions.</p>
@@ -122,38 +124,11 @@ export default async function TeacherDashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Upcoming Deadlines */}
-                <Card className="col-span-1">
-                    <CardHeader>
-                        <CardTitle>Upcoming Deadlines</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {upcomingAssignments?.length === 0 && (
-                                <p className="text-sm text-muted-foreground">No upcoming deadlines.</p>
-                            )}
-                            {upcomingAssignments?.map((assignment: any) => (
-                                <div key={assignment.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium leading-none">{assignment.title}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {assignment.course.name}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center text-xs text-muted-foreground">
-                                            <Clock className="mr-1 h-3 w-3" />
-                                            {format(new Date(assignment.dueDate), "MMM d")}
-                                        </div>
-                                        <Badge variant="secondary">
-                                            {assignment._count.submissions} Submissions
-                                        </Badge>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* Updates: Dashboard Task Widget */}
+                <DashboardTaskWidget
+                    tasks={allAssignments || []}
+                    courses={activeCourses || []}
+                />
             </div>
         </div>
     )

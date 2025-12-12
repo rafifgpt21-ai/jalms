@@ -86,7 +86,8 @@ export default async function DashboardLayout({
                         <div className="hidden md:flex!">
                             <DashboardSidebar
                                 userRoles={userRoles}
-                                courses={allCourses}
+                                teacherCourses={teacherCourses}
+                                studentCourses={studentCourses}
                                 conversations={conversations}
                                 userId={session.user?.id}
                             />
@@ -101,7 +102,8 @@ export default async function DashboardLayout({
                     <BottomNavigation
                         roles={userRoles}
                         hasUnreadMessages={hasUnreadMessages}
-                        courses={allCourses}
+                        teacherCourses={teacherCourses}
+                        studentCourses={studentCourses}
                         userEmail={session.user?.email}
                         userName={session.user?.name}
                         userNickname={session.user?.nickname}

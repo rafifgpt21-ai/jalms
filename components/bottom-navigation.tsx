@@ -27,7 +27,8 @@ import { UserSettings } from "@/components/user-settings"
 interface BottomNavigationProps {
     roles: Role[]
     hasUnreadMessages?: boolean
-    courses?: any[]
+    teacherCourses?: any[]
+    studentCourses?: any[]
     userEmail?: string | null
     userName?: string | null
     userNickname?: string | null
@@ -39,7 +40,8 @@ interface BottomNavigationProps {
 export function BottomNavigation({
     roles,
     hasUnreadMessages: initialHasUnread = false,
-    courses,
+    teacherCourses,
+    studentCourses,
     userEmail,
     userName,
     userNickname,
@@ -174,7 +176,8 @@ export function BottomNavigation({
                                         <SidebarNav
                                             userRoles={roles}
                                             onNavigate={() => setOpen(false)}
-                                            courses={courses}
+                                            teacherCourses={teacherCourses}
+                                            studentCourses={studentCourses}
                                             isMobile={true}
                                             hasUnreadMessages={hasUnreadMessages}
                                         />
