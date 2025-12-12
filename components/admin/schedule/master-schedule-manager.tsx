@@ -27,6 +27,15 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, X, Search, ChevronLeft, ChevronRight, Loader2, Save } from "lucide-react"
@@ -91,6 +100,8 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
     const [searchQuery, setSearchQuery] = useState("")
     const [isUpdating, setIsUpdating] = useState(false)
     const [viewMode, setViewMode] = useState<"day" | "week">("day")
+    const [conflictDetails, setConflictDetails] = useState<string[] | null>(null)
+    const [showConflictDialog, setShowConflictDialog] = useState(false)
 
     // Filter teachers based on search
     const filteredTeachers = useMemo(() => {
@@ -124,7 +135,10 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
             const dbDay = DB_DAY_MAPPING[dayStr]
             const result = await updateSchedule(teacherId, dbDay, period, courseId)
 
-            if (result.error) {
+            if (result.conflictDetails) {
+                setConflictDetails(result.conflictDetails)
+                setShowConflictDialog(true)
+            } else if (result.error) {
                 toast.error(result.error)
             } else {
                 toast.success("Schedule updated")
@@ -139,6 +153,29 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
 
     return (
         <div className="space-y-6">
+            {/* Conflict Dialog */}
+            <AlertDialog open={showConflictDialog} onOpenChange={setShowConflictDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Schedule Conflict Detected</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="flex flex-col gap-2 mt-2">
+                                {conflictDetails?.map((detail, index) => (
+                                    <div key={index} className="text-sm bg-red-50 text-red-700 p-2 rounded border border-red-200">
+                                        {detail}
+                                    </div>
+                                ))}
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setShowConflictDialog(false)}>
+                            Understood
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             {/* Header Controls */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
                 <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto">
@@ -221,7 +258,7 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                                 filteredTeachers.map(teacher => (
                                     <TableRow key={teacher.id} className="hover:bg-muted/50">
                                         {/* Teacher Sticky Column */}
-                                        <TableCell className="font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[200px] min-w-[200px] align-top py-4">
+                                        <TableCell className="font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[200px] min-w-[200px] align-top py-2">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={teacher.image || ""} />
@@ -314,7 +351,7 @@ function ScheduleCell({ teacher, period, dayStr, assignedCourse, onUpdate, disab
                 <div
                     className={cn(
                         "rounded border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-colors hover:bg-accent",
-                        compact ? "h-[40px] p-0.5 text-[9px]" : "h-[70px] p-1",
+                        compact ? "h-[40px] p-0.5 text-[9px]" : "h-[50px] p-1",
                         assignedCourse ? "bg-blue-50/50 border-blue-200 border-solid" : "hover:border-gray-400",
                         disabled && "opacity-50 cursor-wait"
                     )}

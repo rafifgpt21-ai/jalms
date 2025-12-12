@@ -57,11 +57,14 @@ export async function updateSchedule(
             const conflicts = await checkCourseScheduleUpdateConflict(courseId, [{ day: dayOfWeek, period }])
 
             if (conflicts.length > 0) {
-                // Just report the first one for brevity in UI
-                const first = conflicts[0]
                 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                const conflictDetails = conflicts.map(c =>
+                    `Conflict for student ${c.studentName} with ${c.conflict.courseName} on ${days[c.conflict.dayOfWeek]} Period ${c.conflict.period}`
+                )
+
                 return {
-                    error: `Conflict for student ${first.studentName} with ${first.conflict.courseName} on ${days[first.conflict.dayOfWeek]} Period ${first.conflict.period}`
+                    error: "Schedule conflict detected",
+                    conflictDetails
                 }
             }
 
