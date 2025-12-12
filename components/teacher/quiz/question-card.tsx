@@ -344,7 +344,7 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <Label htmlFor={`q-img-${question?.id || 'new'}`} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                                <Label htmlFor={`q-img-${question?.id || 'new'}`} style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-white/50 dark:bg-slate-900/50 hover:bg-accent hover:text-accent-foreground h-9 px-3">
                                     <ImageIcon className="mr-2 h-4 w-4" />
                                     Add Image
                                 </Label>
@@ -402,7 +402,7 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2">
-                                    <Label htmlFor={`q-audio-${question?.id || 'new'}`} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                                    <Label htmlFor={`q-audio-${question?.id || 'new'}`} style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-white/50 dark:bg-slate-900/50 hover:bg-accent hover:text-accent-foreground h-9 px-3">
                                         <AudioLines className="mr-2 h-4 w-4" />
                                         Attach Audio
                                     </Label>

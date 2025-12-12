@@ -138,11 +138,14 @@ export default async function AdminDashboard() {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {quickActions.map((action) => (
                             <Link key={action.label} href={action.href}>
-                                <div className="h-full flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-lg hover:-translate-y-1 group text-center cursor-pointer">
-                                    <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110", action.bg, action.color)}>
+                                <div
+                                    style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
+                                    className="h-full flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-slate-900/40 transition-all hover:bg-white/60 dark:hover:bg-slate-900/60 hover:border-indigo-200/50 dark:hover:border-indigo-800/50 hover:shadow-lg hover:-translate-y-1 group text-center cursor-pointer shadow-sm"
+                                >
+                                    <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm", action.bg, action.color)}>
                                         <action.icon className="h-6 w-6" />
                                     </div>
-                                    <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                         {action.label}
                                     </span>
                                 </div>

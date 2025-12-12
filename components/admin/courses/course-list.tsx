@@ -120,68 +120,68 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
                     </div>
                     <div className="flex w-full sm:w-auto items-center space-x-2">
                         <div className="relative flex-1 sm:flex-initial">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
                             <Input
                                 placeholder="Search courses..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                className="pl-9 w-full sm:w-[300px]"
+                                className="pl-9 w-full sm:w-[300px] bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-white/10 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-slate-900/80 transition-all rounded-xl"
                             />
                         </div>
-                        <Button onClick={handleSearch} variant="secondary">Search</Button>
+                        <Button onClick={handleSearch} variant="secondary" className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 hover:bg-white/80 dark:hover:bg-slate-800/80 rounded-xl">Search</Button>
                     </div>
                 </div>
             </div>
 
-            <div className="border rounded-lg">
+            <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Course Name</TableHead>
-                            <TableHead>Subject</TableHead>
-                            <TableHead className="max-md:hidden">Teacher</TableHead>
-                            <TableHead className="max-lg:hidden">Semester</TableHead>
-                            <TableHead className="max-sm:hidden">Students</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                    <TableHeader className="bg-white/20 dark:bg-white/5 border-b border-white/10">
+                        <TableRow className="hover:bg-transparent border-white/10">
+                            <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Course Name</TableHead>
+                            <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Subject</TableHead>
+                            <TableHead className="max-md:hidden text-slate-700 dark:text-slate-200 font-medium">Teacher</TableHead>
+                            <TableHead className="max-lg:hidden text-slate-700 dark:text-slate-200 font-medium">Semester</TableHead>
+                            <TableHead className="max-sm:hidden text-slate-700 dark:text-slate-200 font-medium">Students</TableHead>
+                            <TableHead className="text-right text-slate-700 dark:text-slate-200 font-medium">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredCourses.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center h-32 text-slate-500 dark:text-slate-400">
                                     No courses found.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             filteredCourses.map((course) => (
-                                <TableRow key={course.id}>
-                                    <TableCell className="font-medium">
+                                <TableRow key={course.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
+                                    <TableCell className="font-medium text-slate-700 dark:text-slate-200">
                                         {course.name}
                                     </TableCell>
-                                    <TableCell className="text-muted-foreground text-sm">
+                                    <TableCell className="text-slate-500 dark:text-slate-400 text-sm">
                                         {course.subject?.name || "-"}
                                     </TableCell>
-                                    <TableCell className="max-md:hidden">{course.teacher.name}</TableCell>
-                                    <TableCell className="max-lg:hidden">
+                                    <TableCell className="max-md:hidden text-slate-600 dark:text-slate-300">{course.teacher.name}</TableCell>
+                                    <TableCell className="max-lg:hidden text-slate-600 dark:text-slate-300">
                                         {course.term.academicYear.name} - {course.term.type === "ODD" ? "Odd" : "Even"}
                                     </TableCell>
-                                    <TableCell className="max-sm:hidden">
+                                    <TableCell className="max-sm:hidden text-slate-600 dark:text-slate-300">
                                         {course._count.students}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" asChild>
+                                            <Button variant="outline" size="sm" asChild className="bg-white/50 dark:bg-slate-800/50 border-white/20 dark:border-white/10 hover:bg-white/80 dark:hover:bg-slate-800/80 rounded-lg h-8">
                                                 <a href={`/admin/courses/${course.id}`}>Manage</a>
                                             </Button>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-white/40 dark:hover:bg-white/10 rounded-lg">
                                                         <span className="sr-only">Open menu</span>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
+                                                <DropdownMenuContent align="end" className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 dark:border-white/10">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem onClick={() => {
                                                         setEditingCourse(course)
@@ -190,7 +190,7 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
                                                         <Edit className="mr-2 h-4 w-4" />
                                                         Edit
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleDelete(course.id)} className="text-red-600">
+                                                    <DropdownMenuItem onClick={() => handleDelete(course.id)} className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20">
                                                         <Trash2 className="mr-2 h-4 w-4" />
                                                         Delete
                                                     </DropdownMenuItem>

@@ -101,14 +101,14 @@ export function MasterScheduleView({ schedules }: MasterScheduleViewProps) {
             </div>
 
             {/* Timetable Grid */}
-            <div className="rounded-md border bg-white shadow-sm overflow-hidden">
+            <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <Table className="min-w-[1000px]">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[250px] bg-gray-50 sticky left-0 z-10 border-r">Teacher</TableHead>
+                        <TableHeader className="bg-white/20 dark:bg-white/5 border-b border-white/10">
+                            <TableRow className="hover:bg-transparent border-white/10">
+                                <TableHead className="w-[250px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky left-0 z-10 border-r border-white/10 text-slate-700 dark:text-slate-200 font-medium">Teacher</TableHead>
                                 {PERIODS.map(period => (
-                                    <TableHead key={period} className="text-center w-[150px] bg-gray-50 border-r last:border-r-0">
+                                    <TableHead key={period} className="text-center w-[150px] border-r border-white/10 last:border-r-0 text-slate-700 dark:text-slate-200 font-medium">
                                         {getPeriodLabel(period)}
                                     </TableHead>
                                 ))}
@@ -123,21 +123,21 @@ export function MasterScheduleView({ schedules }: MasterScheduleViewProps) {
                                 </TableRow>
                             ) : (
                                 teachers.map(teacher => (
-                                    <TableRow key={teacher.id} className="hover:bg-transparent">
-                                        <TableCell className="font-medium bg-white sticky left-0 z-10 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                    <TableRow key={teacher.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
+                                        <TableCell className="font-medium bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky left-0 z-10 border-r border-white/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={teacher.image || undefined} />
                                                     <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-semibold">{teacher.name}</span>
+                                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{teacher.name}</span>
                                                     {teacher.nickname && (
-                                                        <span className="text-xs text-muted-foreground">{teacher.nickname}</span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400">{teacher.nickname}</span>
                                                     )}
                                                     <Link
                                                         href={`/admin/schedule?search=${encodeURIComponent(teacher.name)}`}
-                                                        className="text-[10px] text-blue-500 hover:underline mt-0.5"
+                                                        className="text-[10px] text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline mt-0.5"
                                                     >
                                                         View Schedule
                                                     </Link>
@@ -147,19 +147,19 @@ export function MasterScheduleView({ schedules }: MasterScheduleViewProps) {
                                         {PERIODS.map(period => {
                                             const schedule = getSchedule(teacher.id, selectedDay, period)
                                             return (
-                                                <TableCell key={period} className="p-2 border-r last:border-r-0 align-top h-[100px]">
+                                                <TableCell key={period} className="p-2 border-r border-white/10 last:border-r-0 align-top h-[100px]">
                                                     {schedule ? (
-                                                        <div className="h-full w-full bg-blue-50 border border-blue-100 rounded-md p-2 flex flex-col gap-1 text-center justify-center hover:bg-blue-100 transition-colors">
-                                                            <div className="font-semibold text-xs line-clamp-2" title={schedule.course.name}>
+                                                        <div className="h-full w-full bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-200/50 dark:border-indigo-800/50 rounded-xl p-2 flex flex-col gap-1 text-center justify-center hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30 transition-colors">
+                                                            <div className="font-medium text-slate-700 dark:text-slate-200 text-xs line-clamp-2" title={schedule.course.name}>
                                                                 {schedule.course.name}
                                                             </div>
                                                             {schedule.course.class?.name && (
-                                                                <Badge variant="outline" className="w-fit mx-auto text-[10px] bg-white whitespace-nowrap">
+                                                                <Badge variant="outline" className="w-fit mx-auto text-[10px] bg-white/50 dark:bg-slate-900/50 border-white/20 whitespace-nowrap">
                                                                     {schedule.course.class.name}
                                                                 </Badge>
                                                             )}
                                                             {schedule.course.subject && (
-                                                                <span className="text-[10px] text-gray-500 line-clamp-1">
+                                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
                                                                     {schedule.course.subject.code}
                                                                 </span>
                                                             )}

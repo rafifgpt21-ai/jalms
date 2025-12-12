@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { Role } from "@prisma/client"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
 import {
     LayoutDashboard,
@@ -53,6 +54,113 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
+interface SidebarNavItemProps {
+    href: string
+    icon: any
+    label: string
+    active: boolean
+    onClick?: () => void
+    hasBadge?: boolean
+    isCollapsed: boolean
+    navigatingTo: string | null
+    setNavigatingTo: (path: string | null) => void
+    onNavigate?: () => void
+}
+
+function SidebarNavItem({ href, icon: Icon, label, active, onClick, hasBadge, isCollapsed, navigatingTo, setNavigatingTo, onNavigate }: SidebarNavItemProps) {
+    const pathname = usePathname()
+    const isNavigating = navigatingTo === href
+    const isActive = active || isNavigating
+
+    const handleClick = (e: React.MouseEvent) => {
+        if (onClick) {
+            e.preventDefault()
+            onClick()
+            return
+        }
+        if (pathname !== href) {
+            setNavigatingTo(href)
+        }
+        onNavigate?.()
+    }
+
+    if (isCollapsed) {
+        return (
+            <TooltipProvider>
+                <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                        <Link
+                            href={href}
+                            onClick={handleClick}
+                            className={cn(
+                                "flex items-center justify-center p-3 rounded-xl transition-all duration-200 relative group z-10",
+                                isActive
+                                    ? "text-indigo-600 dark:text-indigo-300"
+                                    : "hover:bg-white/20 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white text-slate-500 dark:text-slate-400"
+                            )}
+                        >
+                            {isNavigating ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <div className="relative">
+                                    <Icon className={cn("h-5 w-5", isActive && "text-indigo-600 dark:text-indigo-400")} />
+                                    {hasBadge && (
+                                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                                    )}
+                                </div>
+                            )}
+                            <span className="sr-only">{label}</span>
+                            {isActive && (
+                                <motion.div
+                                    layoutId="activeSidebarItemCollapsed"
+                                    className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm backdrop-blur-md z-[-1]"
+                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                />
+                            )}
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                        {label}
+                        {hasBadge && " (Unread)"}
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        )
+    }
+
+    return (
+        <Link
+            href={href}
+            onClick={handleClick}
+            className={cn(
+                "flex items-center gap-3 rounded-xl transition-all duration-200 relative overflow-hidden px-4 py-3 text-base z-10",
+                isActive
+                    ? "text-indigo-700 dark:text-indigo-300 font-medium"
+                    : "hover:bg-white/20 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white text-slate-500 dark:text-slate-400"
+            )}
+        >
+            {isActive && (
+                <motion.div
+                    layoutId="activeSidebarItem"
+                    className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm backdrop-blur-md z-[-1]"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+            )}
+            {isNavigating ? (
+                <Loader2 className="animate-spin h-5 w-5" />
+            ) : (
+                <div className="relative">
+                    <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
+                    {hasBadge && (
+                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
+                    )}
+                </div>
+            )}
+            <span>{label}</span>
+        </Link>
+    )
+}
 
 interface SidebarNavProps {
     userRoles: Role[]
@@ -113,105 +221,23 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
     const isHomeroom = pathname.startsWith("/homeroom")
     const isStudent = pathname.startsWith("/student")
 
-    const NavItem = ({ href, icon: Icon, label, active, onClick, hasBadge }: { href: string, icon: any, label: string, active: boolean, onClick?: () => void, hasBadge?: boolean }) => {
-        const isNavigating = navigatingTo === href
-        const isActive = active || isNavigating
+    // NavItem moved outside
 
-        const handleClick = (e: React.MouseEvent) => {
-            if (onClick) {
-                e.preventDefault()
-                onClick()
-                return
-            }
-            if (pathname !== href) {
-                setNavigatingTo(href)
-            }
-            onNavigate?.()
-        }
-
-        if (isCollapsed) {
-            return (
-                <TooltipProvider>
-                    <Tooltip delayDuration={0}>
-                        <TooltipTrigger asChild>
-                            <Link
-                                href={href}
-                                onClick={handleClick}
-                                className={cn(
-                                    "flex items-center justify-center p-3 rounded-md transition-all duration-200 relative group",
-                                    isActive
-                                        ? "bg-linear-to-r from-indigo-500/10 to-violet-500/10 text-indigo-600 dark:text-indigo-400"
-                                        : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
-                                )}
-                            >
-                                {isNavigating ? (
-                                    <Loader2 className="h-5 w-5 animate-spin" />
-                                ) : (
-                                    <div className="relative">
-                                        <Icon className={cn("h-5 w-5", isActive && "text-indigo-600 dark:text-indigo-400")} />
-                                        {hasBadge && (
-                                            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
-                                        )}
-                                    </div>
-                                )}
-                                <span className="sr-only">{label}</span>
-                                {isActive && (
-                                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-blue-500" />
-                                )}
-                            </Link>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">
-                            {label}
-                            {hasBadge && " (Unread)"}
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )
-        }
-
-        return (
-            <Link
-                href={href}
-                onClick={handleClick}
-                className={cn(
-                    "flex items-center gap-3 rounded-md transition-all duration-200 relative overflow-hidden px-4 py-3 text-base",
-                    isActive
-                        ? "bg-linear-to-r from-indigo-500/10 to-violet-500/10 text-indigo-700 dark:text-indigo-400 font-medium"
-                        : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
-                )}
-            >
-                {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500/50" />
-                )}
-                {isNavigating ? (
-                    <Loader2 className="animate-spin h-5 w-5" />
-                ) : (
-                    <div className="relative">
-                        <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
-                        {hasBadge && (
-                            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
-                        )}
-                    </div>
-                )}
-                <span>{label}</span>
-            </Link>
-        )
-    }
 
     return (
         <nav className="space-y-2">
             {/* Admin Section */}
             {userRoles.includes("ADMIN") && isAdmin && (
                 <div className="space-y-1">
-                    <NavItem href="/admin" icon={LayoutDashboard} label="Dashboard" active={pathname === "/admin"} />
-                    <NavItem href="/admin/users" icon={Users} label="User Management" active={pathname.startsWith("/admin/users")} />
-                    <NavItem href="/admin/classes" icon={School} label="Classrooms" active={pathname.startsWith("/admin/classes")} />
-                    <NavItem href="/admin/subjects" icon={Library} label="Subjects" active={pathname.startsWith("/admin/subjects")} />
-                    <NavItem href="/admin/courses" icon={BookOpen} label="Courses" active={pathname.startsWith("/admin/courses")} />
-                    <NavItem href="/admin/semesters" icon={CalendarRange} label="Semesters" active={pathname.startsWith("/admin/semesters")} />
-                    <NavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname === "/admin/schedule" || pathname.startsWith("/admin/schedule/") && !pathname.includes("overview")} />
-                    <NavItem href="/admin/schedule/overview" icon={Table} label="Master Timetable" active={pathname.startsWith("/admin/schedule/overview")} />
-                    <NavItem href="/admin/socials" icon={MessageSquare} label="Socials Monitoring" active={pathname.startsWith("/admin/socials")} hasBadge={hasUnreadMessages} />
+                    <SidebarNavItem href="/admin" icon={LayoutDashboard} label="Dashboard" active={pathname === "/admin"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/users" icon={Users} label="User Management" active={pathname.startsWith("/admin/users")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/classes" icon={School} label="Classrooms" active={pathname.startsWith("/admin/classes")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/subjects" icon={Library} label="Subjects" active={pathname.startsWith("/admin/subjects")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/courses" icon={BookOpen} label="Courses" active={pathname.startsWith("/admin/courses")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/semesters" icon={CalendarRange} label="Semesters" active={pathname.startsWith("/admin/semesters")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname === "/admin/schedule" || pathname.startsWith("/admin/schedule/") && !pathname.includes("overview")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/schedule/overview" icon={Table} label="Master Timetable" active={pathname.startsWith("/admin/schedule/overview")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/socials" icon={MessageSquare} label="Socials Monitoring" active={pathname.startsWith("/admin/socials")} hasBadge={hasUnreadMessages} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                 </div>
             )}
 
@@ -219,10 +245,10 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
             {userRoles.includes("SUBJECT_TEACHER") && isTeacher && (
                 <div className="space-y-4">
                     <div className="space-y-1">
-                        <NavItem href="/teacher" icon={LayoutDashboard} label="Dashboard" active={pathname === "/teacher"} />
-                        <NavItem href="/teacher/attendance" icon={Clock} label="Daily Attendance" active={pathname === "/teacher/attendance"} />
-                        <NavItem href="/teacher/quiz-manager" icon={FileQuestion} label="Quiz Manager" active={pathname.startsWith("/teacher/quiz-manager")} />
-                        <NavItem href="/teacher/materials" icon={FileText} label="Study Materials" active={pathname === "/teacher/materials"} />
+                        <SidebarNavItem href="/teacher" icon={LayoutDashboard} label="Dashboard" active={pathname === "/teacher"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                        <SidebarNavItem href="/teacher/attendance" icon={Clock} label="Daily Attendance" active={pathname === "/teacher/attendance"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                        <SidebarNavItem href="/teacher/quiz-manager" icon={FileQuestion} label="Quiz Manager" active={pathname.startsWith("/teacher/quiz-manager")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                        <SidebarNavItem href="/teacher/materials" icon={FileText} label="Study Materials" active={pathname === "/teacher/materials"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                     </div>
 
                     {isCollapsed ? (
@@ -372,9 +398,9 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                 )}
                             </div>
 
-                            <NavItem href={`/teacher/courses/${selectedCourseId}/tasks-summary`} icon={Table} label="Tasks Summary" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/tasks-summary`)} />
-                            <NavItem href={`/teacher/courses/${selectedCourseId}/attendance`} icon={Clock} label="Attendance" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/attendance`)} />
-                            <NavItem href={`/teacher/courses/${selectedCourseId}/gradebook`} icon={GraduationCap} label="Gradebook" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/gradebook`)} />
+                            <SidebarNavItem href={`/teacher/courses/${selectedCourseId}/tasks-summary`} icon={Table} label="Tasks Summary" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/tasks-summary`)} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                            <SidebarNavItem href={`/teacher/courses/${selectedCourseId}/attendance`} icon={Clock} label="Attendance" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/attendance`)} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                            <SidebarNavItem href={`/teacher/courses/${selectedCourseId}/gradebook`} icon={GraduationCap} label="Gradebook" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/gradebook`)} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                         </div>
                     )}
                 </div>
@@ -383,7 +409,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
             {/* Homeroom Teacher Section */}
             {userRoles.includes("HOMEROOM_TEACHER") && isHomeroom && (
                 <div className="space-y-1">
-                    <NavItem href="/homeroom" icon={Home} label="My Class" active={pathname === "/homeroom"} />
+                    <SidebarNavItem href="/homeroom" icon={Home} label="My Class" active={pathname === "/homeroom"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                 </div>
             )}
 
@@ -391,11 +417,11 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
             {userRoles.includes("STUDENT") && isStudent && (
                 <div className="space-y-4">
                     <div className="space-y-1">
-                        <NavItem href="/student" icon={LayoutDashboard} label="Dashboard" active={pathname === "/student"} />
-                        <NavItem href="/student/learning-profile" icon={PieChart} label="Learning Profile" active={pathname === "/student/learning-profile"} />
-                        <NavItem href="/student/attendance" icon={Clock} label="Attendance" active={pathname === "/student/attendance"} />
-                        <NavItem href="/student/grades" icon={GraduationCap} label="Grades" active={pathname === "/student/grades"} />
-                        <NavItem href="/student/schedule" icon={Calendar} label="Schedule" active={pathname === "/student/schedule"} />
+                        <SidebarNavItem href="/student" icon={LayoutDashboard} label="Dashboard" active={pathname === "/student"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                        <SidebarNavItem href="/student/learning-profile" icon={PieChart} label="Learning Profile" active={pathname === "/student/learning-profile"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                        <SidebarNavItem href="/student/attendance" icon={Clock} label="Attendance" active={pathname === "/student/attendance"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                        <SidebarNavItem href="/student/grades" icon={GraduationCap} label="Grades" active={pathname === "/student/grades"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                        <SidebarNavItem href="/student/schedule" icon={Calendar} label="Schedule" active={pathname === "/student/schedule"} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                     </div>
 
                     {isCollapsed ? (
@@ -525,7 +551,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                 )}
                             </div>
 
-                            <NavItem href={`/student/courses/${selectedCourseId}/materials`} icon={FileText} label="Study Materials" active={pathname.includes("/materials")} />
+                            <SidebarNavItem href={`/student/courses/${selectedCourseId}/materials`} icon={FileText} label="Study Materials" active={pathname.includes("/materials")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                         </div>
                     )}
                 </div>
@@ -557,11 +583,11 @@ export function DashboardSidebar({ userRoles, teacherCourses, studentCourses, co
         <aside
             style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
             className={cn(
-                "bg-sidebar/40 text-sidebar-foreground flex flex-col transition-all duration-300 relative border-r border-sidebar-border/30 shadow-sm",
-                isCollapsed ? "w-16" : "w-80" // Wider for chat
+                "group/sidebar bg-white/50 dark:bg-slate-900/50 text-sidebar-foreground flex flex-col transition-all duration-300 relative border border-white/20 dark:border-white/10 shadow-lg rounded-3xl m-4 h-[calc(100%-2rem)] z-20 overflow-hidden",
+                isCollapsed ? "w-20" : "w-80" // Slightly wider collapsed state for better floating look
             )}
         >
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto no-scrollbar">
                 {isSocials && userId ? (
                     <ChatSidebar
                         initialConversations={activeConversations}
@@ -572,14 +598,12 @@ export function DashboardSidebar({ userRoles, teacherCourses, studentCourses, co
                     />
                 ) : (
                     <div className={cn("p-4", isCollapsed && "p-2")}>
-                        <div className={cn("p-4", isCollapsed && "p-2")}>
-                            <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} teacherCourses={teacherCourses} studentCourses={studentCourses} hasUnreadMessages={hasUnreadMessages} />
-                        </div>
+                        <SidebarNav userRoles={userRoles} isCollapsed={isCollapsed} teacherCourses={teacherCourses} studentCourses={studentCourses} hasUnreadMessages={hasUnreadMessages} />
                     </div>
                 )}
             </div>
 
-            <div className="p-4 border-t border-sidebar-border">
+            <div className="p-4 bg-white/10 dark:bg-slate-900/10 backdrop-blur-sm border-t border-white/10">
                 <Button
                     variant="ghost"
                     size="icon"

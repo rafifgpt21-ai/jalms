@@ -180,12 +180,13 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
 
             {/* Desktop View */}
             {/* Desktop View */}
-            <div className="max-md:hidden border rounded-lg p-4 bg-white shadow-sm overflow-x-auto">
+            {/* Desktop View */}
+            <div className="max-md:hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl p-4 shadow-sm overflow-x-auto">
                 <div className="grid grid-cols-8 gap-2 min-w-[800px]">
                     {/* Header Row */}
-                    <div className="font-bold text-center p-2 flex items-center justify-center bg-gray-100 rounded">Period</div>
+                    <div className="font-semibold text-slate-700 dark:text-slate-200 text-center p-2 flex items-center justify-center bg-white/20 dark:bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm">Period</div>
                     {DAYS.map(day => (
-                        <div key={day} className="font-bold text-center p-2 bg-gray-100 rounded flex items-center justify-center">
+                        <div key={day} className="font-semibold text-slate-700 dark:text-slate-200 text-center p-2 bg-white/20 dark:bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm flex items-center justify-center">
                             {day}
                         </div>
                     ))}
@@ -193,7 +194,7 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
                     {/* Grid */}
                     {PERIODS.map(period => (
                         <Fragment key={period}>
-                            <div className="font-bold flex items-center justify-center bg-gray-50 rounded min-h-[100px] text-xs uppercase px-1 text-center">
+                            <div className="font-medium text-slate-600 dark:text-slate-300 flex items-center justify-center bg-white/10 dark:bg-white/5 border border-white/10 rounded-xl min-h-[100px] text-xs uppercase px-1 text-center backdrop-blur-sm">
                                 {getPeriodLabel(period)}
                             </div>
                             {DAYS.map((day, dayIndex) => {
@@ -273,15 +274,17 @@ const ScheduleSlot = memo(function ScheduleSlot({
             <PopoverTrigger asChild>
                 <div
                     className={cn(
-                        "min-h-[100px] p-2 border rounded cursor-pointer hover:bg-gray-50 transition-colors flex flex-col justify-center items-center text-center text-xs relative group",
-                        assignedCourse ? "bg-blue-50 border-blue-200" : "border-dashed",
-                        hasChanges && "border-yellow-200"
+                        "min-h-[100px] p-2 border rounded-xl cursor-pointer transition-all duration-200 flex flex-col justify-center items-center text-center text-xs relative group backdrop-blur-sm",
+                        assignedCourse
+                            ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-200/50 dark:border-indigo-800/50 border-solid hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30"
+                            : "border-white/20 dark:border-white/10 border-dashed hover:bg-white/20 dark:hover:bg-white/5 hover:border-white/40",
+                        hasChanges && "border-yellow-200/50 bg-yellow-50/30"
                     )}
                 >
                     {assignedCourse ? (
                         <>
-                            <span className="font-semibold line-clamp-2 text-sm">{assignedCourse.name}</span>
-                            <span className="text-gray-500 mt-1">{assignedCourse.class?.name}</span>
+                            <span className="font-medium text-slate-700 dark:text-slate-200 line-clamp-2 text-sm">{assignedCourse.name}</span>
+                            <span className="text-slate-500 dark:text-slate-400 mt-1">{assignedCourse.class?.name}</span>
                         </>
                     ) : (
                         <Plus className="h-6 w-6 text-gray-300 group-hover:text-gray-500" />

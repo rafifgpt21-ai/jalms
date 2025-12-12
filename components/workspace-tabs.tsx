@@ -77,62 +77,67 @@ export function WorkspaceTabs({ roles, userName, userNickname, userEmail, userIm
 
     return (
 
-        <div
-            style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
-            className="relative border-b bg-white/80 px-6 py-1 flex items-center justify-between z-10 top-0 gap-4"
-        >
-            {/* Branding */}
-            <div className="flex items-center gap-2 min-w-fit">
-                <div className="flex items-center justify-center">
-                    <img src="/arsync.svg" alt="Logo" className="h-12 w-auto" />
-                </div>
-            </div>
-
-            {/* Tabs - Centered in available space */}
-            <div className="flex-1 flex justify-center min-w-0 overflow-x-auto no-scrollbar mx-4">
-                {visibleTabs.length > 0 && (
-                    <div
-                        style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
-                        className="flex items-center p-1 bg-gray-100/50 border border-gray-200/50 rounded-full shadow-inner whitespace-nowrap relative ring-1 ring-black/5"
-                    >
-                        {visibleTabs.map((tab) => {
-                            const isOptimisticActive = optimisticPath ? optimisticPath.startsWith(tab.href) : tab.isActive
-                            const hasBadge = (tab as any).hasBadge
-
-                            return (
-                                <Link
-                                    key={tab.href}
-                                    href={tab.href}
-                                    onMouseDown={() => setOptimisticPath(tab.href)}
-                                    // onClick={() => setOptimisticPath(tab.href)} // Link handles navigation, optimistic state is enough on mouse down or just rely on pathname
-                                    className={cn(
-                                        "px-5 py-2 rounded-full text-sm font-medium transition-colors duration-200 relative z-10",
-                                        isOptimisticActive
-                                            ? "text-gray-900"
-                                            : "text-gray-500 hover:text-gray-700"
-                                    )}
-                                >
-                                    {isOptimisticActive && (
-                                        <motion.div
-                                            layoutId="activeTab"
-                                            className="absolute inset-0 bg-white rounded-full shadow-sm ring-1 ring-black/5 z-[-1]"
-                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                        />
-                                    )}
-                                    <span className="relative z-10">{tab.label}</span>
-                                    {hasBadge && (
-                                        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-                                    )}
-                                </Link>
-                            )
-                        })}
+        <div className="relative px-6 py-4 flex items-center justify-center z-10 top-0 gap-4 pointer-events-none">
+            <div
+                style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
+                className="flex items-center gap-2 bg-white/60 dark:bg-slate-900/60 border border-white/20 dark:border-white/10 rounded-full py-2 pl-4 pr-2 shadow-sm pointer-events-auto ring-1 ring-black/5"
+            >
+                {/* Branding */}
+                <div className="flex items-center gap-2 pr-4 border-r border-black/5 dark:border-white/10 mr-2">
+                    <div className="flex items-center justify-center">
+                        <img src="/arsync.svg" alt="Logo" className="h-8 w-auto" />
                     </div>
-                )}
-            </div>
+                    <span className="font-bold text-lg bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent hidden xl:block">Arsync</span>
+                </div>
 
-            {/* User Profile & Logout */}
-            <div className="flex items-center gap-4 min-w-fit justify-end">
-                <UserSettings email={userEmail} name={userName} nickname={userNickname} image={userImage} />
+                {/* Tabs */}
+                <div className="flex justify-center">
+                    {visibleTabs.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            {visibleTabs.map((tab) => {
+                                const isOptimisticActive = optimisticPath ? optimisticPath.startsWith(tab.href) : tab.isActive
+                                const hasBadge = (tab as any).hasBadge
+
+                                return (
+                                    <Link
+                                        key={tab.href}
+                                        href={tab.href}
+                                        onMouseDown={() => setOptimisticPath(tab.href)}
+                                        className={cn(
+                                            "px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 relative z-10",
+                                            isOptimisticActive
+                                                ? "text-gray-900 dark:text-white"
+                                                : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-black/5 dark:hover:bg-white/5"
+                                        )}
+                                    >
+                                        {isOptimisticActive && (
+                                            <motion.div
+                                                layoutId="activeTab"
+                                                className="absolute inset-0 bg-white dark:bg-slate-800 rounded-full shadow-sm ring-1 ring-black/5 z-[-1]"
+                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                            />
+                                        )}
+                                        <span className="relative z-10">{tab.label}</span>
+                                        {hasBadge && (
+                                            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white w-2 h-2" />
+                                        )}
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Separator */}
+                <div className="h-6 w-px bg-black/5 dark:bg-white/10 mx-2 hidden lg:block" />
+
+                {/* User Profile */}
+                <div className="flex items-center gap-3 pl-1">
+                    <div className="text-sm font-medium text-right hidden lg:block leading-tight">
+                        <div className="text-foreground">{userNickname || userName?.split(' ')[0]}</div>
+                    </div>
+                    <UserSettings email={userEmail} name={userName} nickname={userNickname} image={userImage} />
+                </div>
             </div>
         </div>
     )

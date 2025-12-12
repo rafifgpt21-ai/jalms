@@ -54,7 +54,7 @@ const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satur
 // Let's verify schema comment: "214:   dayOfWeek Int // 0=Sunday, 1=Monday, ... 6=Saturday"
 // So Monday is 1. Saturday is 6. Sunday is 0.
 
-const UI_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] // Excluding Sunday for school usually, but can add.
+const UI_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 const DB_DAY_MAPPING: Record<string, number> = {
     "Monday": 1,
     "Tuesday": 2,
@@ -200,7 +200,7 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
 
                     {viewMode === "day" && (
                         <Tabs value={selectedDay} onValueChange={setSelectedDay} className="w-full md:w-auto">
-                            <TabsList className="grid grid-cols-3 md:grid-cols-6 h-auto">
+                            <TabsList className="grid grid-cols-4 md:grid-cols-7 h-auto p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10">
                                 {UI_DAYS.map(day => (
                                     <TabsTrigger key={day} value={day} className="text-xs md:text-sm px-2 py-1.5">
                                         {day.slice(0, 3)}
@@ -212,10 +212,10 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                 </div>
 
                 <div className="relative w-full md:w-64 min-w-[200px]">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
                     <Input
                         placeholder="Search teachers..."
-                        className="pl-8"
+                        className="pl-9 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-white/10 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-slate-900/80 transition-all rounded-xl"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -223,24 +223,24 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
             </div>
 
             {/* Main Grid */}
-            <div className="border rounded-md bg-white shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden flex flex-col">
                 <div className="overflow-x-auto max-w-[100vw] md:max-w-[calc(100vw-3rem)]">
                     <Table className="relative min-w-full w-auto">
-                        <TableHeader className="sticky top-0 bg-gray-50 z-20 shadow-sm">
-                            <TableRow>
-                                <TableHead className="w-[200px] min-w-[200px] max-w-[200px] bg-gray-50 z-30 sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <TableHeader className="sticky top-0 bg-white/20 dark:bg-slate-900/20 backdrop-blur-md z-20 shadow-sm border-b border-white/10">
+                            <TableRow className="hover:bg-transparent border-white/10">
+                                <TableHead className="w-[200px] min-w-[200px] max-w-[200px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl z-30 sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-slate-700 dark:text-slate-200 font-medium border-b border-r border-white/20 dark:border-white/10">
                                     Teacher
                                 </TableHead>
 
                                 {viewMode === "day" ? (
                                     PERIODS.map(period => (
-                                        <TableHead key={period} className="text-center min-w-[140px] w-[140px] px-2 border-l">
+                                        <TableHead key={period} className="text-center min-w-[140px] w-[140px] px-2 border-l border-white/10 text-slate-700 dark:text-slate-200 font-medium">
                                             {getPeriodLabel(period)}
                                         </TableHead>
                                     ))
                                 ) : (
                                     ALL_DAYS.map(day => (
-                                        <TableHead key={day} className="text-center min-w-[160px] w-[160px] px-1 border-l">
+                                        <TableHead key={day} className="text-center min-w-[160px] w-[160px] px-1 border-l border-white/10 text-slate-700 dark:text-slate-200 font-medium">
                                             {day}
                                         </TableHead>
                                     ))
@@ -256,9 +256,9 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                                 </TableRow>
                             ) : (
                                 filteredTeachers.map(teacher => (
-                                    <TableRow key={teacher.id} className="hover:bg-muted/50">
+                                    <TableRow key={teacher.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
                                         {/* Teacher Sticky Column */}
-                                        <TableCell className="font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[200px] min-w-[200px] align-top py-2">
+                                        <TableCell className="font-medium sticky left-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[200px] min-w-[200px] align-top py-2 border-b border-r border-white/20 dark:border-white/10 transition-colors group-hover:bg-white/60 dark:group-hover:bg-slate-800/60">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={teacher.image || ""} />
@@ -276,7 +276,7 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                                             PERIODS.map(period => {
                                                 const assignedCourse = getAssignment(teacher, period, selectedDay)
                                                 return (
-                                                    <TableCell key={period} className="p-1 border-l w-[140px]">
+                                                    <TableCell key={period} className="p-1 border-l border-white/10 w-[140px]">
                                                         <ScheduleCell
                                                             teacher={teacher}
                                                             period={period}
@@ -290,7 +290,7 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                                             })
                                         ) : (
                                             ALL_DAYS.map(day => (
-                                                <TableCell key={day} className="p-1 border-l w-[160px] align-top bg-slate-50/30">
+                                                <TableCell key={day} className="p-1 border-l border-white/10 w-[160px] align-top bg-white/5">
                                                     <div className="grid grid-cols-1 gap-1">
                                                         {PERIODS.map(period => {
                                                             const assignedCourse = getAssignment(teacher, period, day)
@@ -350,15 +350,17 @@ function ScheduleCell({ teacher, period, dayStr, assignedCourse, onUpdate, disab
             <PopoverTrigger asChild>
                 <div
                     className={cn(
-                        "rounded border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-colors hover:bg-accent",
+                        "rounded-xl border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200",
                         compact ? "h-[40px] p-0.5 text-[9px]" : "h-[50px] p-1",
-                        assignedCourse ? "bg-blue-50/50 border-blue-200 border-solid" : "hover:border-gray-400",
+                        assignedCourse
+                            ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-200/50 dark:border-indigo-800/50 border-solid hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30"
+                            : "border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:border-white/30",
                         disabled && "opacity-50 cursor-wait"
                     )}
                 >
                     {assignedCourse ? (
                         <>
-                            <span className={cn("font-semibold leading-tight line-clamp-1", compact ? "text-[9px]" : "text-xs line-clamp-2")}>
+                            <span className={cn("font-medium text-slate-700 dark:text-slate-200 leading-tight line-clamp-1", compact ? "text-[9px]" : "text-xs line-clamp-2")}>
                                 {assignedCourse.name}
                             </span>
                             {!compact && (

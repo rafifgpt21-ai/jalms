@@ -72,15 +72,15 @@ export default async function TasksSummaryPage({
                 subtitle={courseName}
                 backLink="/teacher"
             />
-            <Card>
+            <Card className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-sm overflow-hidden">
                 <CardHeader>
                     <CardTitle>Student Progress</CardTitle>
                 </CardHeader>
                 <CardContent className="overflow-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-background z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Student</TableHead>
+                            <TableRow className="hover:bg-transparent border-white/10">
+                                <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r border-white/10">Student</TableHead>
                                 {assignments?.map((assignment) => (
                                     <TableHead key={assignment.id} className="text-center min-w-[100px]">
                                         <div className="flex flex-col items-center gap-1">
@@ -99,8 +99,8 @@ export default async function TasksSummaryPage({
                         </TableHeader>
                         <TableBody>
                             {students?.map((student) => (
-                                <TableRow key={student.studentId}>
-                                    <TableCell className="font-medium sticky left-0 bg-background z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                <TableRow key={student.studentId} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-light-white/10 transition-colors">
+                                    <TableCell className="font-medium sticky left-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r border-white/10 group-hover:bg-white/60 dark:group-hover:bg-slate-800/60 transition-colors">
                                         <div className="flex items-center gap-2">
                                             <Avatar className="h-8 w-8">
                                                 <AvatarImage src={student.studentAvatar || undefined} />

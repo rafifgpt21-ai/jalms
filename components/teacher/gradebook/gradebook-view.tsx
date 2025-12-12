@@ -88,7 +88,7 @@ export function GradebookView({ data }: GradebookViewProps) {
                         <TableHeader>
                             <TableRow className="hover:bg-transparent border-slate-100 dark:border-slate-800">
                                 {/* Sticky Student Column */}
-                                <TableHead style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="w-[250px] sticky left-0 z-20 bg-white/95 dark:bg-slate-900/95 border-r border-slate-100 dark:border-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                <TableHead style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="w-[250px] sticky left-0 z-20 bg-white/40 dark:bg-slate-900/40 border-r border-slate-200/50 dark:border-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-xl">
                                     Student
                                 </TableHead>
 
@@ -125,7 +125,7 @@ export function GradebookView({ data }: GradebookViewProps) {
                                 filteredStudents.map((student) => (
                                     <TableRow key={student.studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 border-slate-100 dark:border-slate-800 group transition-colors">
                                         {/* Sticky Student Name */}
-                                        <TableCell style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="sticky left-0 z-20 bg-white/60 dark:bg-slate-950/60 border-r border-slate-100 dark:border-slate-800 font-medium text-slate-900 dark:text-slate-100 group-hover:bg-indigo-50/20 dark:group-hover:bg-indigo-900/10">
+                                        <TableCell style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="sticky left-0 z-20 bg-white/40 dark:bg-slate-900/40 border-r border-slate-200/50 dark:border-slate-800 font-medium text-slate-900 dark:text-slate-100 group-hover:bg-white/60 dark:group-hover:bg-slate-800/60 transition-colors backdrop-blur-xl">
                                             <div className="flex items-center gap-3">
                                                 {/* <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
                                                     <AvatarImage src={student.studentImage} />

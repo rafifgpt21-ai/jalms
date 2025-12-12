@@ -111,27 +111,27 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
     const getStatusColor = (status: AttendanceStatus | null, current: AttendanceStatus) => {
         if (status === current) {
             switch (current) {
-                case "PRESENT": return "bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
-                case "ABSENT": return "bg-red-100 text-red-700 border-red-200 hover:bg-red-200"
-                case "EXCUSED": return "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200"
+                case "PRESENT": return "bg-green-100/80 text-green-700 border-green-200 hover:bg-green-200/80"
+                case "ABSENT": return "bg-red-100/80 text-red-700 border-red-200 hover:bg-red-200/80"
+                case "EXCUSED": return "bg-blue-100/80 text-blue-700 border-blue-200 hover:bg-blue-200/80"
             }
         }
-        return "bg-transparent hover:bg-gray-100 text-gray-500 border-transparent"
+        return "bg-white/40 hover:bg-white/60 text-slate-600 dark:text-slate-400 border-white/20 hover:border-white/40"
     }
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start bg-white p-4 rounded-lg border shadow-sm">
+            <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm p-4 lg:p-6">
                 <div className="space-y-4">
                     <div>
-                        <Label htmlFor="topic" className="text-sm font-medium mb-1 block">Topic / Lesson Plan</Label>
+                        <Label htmlFor="topic" className="text-sm font-medium mb-1 block text-slate-700 dark:text-slate-200">Topic / Lesson Plan</Label>
                         <div className="flex gap-2 w-full max-w-xl">
                             <Input
                                 id="topic"
                                 placeholder="e.g., Introduction to Algebra"
                                 value={topic || ""}
                                 onChange={(e) => setTopic(e.target.value)}
-                                className="flex-1"
+                                className="flex-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-white/20 dark:border-white/10 focus:ring-indigo-500/20 rounded-xl"
                             />
                             <Button
                                 size="sm"
@@ -146,7 +146,12 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
                 </div>
                 <div className="flex flex-col gap-3 lg:items-end">
                     <div className="flex gap-2 justify-start lg:justify-end w-full lg:w-auto">
-                        <Button variant="outline" size="sm" onClick={() => markAll("PRESENT")} className="flex-1 lg:flex-none">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => markAll("PRESENT")}
+                            className="flex-1 lg:flex-none border-white/20 bg-white/40 hover:bg-white/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/60 rounded-xl"
+                        >
                             Mark All Present
                         </Button>
                         <Button
@@ -164,7 +169,7 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
                             {saved ? "Saved!" : "Save Attendance"}
                         </Button>
                     </div>
-                    <div className="flex items-center justify-between gap-3 border rounded-md px-3 py-2 bg-muted/30 w-full lg:w-auto">
+                    <div className="flex items-center justify-between gap-3 border border-white/20 rounded-xl px-3 py-2 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm w-full lg:w-auto">
                         <Label htmlFor="apply-all" className="cursor-pointer text-sm font-medium text-muted-foreground">Apply to all sessions today</Label>
                         <Switch id="apply-all" checked={applyToAll} onCheckedChange={setApplyToAll} />
                     </div>
@@ -196,7 +201,7 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
                 {/* Mobile View: Cards */}
                 <div className="grid gap-4 md:hidden">
                     {students.map(({ student, status, excuseReason }) => (
-                        <div key={student.id} className="bg-white p-4 rounded-lg border shadow-sm space-y-4">
+                        <div key={student.id} className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-white/20 dark:border-white/10 shadow-sm space-y-4">
                             <div className="flex items-center gap-3">
                                 <Avatar>
                                     <AvatarImage src={student.image || undefined} />
@@ -253,17 +258,17 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
                 </div>
 
                 {/* Desktop View: Table */}
-                <div className="hidden md:block! border rounded-lg bg-white shadow-sm overflow-hidden">
+                <div className="hidden md:block! border border-white/20 dark:border-white/10 rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-md shadow-sm overflow-hidden">
                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[300px]">Student</TableHead>
-                                <TableHead>Status</TableHead>
+                        <TableHeader className="bg-white/20 dark:bg-white/5 border-b border-white/10">
+                            <TableRow className="hover:bg-transparent border-white/10">
+                                <TableHead className="w-[300px] text-slate-700 dark:text-slate-200">Student</TableHead>
+                                <TableHead className="text-slate-700 dark:text-slate-200">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {students.map(({ student, status, excuseReason }) => (
-                                <TableRow key={student.id}>
+                                <TableRow key={student.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-light-white/10 transition-colors">
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar>
