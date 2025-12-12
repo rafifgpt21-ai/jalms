@@ -34,7 +34,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
     const wasLate = submission && assignment.dueDate && submission.submittedAt > assignment.dueDate
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" suppressHydrationWarning>
             <MobileHeaderSetter
                 title={assignment.title}
                 subtitle={assignment.course.name}
@@ -43,7 +43,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-3xl font-bold hidden md:block">{assignment.title}</h1>
-                    <div className="text-gray-500 mt-1 hidden md:block">{assignment.course.name}</div>
+                    <div className="text-gray-500 mt-1 hidden md:block" suppressHydrationWarning>{assignment.course.name}</div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                     {assignment.type !== 'NON_SUBMISSION' && (

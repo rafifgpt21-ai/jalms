@@ -349,6 +349,8 @@ model QuizQuestion {
   
   text      String
   imageUrl  String?
+  audioUrl  String?
+  audioLimit Int      @default(0) // 0 = unlimited
   order     Int      @default(0)
 
   quizId    String   @db.ObjectId

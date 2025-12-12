@@ -182,6 +182,8 @@ interface QuestionInput {
     id?: string; // If present, update; else create
     text: string;
     imageUrl?: string;
+    audioUrl?: string; // [NEW] Added audioUrl
+    audioLimit?: number; // [NEW] Added audioLimit
     order: number;
     choices: ChoiceInput[];
 }
@@ -221,6 +223,8 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
                     data: {
                         text: data.text,
                         imageUrl: data.imageUrl,
+                        audioUrl: data.audioUrl,
+                        audioLimit: data.audioLimit ?? 0,
                         order: data.order,
                     }
                 });
@@ -278,6 +282,8 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
                     quizId,
                     text: data.text,
                     imageUrl: data.imageUrl,
+                    audioUrl: data.audioUrl,
+                    audioLimit: data.audioLimit ?? 0,
                     order: data.order,
                     choices: {
                         create: data.choices.map((c, index) => ({
@@ -320,6 +326,7 @@ export async function deleteQuestion(questionId: string) {
         // Collect all images to delete
         const imagesToDelete: string[] = [];
         if (question.imageUrl) imagesToDelete.push(question.imageUrl);
+        if (question.audioUrl) imagesToDelete.push(question.audioUrl);
         question.choices.forEach(c => {
             if (c.imageUrl) imagesToDelete.push(c.imageUrl);
         });
@@ -368,6 +375,8 @@ export async function bulkCreateQuestions(quizId: string, questionsData: Questio
                         quizId,
                         text: q.text,
                         imageUrl: q.imageUrl,
+                        audioUrl: q.audioUrl,
+                        audioLimit: q.audioLimit ?? 0,
                         order: startOrder++,
                         choices: {
                             create: q.choices.map((c, idx) => ({
@@ -403,7 +412,7 @@ export async function deleteQuizImages(urls: string[]) {
             // or just filename if relative? The DB stores URL.
 
             // Basic validation to prevent deleting outside uploads
-            if (!url.includes("/api/files/quiz-pictures/")) {
+            if (!url.includes("/api/files/quiz-pictures/") && !url.includes("/api/files/quiz-audio/")) {
                 console.warn(`Skipping deletion of invalid image path: ${url}`);
                 continue;
             }

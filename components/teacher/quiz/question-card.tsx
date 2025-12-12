@@ -23,6 +23,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { AudioLines, Play } from "lucide-react"
 
 interface Choice {
     id?: string
@@ -46,9 +47,12 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
         { text: "", isCorrect: false, order: 0 },
         { text: "", isCorrect: false, order: 1 }
     ])
+    const [audioUrl, setAudioUrl] = useState<string | undefined>(question?.audioUrl || undefined)
+    const [audioLimit, setAudioLimit] = useState<number>(question?.audioLimit || 0)
 
     // Lazy Upload State
     const [pendingQuestionFile, setPendingQuestionFile] = useState<File | null>(null)
+    const [pendingAudioFile, setPendingAudioFile] = useState<File | null>(null)
     const [pendingChoiceFiles, setPendingChoiceFiles] = useState<Record<number, File>>({})
     const [objectUrls, setObjectUrls] = useState<string[]>([]) // Track for cleanup
 
@@ -70,29 +74,34 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
         return url
     }
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>, target: 'question' | number) => {
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>, target: 'question' | 'audio' | number) => {
         const files = e.target.files
         if (!files || files.length === 0) return
         const file = files[0]
 
         if (target === 'question') {
             setPendingQuestionFile(file)
+        } else if (target === 'audio') {
+            setPendingAudioFile(file)
         } else {
             setPendingChoiceFiles(prev => ({ ...prev, [target]: file }))
         }
     }
 
-    const removeImage = (target: 'question' | number) => {
+    const removeImage = (target: 'question' | 'audio' | number) => {
         if (target === 'question') {
             setPendingQuestionFile(null)
             setImageUrl(undefined)
+        } else if (target === 'audio') {
+            setPendingAudioFile(null)
+            setAudioUrl(undefined)
         } else {
             const newChoices = [...choices]
-            newChoices[target].imageUrl = undefined
+            newChoices[target as number].imageUrl = undefined
             setChoices(newChoices)
             setPendingChoiceFiles(prev => {
                 const next = { ...prev }
-                delete next[target]
+                delete next[target as number]
                 return next
             })
         }
@@ -184,9 +193,22 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                         imagesToDelete.push(question.imageUrl)
                     }
                 }
-            } else if (question?.imageUrl && !imageUrl) {
-                // Image was removed by user
                 imagesToDelete.push(question.imageUrl)
+            }
+
+            // Audio Upload
+            let finalAudioUrl = audioUrl
+            if (pendingAudioFile) {
+                const uploaded = await startUpload([pendingAudioFile], "quiz-audio")
+                if (uploaded?.[0]) {
+                    finalAudioUrl = uploaded[0].url
+                    if (question?.audioUrl && question.audioUrl !== finalAudioUrl) {
+                        imagesToDelete.push(question.audioUrl)
+                    }
+                }
+            } else if (question?.audioUrl && !audioUrl) {
+                // Audio was removed
+                imagesToDelete.push(question.audioUrl)
             }
 
             // Choice Images
@@ -215,12 +237,15 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
             // Calculate images to delete (Global diff approach)
             const oldUrls = new Set<string>()
             if (question?.imageUrl) oldUrls.add(question.imageUrl)
+            if (question?.audioUrl) oldUrls.add(question.audioUrl)
+
             question?.choices?.forEach((c: any) => {
                 if (c.imageUrl) oldUrls.add(c.imageUrl)
             })
 
             const newUrls = new Set<string>()
             if (finalQuestionImageUrl) newUrls.add(finalQuestionImageUrl)
+            if (finalAudioUrl) newUrls.add(finalAudioUrl)
             finalChoices.forEach(c => {
                 if (c.imageUrl) newUrls.add(c.imageUrl)
             })
@@ -235,6 +260,8 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                 id: question?.id,
                 text,
                 imageUrl: finalQuestionImageUrl,
+                audioUrl: finalAudioUrl,
+                audioLimit: audioLimit,
                 order: question?.order || 0,
                 choices: finalChoices.map((c, i) => ({ ...c, order: i }))
             }
@@ -250,6 +277,21 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
         })
     }
 
+    const getDisplayQuestionUrl = () => {
+        if (pendingQuestionFile) return URL.createObjectURL(pendingQuestionFile)
+        return imageUrl
+    }
+
+    const getDisplayAudioUrl = () => {
+        if (pendingAudioFile) return URL.createObjectURL(pendingAudioFile)
+        return audioUrl
+    }
+
+    const getDisplayChoiceUrl = (index: number) => {
+        if (pendingChoiceFiles[index]) return URL.createObjectURL(pendingChoiceFiles[index])
+        return choices[index].imageUrl
+    }
+
     const handleDelete = () => {
         startTransition(async () => {
             const result = await deleteQuestion(question.id)
@@ -261,17 +303,6 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                 router.refresh()
             }
         })
-    }
-
-    // Helper to get display URL
-    const getDisplayQuestionUrl = () => {
-        if (pendingQuestionFile) return URL.createObjectURL(pendingQuestionFile)
-        return imageUrl
-    }
-
-    const getDisplayChoiceUrl = (index: number) => {
-        if (pendingChoiceFiles[index]) return URL.createObjectURL(pendingChoiceFiles[index])
-        return choices[index].imageUrl
     }
 
     return (
@@ -327,7 +358,67 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                                 />
                             </div>
                         )}
+
+                        {/* Audio Upload Section */}
+                        <div className="space-y-2">
+                            <Label>Audio (Optional)</Label>
+                            {getDisplayAudioUrl() ? (
+                                <div className="flex items-center gap-4 p-3 border rounded-md bg-muted/50">
+                                    <div className="flex-1 flex gap-3 items-center">
+                                        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                                            <AudioLines className="h-5 w-5" />
+                                        </div>
+                                        <div className="flex-1 space-y-1">
+                                            <p className="text-sm font-medium line-clamp-1">
+                                                {pendingAudioFile ? pendingAudioFile.name : "Audio Attachment"}
+                                            </p>
+                                            <audio controls className="h-8 w-full max-w-[200px]" src={getDisplayAudioUrl()!} />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 border-l pl-3">
+                                        <div className="flex flex-col gap-1.5">
+                                            <Label htmlFor={`audio-limit-${question?.id || 'new'}`} className="text-xs text-muted-foreground">
+                                                Max Plays (0=∞)
+                                            </Label>
+                                            <Input
+                                                id={`audio-limit-${question?.id || 'new'}`}
+                                                type="number"
+                                                min="0"
+                                                value={audioLimit}
+                                                onChange={(e) => setAudioLimit(Math.max(0, parseInt(e.target.value) || 0))}
+                                                className="h-7 w-20 text-center"
+                                            />
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => removeImage('audio')}
+                                            className="h-8 w-8 text-destructive hover:text-destructive"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor={`q-audio-${question?.id || 'new'}`} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                                        <AudioLines className="mr-2 h-4 w-4" />
+                                        Attach Audio
+                                    </Label>
+                                    <Input
+                                        id={`q-audio-${question?.id || 'new'}`}
+                                        type="file"
+                                        accept="audio/*"
+                                        className="hidden"
+                                        onChange={(e) => handleImageSelect(e, 'audio')}
+                                        disabled={isUploading}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </div>
+
                     {!isNew && (
                         <div className="flex flex-col gap-2">
                             <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
@@ -357,7 +448,7 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                         </div>
                     )}
                 </div>
-            </CardHeader>
+            </CardHeader >
             <CardContent>
                 <div className="space-y-4">
                     <Label>Choices</Label>
@@ -437,6 +528,6 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                     {isPending || isUploading ? "Saving..." : "Save Question"}
                 </Button>
             </CardFooter>
-        </Card>
+        </Card >
     )
 }
