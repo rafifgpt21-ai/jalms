@@ -202,7 +202,7 @@ export function ChatWindow({
 
             {/* Messages Area - Enhanced with Motion */}
             <ScrollArea className="flex-1 p-4">
-                <div className="space-y-6 pb-32 md:pb-4 max-w-4xl mx-auto">
+                <div className="space-y-6 pb-24 md:pb-14 max-w-4xl mx-auto">
                     {messages.map((message, index) => {
                         const isMe = message.sender.id === currentUserId;
                         const isLastFromUser = index === messages.length - 1 || messages[index + 1]?.sender.id !== message.sender.id;

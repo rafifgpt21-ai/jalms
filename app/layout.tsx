@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${outfit.variable} antialiased font-sans bg-linear-to-br from-indigo-50/50 via-white to-cyan-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 min-h-screen`}
+        className={`${inter.variable} ${outfit.variable} antialiased font-sans bg-linear-to-br from-indigo-100/40 via-slate-50 to-cyan-100/40 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 min-h-screen`}
         suppressHydrationWarning
       >
         <NextSSRPlugin

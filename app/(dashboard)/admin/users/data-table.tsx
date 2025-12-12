@@ -40,8 +40,8 @@ export function DataTable<TData, TValue>({
     })
 
     return (
-        <div>
-            <div className="rounded-md border h-[600px] overflow-auto relative">
+        <div className="h-full">
+            <div className="h-full overflow-auto relative scrollbar-hide">
                 <table className="w-full caption-bottom text-sm">
                     <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
                         {table.getHeaderGroups().map((headerGroup) => (

@@ -100,7 +100,7 @@ export function UserToolbar() {
     }
 
     return (
-        <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-lg border shadow-sm flex-wrap">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
             {/* Search Bar */}
             <div className="flex flex-1 max-w-md items-center space-x-2 min-w-[200px]">
                 <div className="relative flex-1">
