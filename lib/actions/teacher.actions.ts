@@ -149,6 +149,7 @@ export async function getAssignmentDetails(assignmentId: string) {
                 course: {
                     include: {
                         subject: true,
+                        teacher: true,
                         students: {
                             orderBy: { name: "asc" }
                         }
@@ -384,18 +385,14 @@ export async function getCourseGradebook(courseId: string) {
             let studentPoints = 0
             let maxPointsPossible = 0
             let extraCreditPoints = 0
+            const scores: Record<string, number | null> = {}
 
             course.assignments.forEach(assignment => {
                 const submission = assignment.submissions.find(s => s.studentId === student.id)
-
-                // If assignment is NOT extra credit, it adds to MaxPointsPossible
-                if (!assignment.isExtraCredit) {
-                    maxPointsPossible += assignment.maxPoints
-                }
+                let actualPoints: number | null = null
 
                 if (submission && submission.grade !== null) {
-                    // Calculate actual points from percentage grade
-                    let actualPoints = (submission.grade / 100) * assignment.maxPoints
+                    actualPoints = Number((submission.grade / 100) * assignment.maxPoints)
 
                     // Apply Late Penalty
                     const isLate = assignment.dueDate && submission.submittedAt > assignment.dueDate
@@ -404,6 +401,18 @@ export async function getCourseGradebook(courseId: string) {
                         actualPoints -= penaltyAmount
                     }
 
+                    // Round to 2 decimals
+                    actualPoints = Math.round(actualPoints * 100) / 100
+                }
+
+                scores[assignment.id] = actualPoints
+
+                // Calculation for Total Score
+                if (!assignment.isExtraCredit) {
+                    maxPointsPossible += assignment.maxPoints
+                }
+
+                if (actualPoints !== null) {
                     if (assignment.isExtraCredit) {
                         extraCreditPoints += actualPoints
                     } else {
@@ -431,9 +440,11 @@ export async function getCourseGradebook(courseId: string) {
             return {
                 studentId: student.id,
                 studentName: student.name,
+                studentImage: student.image,
                 attendancePercentage: totalSessions > 0 ? (attendedCount / totalSessions) * 100 : 100,
                 totalScore: Math.round(totalScore * 10) / 10,
                 earnedPoints: Math.round(numerator * 10) / 10,
+                scores,
                 breakdown: {
                     studentPoints,
                     extraCreditPoints,
@@ -444,7 +455,16 @@ export async function getCourseGradebook(courseId: string) {
             }
         })
 
-        return { gradebook: gradebookData, courseName: course.name, maxPoints: courseMaxPoints }
+        const assignmentMetadata = course.assignments.map(a => ({
+            id: a.id,
+            title: a.title,
+            maxPoints: a.maxPoints,
+            isExtraCredit: a.isExtraCredit,
+            dueDate: a.dueDate,
+            type: a.type
+        }))
+
+        return { gradebook: gradebookData, assignments: assignmentMetadata, courseName: course.name, maxPoints: courseMaxPoints }
 
     } catch (error) {
         console.error("Error fetching gradebook:", error)

@@ -47,20 +47,23 @@ export default async function StudentSchedulePage() {
         <div className="space-y-6 p-6">
             <MobileHeaderSetter title="My Weekly Schedule" />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Weekly Schedule</CardTitle>
+            {/* Main Glass Card */}
+            <Card className="overflow-hidden border-none shadow-xl bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl ring-1 ring-black/5 dark:ring-white/10">
+                <CardHeader className="border-b border-black/5 dark:border-white/5 pb-4">
+                    <CardTitle className="font-heading text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                        Weekly Schedule
+                    </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto">
+                <CardContent className="p-0 sm:p-6">
+                    <div className="overflow-x-auto pb-4">
                         <div className="min-w-[800px]">
                             {/* Header Row */}
-                            <div className="grid grid-cols-8 gap-1 mb-1">
-                                <div className="bg-gray-100 dark:bg-gray-800 p-2 font-bold text-center rounded-md">
+                            <div className="grid grid-cols-8 gap-2 mb-2">
+                                <div className="p-3 font-heading font-bold text-center rounded-xl text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-sm">
                                     Period
                                 </div>
                                 {days.map((day) => (
-                                    <div key={day} className="bg-blue-100 dark:bg-blue-900/30 p-2 font-bold text-center rounded-md">
+                                    <div key={day} className="p-3 font-heading font-bold text-center rounded-xl text-white bg-indigo-600/90 shadow-lg shadow-indigo-600/20 backdrop-blur-sm">
                                         {day}
                                     </div>
                                 ))}
@@ -68,9 +71,9 @@ export default async function StudentSchedulePage() {
 
                             {/* Rows */}
                             {periods.map((period) => (
-                                <div key={period} className="grid grid-cols-8 gap-1 mb-1">
+                                <div key={period} className="grid grid-cols-8 gap-2 mb-2">
                                     {/* Period Label */}
-                                    <div className="bg-gray-50 dark:bg-gray-800 p-3 flex items-center justify-center font-medium rounded-md border border-gray-100 dark:border-gray-700">
+                                    <div className="bg-slate-50/80 dark:bg-slate-800/40 p-3 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 rounded-xl border border-white/50 dark:border-white/5 shadow-sm">
                                         {getPeriodLabel(period)}
                                     </div>
 
@@ -80,22 +83,24 @@ export default async function StudentSchedulePage() {
                                         return (
                                             <div
                                                 key={`${dayIdx}-${period}`}
-                                                className={`p-2 min-h-[80px] rounded-md border text-sm flex flex-col justify-center items-center text-center transition-colors ${course
-                                                    ? "bg-blue-50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-800"
-                                                    : "bg-white border-gray-100 dark:bg-gray-900 dark:border-gray-800"
+                                                className={`group relative p-2 min-h-[100px] rounded-2xl flex flex-col justify-center items-center text-center transition-all duration-300 ${course
+                                                    ? "bg-white/80 dark:bg-slate-800/60 border border-indigo-100 dark:border-indigo-500/20 shadow-md shadow-indigo-500/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer"
+                                                    : "bg-slate-50/30 dark:bg-slate-900/20 border border-dashed border-slate-200 dark:border-slate-800"
                                                     }`}
                                             >
                                                 {course ? (
                                                     <>
-                                                        <div className="font-semibold text-blue-700 dark:text-blue-300 line-clamp-2">
+                                                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 rounded-l-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        <div className="font-heading font-bold text-indigo-900 dark:text-indigo-100 line-clamp-2 px-1 text-sm sm:text-base">
                                                             {course.reportName || course.name}
                                                         </div>
-                                                        <div className="text-xs text-gray-500 mt-1">
+                                                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                                                             {course.teacher.name}
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <span className="text-gray-300">-</span>
+                                                    <span className="text-slate-300 dark:text-slate-700 select-none text-xl font-light">·</span>
                                                 )}
                                             </div>
                                         )

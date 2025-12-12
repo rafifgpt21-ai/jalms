@@ -140,7 +140,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                 className={cn(
                                     "flex items-center justify-center p-3 rounded-md transition-all duration-200 relative group",
                                     isActive
-                                        ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
+                                        ? "bg-linear-to-r from-indigo-500/10 to-violet-500/10 text-indigo-600 dark:text-indigo-400"
                                         : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                 )}
                             >
@@ -148,7 +148,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                     <Loader2 className="h-5 w-5 animate-spin" />
                                 ) : (
                                     <div className="relative">
-                                        <Icon className={cn("h-5 w-5", isActive && "text-blue-600 dark:text-blue-400")} />
+                                        <Icon className={cn("h-5 w-5", isActive && "text-indigo-600 dark:text-indigo-400")} />
                                         {hasBadge && (
                                             <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
                                         )}
@@ -176,12 +176,12 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                 className={cn(
                     "flex items-center gap-3 rounded-md transition-all duration-200 relative overflow-hidden px-4 py-3 text-base",
                     isActive
-                        ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
+                        ? "bg-linear-to-r from-indigo-500/10 to-violet-500/10 text-indigo-700 dark:text-indigo-400 font-medium"
                         : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                 )}
             >
                 {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/50" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500/50" />
                 )}
                 {isNavigating ? (
                     <Loader2 className="animate-spin h-5 w-5" />
@@ -459,9 +459,9 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                             : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
                                                     )}
                                                 >
-                                                    <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-blue-600 dark:text-blue-400")} />
+                                                    <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-indigo-600 dark:text-indigo-400")} />
                                                     {pathname.includes("/tasks") && (
-                                                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-blue-500" />
+                                                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-indigo-500" />
                                                     )}
                                                 </div>
                                             </DropdownMenuTrigger>

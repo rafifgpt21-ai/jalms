@@ -118,7 +118,7 @@ export function BottomNavigation({
     if (visibleTabs.length === 0) return null
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-100 pb-safe">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-white/20 dark:border-white/10 z-100 pb-safe shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
             <div className="flex items-center h-16">
                 {/* Fixed Menu Button (Left) */}
                 <div className="flex-none w-16 border-r border-gray-100 flex items-center justify-center h-full p-0">
@@ -129,8 +129,8 @@ export function BottomNavigation({
                                 className={cn(
                                     "w-full h-full rounded-none flex items-center justify-center transition-all duration-200",
                                     open
-                                        ? "bg-red-50 hover:bg-red-100 text-red-600"
-                                        : "bg-blue-50 hover:bg-blue-100 text-blue-600"
+                                        ? "bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+                                        : "bg-indigo-50/50 hover:bg-indigo-100/50 text-indigo-600/70"
                                 )}
                                 suppressHydrationWarning
                             >
@@ -206,8 +206,8 @@ export function BottomNavigation({
                                 className={cn(
                                     "flex flex-col items-center justify-center min-w-16 h-full space-y-1 relative transition-colors select-none",
                                     tab.isActive
-                                        ? "text-blue-600"
-                                        : "text-gray-500 hover:text-gray-900"
+                                        ? "text-indigo-600 dark:text-indigo-400 font-medium"
+                                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
                                 )}
                             >
                                 <div className="relative">

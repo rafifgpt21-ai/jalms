@@ -65,13 +65,11 @@ export function ChatWindow({
     }, [messages]);
 
     // Polling and Mark Read effects
-    // Polling and Mark Read effects
     useEffect(() => {
         let isMounted = true;
         let timeoutId: NodeJS.Timeout;
 
         // Track the latest message timestamp to fetch only deltas
-        // Initialize with the last message's time or null
         let lastMessageDate = messages.length > 0
             ? new Date(messages[messages.length - 1].createdAt)
             : undefined;
@@ -79,52 +77,38 @@ export function ChatWindow({
         const markRead = async () => {
             try {
                 await markConversationAsRead(conversationId);
-                // Refresh context to update global unread count/indicators
                 refreshConversations();
             } catch (error) {
                 console.error("Failed to mark conversation as read", error);
             }
         };
 
-        // Mark as read immediately on mount
         markRead();
 
-        // Smart polling function
         const pollMessages = async () => {
             if (!isMounted) return;
-
-            // Determine polling interval based on visibility
-            // 3s if active, 15s if background/hidden
             const isPageHidden = document.hidden;
             const interval = isPageHidden ? 15000 : 3000;
 
             try {
-                // Fetch only messages AFTER the last one we have
                 const newMessages = await getMessages(conversationId, lastMessageDate);
 
                 if (isMounted && Array.isArray(newMessages) && newMessages.length > 0) {
                     setMessages(prev => {
-                        // Avoid duplicates just in case, though Date filter should handle it
-                        // Map existing IDs
                         const existingIds = new Set(prev.map(m => m.id));
                         const uniqueNewMessages = (newMessages as unknown as Message[]).filter(m => !existingIds.has(m.id));
-
                         if (uniqueNewMessages.length === 0) return prev;
-
                         return [...prev, ...uniqueNewMessages];
                     });
 
-                    // Update cursor
                     const lastMsg = newMessages[newMessages.length - 1] as unknown as Message;
                     lastMessageDate = new Date(lastMsg.createdAt);
 
-                    // Check for unread in new messages to mark as read
                     const hasUnread = (newMessages as unknown as Message[]).some(
                         msg => msg.sender.id !== currentUserId && !msg.readByIds.includes(currentUserId)
                     );
 
                     if (hasUnread && !isPageHidden) {
-                        // Only mark read automatically if user is actually looking at the page
                         markRead();
                     }
                 }
@@ -137,14 +121,13 @@ export function ChatWindow({
             }
         };
 
-        // Start polling loop
         timeoutId = setTimeout(pollMessages, 3000);
 
         return () => {
             isMounted = false;
             clearTimeout(timeoutId);
         };
-    }, [conversationId, refreshConversations]); // Removing messages dependency to avoid re-triggering loop logic unnecessarily, using ref or local var for cursor
+    }, [conversationId, refreshConversations]);
 
     // Update Mobile Header
     const { setHeader, resetHeader } = useMobileHeader()
@@ -174,7 +157,6 @@ export function ChatWindow({
             if (result.error) {
                 toast.error(result.error);
             } else if (result.message) {
-                // ... (optimistic update logic)
                 const optimisticMessage: Message = {
                     id: result.message.id,
                     content: result.message.content,
@@ -189,7 +171,7 @@ export function ChatWindow({
 
                 setMessages((prev) => [...prev, optimisticMessage]);
                 setNewMessage("");
-                refreshConversations(); // Update sidebar with new message preview
+                refreshConversations();
             }
         } catch (error) {
             toast.error("Failed to send message");
@@ -199,82 +181,100 @@ export function ChatWindow({
     };
 
     return (
-        <div className="flex flex-col flex-1 h-full min-h-0 bg-background relative">
-            {/* Header */}
-            <div className="hidden md:flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
-                <Avatar>
+        <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-50/50 dark:bg-slate-950/50 relative">
+            {/* Glass Header */}
+            <div className="hidden md:flex items-center gap-3 p-4 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl sticky top-0 z-10 shadow-sm">
+                <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-slate-800 shadow-md">
                     <AvatarImage src={otherParticipant?.image || undefined} />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
                         {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
                     </AvatarFallback>
                 </Avatar>
                 <div>
-                    <h3 className="font-semibold">{otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}</h3>
-                    <p className="text-xs text-muted-foreground">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 font-heading">
+                        {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                         {otherParticipant?.nickname ? otherParticipant?.name : otherParticipant?.email}
                     </p>
                 </div>
             </div>
 
-            {/* Messages Area */}
-            <ScrollArea className="flex-1 p-4 bg-gray-50/50 dark:bg-zinc-900/50">
-                <div className="space-y-4 pb-32 md:pb-4">
-                    {messages.map((message) => {
+            {/* Messages Area - Enhanced with Motion */}
+            <ScrollArea className="flex-1 p-4">
+                <div className="space-y-6 pb-32 md:pb-4 max-w-4xl mx-auto">
+                    {messages.map((message, index) => {
                         const isMe = message.sender.id === currentUserId;
+                        const isLastFromUser = index === messages.length - 1 || messages[index + 1]?.sender.id !== message.sender.id;
+
                         return (
                             <div
                                 key={message.id}
                                 className={cn(
-                                    "flex w-full",
+                                    "flex w-full items-end gap-2",
                                     isMe ? "justify-end" : "justify-start"
                                 )}
                             >
+                                {!isMe && isLastFromUser && (
+                                    <Avatar className="h-6 w-6 mb-1 ring-1 ring-slate-100 dark:ring-slate-800">
+                                        <AvatarImage src={message.sender.image || undefined} />
+                                        <AvatarFallback className="text-[9px] bg-slate-200">
+                                            {message.sender.name?.slice(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                )}
+                                {!isMe && !isLastFromUser && <div className="w-6" />}
+
                                 <div
                                     className={cn(
-                                        "flex max-w-[70%] flex-col gap-1 rounded-2xl px-4 py-2 text-sm shadow-sm",
+                                        "flex flex-col gap-1 px-5 py-3 text-sm shadow-sm max-w-[75%] transition-all",
                                         isMe
-                                            ? "bg-primary text-primary-foreground rounded-br-none"
-                                            : "bg-white dark:bg-zinc-800 text-foreground rounded-bl-none border border-border/50"
+                                            ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm"
+                                            : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-slate-100 dark:border-slate-700"
                                     )}
                                 >
-                                    <p>{message.content}</p>
-                                    <span className={cn("text-[10px] self-end opacity-70", isMe ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                                    <p className="leading-relaxed">{message.content}</p>
+                                    <span className={cn(
+                                        "text-[10px] self-end",
+                                        isMe ? "text-indigo-100/80" : "text-slate-400"
+                                    )}>
                                         {format(new Date(message.createdAt), "HH:mm")}
                                     </span>
                                 </div>
                             </div>
                         );
                     })}
-                    <div ref={scrollRef} />
+                    <div ref={scrollRef} className="h-4" />
                 </div>
             </ScrollArea>
 
-            {/* Input Area - Redesigned with Fixed Mobile Positioning */}
-            <div className="fixed bottom-16 left-0 right-0 z-20 md:static md:bottom-auto md:z-auto p-3 md:p-4 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-                <form onSubmit={handleSend} className="flex gap-2 items-end">
-                    <div className="flex-1 relative">
-                        <Input
-                            placeholder="Type a message..."
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            className="w-full rounded-2xl pl-4 pr-12 py-6 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/20 shadow-inner resize-none overflow-hidden"
-                            disabled={isSending}
-                            autoComplete="off"
-                        />
-                    </div>
+            {/* Floating Input Area */}
+            <div className="fixed bottom-16 left-0 right-0 z-20 md:absolute md:bottom-6 md:left-4 md:right-4 md:z-auto p-2">
+                <form
+                    onSubmit={handleSend}
+                    className="flex gap-2 items-center max-w-4xl mx-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-2 rounded-full border border-slate-200/50 dark:border-slate-700/50 shadow-2xl ring-1 ring-black/5 dark:ring-white/5"
+                >
+                    <Input
+                        placeholder="Type a message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 h-auto placeholder:text-slate-400"
+                        disabled={isSending}
+                        autoComplete="off"
+                    />
 
                     <Button
                         type="submit"
                         size="icon"
                         className={cn(
-                            "rounded-full h-12 w-12 shrink-0 shadow-sm transition-all duration-200",
+                            "rounded-full h-10 w-10 shrink-0 transition-all duration-300",
                             newMessage.trim()
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/30"
+                                : "bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800"
                         )}
                         disabled={!newMessage.trim() || isSending}
                     >
-                        <Send className="w-5 h-5 ml-0.5" />
+                        <Send className="w-4 h-4 ml-0.5" />
                     </Button>
                 </form>
             </div>

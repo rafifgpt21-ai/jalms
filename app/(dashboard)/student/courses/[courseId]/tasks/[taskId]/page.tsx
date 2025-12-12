@@ -1,13 +1,11 @@
 import { getAssignmentDetails } from "@/lib/actions/teacher.actions"
 import { getUser } from "@/lib/actions/user.actions"
 import { db as prisma } from "@/lib/db"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { SubmissionForm } from "@/components/student/submission-form"
 import { QuizPlayer } from "@/components/student/quiz/quiz-player"
-import { CheckCircle, AlertCircle, Clock, FileText } from "lucide-react"
+import { CheckCircle, Clock, FileText, Calendar, Trophy, AlertTriangle } from "lucide-react"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function StudentTaskDetailPage({ params }: { params: Promise<{ taskId: string }> }) {
@@ -29,9 +27,26 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
     const isSubmitted = !!submission
     const isGraded = submission?.grade !== null && submission?.grade !== undefined
     const isLate = assignment.type !== 'NON_SUBMISSION' && assignment.dueDate && new Date() > new Date(assignment.dueDate) && !isSubmitted
-
-    // If submitted, check if it was late
     const wasLate = submission && assignment.dueDate && submission.submittedAt > assignment.dueDate
+
+    // Status Logic
+    let statusVariant = "outline"
+    let statusLabel = "To Do"
+    let statusColor = "text-slate-500 bg-slate-100 dark:text-slate-400 dark:bg-slate-800"
+
+    if (isGraded) {
+        statusVariant = "default"
+        statusLabel = "Graded"
+        statusColor = "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30"
+    } else if (isSubmitted) {
+        statusVariant = "secondary"
+        statusLabel = "Submitted"
+        statusColor = "text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/30"
+    } else if (isLate) {
+        statusVariant = "destructive"
+        statusLabel = "Missing"
+        statusColor = "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30"
+    }
 
     return (
         <div className="space-y-6" suppressHydrationWarning>
@@ -40,93 +55,89 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                 subtitle={assignment.course.name}
                 backLink={`/student/courses/${assignment.courseId}/tasks`}
             />
-            <div className="flex items-start justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold hidden md:block">{assignment.title}</h1>
-                    <div className="text-gray-500 mt-1 hidden md:block" suppressHydrationWarning>{assignment.course.name}</div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                    {assignment.type !== 'NON_SUBMISSION' && (
-                        <div className="text-sm font-medium">
-                            Due: {format(new Date(assignment.dueDate), "MMM d, h:mm a")}
-                        </div>
-                    )}
-                    <Badge variant={
-                        isGraded ? 'default' :
-                            isSubmitted ? 'secondary' :
-                                isLate ? 'destructive' : 'outline'
-                    } className={
-                        isGraded ? 'bg-green-600' :
-                            isSubmitted ? 'bg-blue-600 text-white' : ''
-                    }>
-                        {isGraded ? 'Graded' : isSubmitted ? 'Submitted' : isLate ? 'Missing' : 'To Do'}
-                    </Badge>
-                </div>
-            </div>
 
-            <div className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Instructions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="prose dark:prose-invert max-w-none">
-                            <div dangerouslySetInnerHTML={{ __html: assignment.description || "<p>No instructions provided.</p>" }} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Content: Instructions & Work (Left 2 Cols) */}
+                <div className="lg:col-span-2 space-y-8">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
+                            <span>{assignment.course.reportName || assignment.course.name}</span>
+                            <span>•</span>
+                            {/* @ts-ignore - teacher included in getAssignmentDetails via recent update */}
+                            <span>{assignment.course.teacher?.name}</span>
                         </div>
-                    </CardContent>
-                </Card>
+                        <h1 className="text-3xl md:text-4xl font-heading font-bold text-slate-900 dark:text-white leading-tight">
+                            {assignment.title}
+                        </h1>
+                    </div>
 
-                {(isGraded && (assignment.showGradeAfterSubmission || assignment.type !== 'QUIZ')) && (
-                    <Card className="border-green-200 bg-green-50 dark:bg-green-900/10">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                                <CheckCircle className="h-5 w-5" />
-                                Feedback & Grade
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="font-medium">Score:</span>
-                                <span className="text-2xl font-bold text-green-700 dark:text-green-400">
-                                    {submission?.grade} / {assignment.maxPoints}
-                                </span>
+                    {/* Instructions */}
+                    <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-sm">
+                        <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                            <FileText className="w-5 h-5 text-indigo-500" />
+                            Instructions
+                        </h3>
+                        <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-heading prose-a:text-indigo-600">
+                            <div dangerouslySetInnerHTML={{ __html: assignment.description || "<p class='text-slate-500 italic'>No specific instructions provided.</p>" }} />
+                        </div>
+                    </div>
+
+                    {/* Grade Feedback (if exists) */}
+                    {(isGraded && (assignment.showGradeAfterSubmission || assignment.type !== 'QUIZ')) && (
+                        <div className="bg-emerald-50/50 dark:bg-emerald-900/10 backdrop-blur-xl border border-emerald-100 dark:border-emerald-800 rounded-3xl p-6 shadow-sm">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h3 className="font-heading text-lg font-bold mb-1 flex items-center gap-2 text-emerald-800 dark:text-emerald-400">
+                                        <CheckCircle className="w-5 h-5" />
+                                        Feedback & Grade
+                                    </h3>
+                                    <p className="text-emerald-600 dark:text-emerald-500 text-sm">
+                                        Great job! Here is your result.
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 font-heading">
+                                        {submission?.grade}
+                                        <span className="text-lg text-emerald-400 dark:text-emerald-600 font-normal ml-1">/ {assignment.maxPoints}</span>
+                                    </div>
+                                </div>
                             </div>
+
                             {submission?.feedback && (
-                                <div className="bg-white dark:bg-black p-4 rounded-md border">
-                                    <p className="font-medium mb-1 text-sm text-gray-500">Teacher Feedback:</p>
+                                <div className="mt-4 p-4 bg-white/60 dark:bg-black/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-100">
+                                    <p className="font-medium text-xs uppercase tracking-wider text-emerald-500 mb-1">Teacher Feedback</p>
                                     <p>{submission.feedback}</p>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-                )}
+                        </div>
+                    )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Your Work</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                    {/* Work Area */}
+                    <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-sm">
+                        <h3 className="font-heading text-lg font-bold mb-4 text-slate-800 dark:text-slate-200">
+                            Your Work
+                        </h3>
 
                         {assignment.type === 'SUBMISSION' ? (
                             isGraded ? (
-                                <div className="space-y-4">
-                                    <div className="space-y-4">
-                                        <div className="border rounded-md p-4 bg-gray-50 dark:bg-gray-900">
-                                            <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: submission?.submissionUrl || "" }} />
-                                        </div>
-                                        <p className="text-xs text-gray-500 text-center">
-                                            Submitted on {format(new Date(submission!.submittedAt), "MMM d, h:mm a")}
-                                        </p>
-                                        <div className="pt-4 border-t">
-                                            <h4 className="text-sm font-medium mb-2">Edit Submission</h4>
-                                            <SubmissionForm
-                                                assignmentId={assignment.id}
-                                                initialUrl={submission?.submissionUrl || ""}
-                                                initialAttachmentUrl={submission?.attachmentUrl || ""}
-                                                initialLink={submission?.link || ""}
-                                                isLate={isLate || (!!wasLate)}
-                                            />
-                                        </div>
+                                <div className="space-y-6">
+                                    <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/50">
+                                        <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: submission?.submissionUrl || "" }} />
+                                    </div>
+                                    <p className="text-sm text-slate-500 text-center flex items-center justify-center gap-1">
+                                        <Clock className="w-4 h-4" />
+                                        Submitted on {format(new Date(submission!.submittedAt), "MMM d, h:mm a")}
+                                    </p>
+
+                                    <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Edit Submission</h4>
+                                        <SubmissionForm
+                                            assignmentId={assignment.id}
+                                            initialUrl={submission?.submissionUrl || ""}
+                                            initialAttachmentUrl={submission?.attachmentUrl || ""}
+                                            initialLink={submission?.link || ""}
+                                            isLate={isLate || (!!wasLate)}
+                                        />
                                     </div>
                                 </div>
                             ) : (
@@ -147,36 +158,78 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                                 showGradeAfterSubmission={assignment.showGradeAfterSubmission}
                             />
                         ) : (
-                            <div className="text-center py-6 text-gray-500">
+                            <div className="text-center py-10 text-slate-500">
                                 <p>No submission required for this task.</p>
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm">Points Breakdown</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span>Max Points:</span>
-                            <span>{assignment.maxPoints}</span>
+                {/* Sidebar (Right Col) */}
+                <div className="space-y-6">
+                    <div className="sticky top-24 space-y-6">
+                        {/* Status Card */}
+                        <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-3xl p-6 shadow-sm">
+                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Task Details</h4>
+
+                            <div className="space-y-4">
+                                <div className={`flex items-center gap-3 p-3 rounded-xl ${statusColor}`}>
+                                    {isGraded ? <CheckCircle className="w-5 h-5" /> :
+                                        isSubmitted ? <CheckCircle className="w-5 h-5" /> :
+                                            isLate ? <AlertTriangle className="w-5 h-5" /> :
+                                                <Clock className="w-5 h-5" />}
+                                    <span className="font-bold">{statusLabel}</span>
+                                </div>
+
+                                <div className="flex items-center justify-between p-2">
+                                    <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                        <Calendar className="w-4 h-4" /> Due Date
+                                    </span>
+                                    <span className={`font-medium ${isLate ? "text-red-500" : "text-slate-900 dark:text-white"}`}>
+                                        {assignment.dueDate ? format(new Date(assignment.dueDate), "MMM d") : "No Due Date"}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-2 pt-0">
+                                    <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2 ml-6 text-xs">
+                                        Time
+                                    </span>
+                                    <span className="text-sm text-slate-500">
+                                        {assignment.dueDate ? format(new Date(assignment.dueDate), "h:mm a") : "-"}
+                                    </span>
+                                </div>
+
+                                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+
+                                <div className="flex items-center justify-between p-2">
+                                    <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                        <Trophy className="w-4 h-4" /> Points
+                                    </span>
+                                    <span className="font-medium text-slate-900 dark:text-white">
+                                        {assignment.maxPoints} pts
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        {assignment.isExtraCredit && (
-                            <div className="flex justify-between text-green-600">
-                                <span>Extra Credit:</span>
-                                <span>Yes</span>
+
+                        {/* Extra Info Card */}
+                        {(assignment.isExtraCredit || assignment.latePenalty > 0) && (
+                            <div className="bg-slate-50/50 dark:bg-slate-900/20 backdrop-blur-sm border border-slate-100 dark:border-slate-800 rounded-3xl p-6">
+                                {assignment.isExtraCredit && (
+                                    <div className="flex items-center gap-2 text-emerald-600 mb-2 font-medium">
+                                        <Badge variant="outline" className="border-emerald-200 text-emerald-600 bg-emerald-50">Extra Credit</Badge>
+                                        <span className="text-sm">Available</span>
+                                    </div>
+                                )}
+                                {assignment.latePenalty > 0 && (
+                                    <div className="flex items-center gap-2 text-red-500 text-sm">
+                                        <span>Late Penalty:</span>
+                                        <span className="font-bold">-{assignment.latePenalty}%</span>
+                                    </div>
+                                )}
                             </div>
                         )}
-                        {assignment.latePenalty > 0 && (
-                            <div className="flex justify-between text-red-600">
-                                <span>Late Penalty:</span>
-                                <span>-{assignment.latePenalty}%</span>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </div>
     )

@@ -22,6 +22,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Conversation = {
     id: string;
@@ -55,7 +56,6 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
     const [searchQuery, setSearchQuery] = useState("");
     const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
-    // Sync state with props when router.refresh() updates initialConversations
     useEffect(() => {
         setConversations(initialConversations);
     }, [initialConversations]);
@@ -68,74 +68,53 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
         return displayName.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
-
-
     const headerButtons = (
         <>
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
                         <Search className="h-5 w-5" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="end" className="w-[calc(100vw-32px)] p-0 bg-background border shadow-lg mt-2">
+                <PopoverContent side="bottom" align="end" className="w-[calc(100vw-32px)] p-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-xl mt-2">
                     <div className="p-4 space-y-4">
                         <div className="relative">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                             <Input
                                 placeholder="Search chats..."
-                                className="pl-8 bg-muted/50"
+                                className="pl-9 bg-slate-100/50 dark:bg-slate-800/50 border-0 focus-visible:ring-1 focus-visible:ring-indigo-500/30"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 autoFocus
                             />
                         </div>
                         <div className="max-h-[300px] overflow-y-auto">
+                            {/* Mobile Popover List Logic (Same as before but styled) */}
                             {filteredConversations.length === 0 ? (
-                                <div className="p-4 text-center text-muted-foreground text-sm">
-                                    No conversations found.
-                                </div>
+                                <div className="p-4 text-center text-slate-400 text-sm">No conversations found.</div>
                             ) : (
-                                <div className="flex flex-col">
+                                <div className="flex flex-col gap-1">
                                     {filteredConversations.map((conv) => {
                                         const otherParticipant = conv.participants.find((p) => p.id !== userId);
                                         const lastMessage = conv.messages[0];
-                                        const isActive = pathname === `/socials/${conv.id}`;
-
                                         return (
                                             <Link
                                                 key={conv.id}
                                                 href={`/socials/${conv.id}`}
-                                                className={cn(
-                                                    "flex items-center gap-3 p-3 transition-colors hover:bg-muted/50 rounded-md",
-                                                    isActive && "bg-muted"
-                                                )}
+                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                                             >
                                                 <Avatar>
                                                     <AvatarImage src={otherParticipant?.image || undefined} />
-                                                    <AvatarFallback>
-                                                        {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
-                                                    </AvatarFallback>
+                                                    <AvatarFallback>{(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="font-medium truncate">
-                                                            {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
-                                                        </span>
-                                                        {lastMessage && (
-                                                            <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                                                                {formatDistanceToNow(new Date(lastMessage.createdAt), {
-                                                                    addSuffix: false,
-                                                                })}
-                                                            </span>
-                                                        )}
+                                                    <div className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                                                        {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
                                                     </div>
-                                                    <p className="text-sm truncate text-muted-foreground">
-                                                        {lastMessage ? lastMessage.content : "No messages yet"}
-                                                    </p>
+                                                    <p className="text-sm text-slate-500 truncate">{lastMessage ? lastMessage.content : "No messages yet"}</p>
                                                 </div>
                                             </Link>
-                                        );
+                                        )
                                     })}
                                 </div>
                             )}
@@ -143,43 +122,29 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                     </div>
                 </PopoverContent>
             </Popover>
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500" onClick={() => setIsNewChatOpen(true)}>
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setIsNewChatOpen(true)}>
                 <Plus className="h-5 w-5" />
             </Button>
         </>
     );
 
-    const shouldShowHeader = headerMode === "show"
-        ? true
-        : headerMode === "hide"
-            ? false
-            : !isSidebar || (isSidebar && false); // Auto: Show if default variant, hide if sidebar (unless overridden by CSS previously, but now explicit)
-    // Actually, preserving legacy behavior: !isSidebar showed it. isSidebar used 'hidden md:flex'
-    // To fix the bug, we want "show" to be used in Desktop Sidebar.
-    // Let's rely on the explicit 'show' prop passed from parents for Sidebars.
-    // For 'auto' (default variant), it returns true.
+    const shouldShowHeader = headerMode === "show" ? true : headerMode === "hide" ? false : !isSidebar;
 
     return (
-        <div className={cn("flex flex-col h-full", isSidebar && "text-sidebar-foreground")}>
+        <div className={cn("flex flex-col h-full", isSidebar && "text-slate-600 dark:text-slate-400 bg-transparent")}>
             {isSidebar && pathname === "/socials" && !disableMobileHeader && (
-                <MobileHeaderSetter
-                    title="Socials"
-                    rightAction={headerButtons}
-                />
+                <MobileHeaderSetter title="Socials" rightAction={headerButtons} />
             )}
+
             {shouldShowHeader && (
-                <div className={cn("p-4 flex items-center", isCollapsed ? "flex-col space-y-4 px-2 justify-center" : "justify-between gap-2", !isSidebar && "border-b")}>
+                <div className={cn("p-4 flex items-center bg-transparent sticky top-0 z-10", isCollapsed ? "flex-col space-y-4 px-2 justify-center" : "justify-between gap-2", !isSidebar && "border-b border-slate-100 dark:border-slate-800")}>
                     {isCollapsed ? (
                         <>
+                            {/* Collapsed View Header Icons */}
                             <TooltipProvider>
                                 <Tooltip delayDuration={0}>
                                     <TooltipTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-10 w-10 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
-                                            onClick={() => setIsNewChatOpen(true)}
-                                        >
+                                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400" onClick={() => setIsNewChatOpen(true)}>
                                             <Plus className="w-5 h-5" />
                                         </Button>
                                     </TooltipTrigger>
@@ -189,75 +154,36 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
 
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-10 w-10 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
-                                    >
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400">
                                         <Search className="w-5 h-5" />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent side="right" className="w-80 p-0 bg-sidebar border-sidebar-border">
+                                {/* Search Popover Content */}
+                                <PopoverContent side="right" className="w-80 p-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl ml-2">
                                     <div className="p-4 space-y-4">
                                         <div className="relative">
-                                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                             <Input
                                                 placeholder="Search chats..."
-                                                className="pl-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-muted-foreground"
+                                                className="pl-9 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                 autoFocus
                                             />
                                         </div>
                                         <div className="max-h-[300px] overflow-y-auto">
-                                            {filteredConversations.length === 0 ? (
-                                                <div className="p-4 text-center text-muted-foreground text-sm">
-                                                    No conversations found.
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col">
-                                                    {filteredConversations.map((conv) => {
-                                                        const otherParticipant = conv.participants.find((p) => p.id !== userId);
-                                                        const lastMessage = conv.messages[0];
-                                                        const isActive = pathname === `/socials/${conv.id}`;
-
-                                                        return (
-                                                            <Link
-                                                                key={conv.id}
-                                                                href={`/socials/${conv.id}`}
-                                                                className={cn(
-                                                                    "flex items-center gap-3 p-3 transition-colors hover:bg-sidebar-accent rounded-md",
-                                                                    isActive && "bg-sidebar-accent"
-                                                                )}
-                                                            >
-                                                                <Avatar>
-                                                                    <AvatarImage src={otherParticipant?.image || undefined} />
-                                                                    <AvatarFallback>
-                                                                        {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <div className="flex-1 min-w-0 text-sidebar-foreground">
-                                                                    <div className="flex items-center justify-between mb-1">
-                                                                        <span className="font-medium truncate">
-                                                                            {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
-                                                                        </span>
-                                                                        {lastMessage && (
-                                                                            <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                                                                                {formatDistanceToNow(new Date(lastMessage.createdAt), {
-                                                                                    addSuffix: false,
-                                                                                })}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-sm truncate text-muted-foreground">
-                                                                        {lastMessage ? lastMessage.content : "No messages yet"}
-                                                                    </p>
-                                                                </div>
-                                                            </Link>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
+                                            {filteredConversations.map(conv => {
+                                                const otherParticipant = conv.participants.find(p => p.id !== userId);
+                                                return (
+                                                    <Link key={conv.id} href={`/socials/${conv.id}`} className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarImage src={otherParticipant?.image || undefined} />
+                                                            <AvatarFallback>{(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="text-sm font-medium">{otherParticipant?.nickname || otherParticipant?.name}</span>
+                                                    </Link>
+                                                )
+                                            })}
                                         </div>
                                     </div>
                                 </PopoverContent>
@@ -265,204 +191,169 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                         </>
                     ) : (
                         <>
-                            <h2 className="text-lg font-semibold tracking-tight px-2">Socials</h2>
+                            <h2 className="text-xl font-heading font-bold tracking-tight px-2 text-slate-800 dark:text-slate-200">Socials</h2>
                             <div className="flex items-center gap-1">
+                                {/* Search Trigger (Standard View) */}
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
-                                        >
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
                                             <Search className="w-4 h-4" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent side="bottom" align="end" className="w-80 p-0 bg-sidebar border-sidebar-border">
+                                    <PopoverContent side="bottom" align="end" className="w-80 p-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-xl">
                                         <div className="p-4 space-y-4">
                                             <div className="relative">
-                                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                                 <Input
                                                     placeholder="Search chats..."
-                                                    className="pl-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-muted-foreground"
+                                                    className="pl-9 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
                                                     autoFocus
                                                 />
                                             </div>
-                                            <div className="max-h-[300px] overflow-y-auto">
-                                                {filteredConversations.length === 0 ? (
-                                                    <div className="p-4 text-center text-muted-foreground text-sm">
-                                                        No conversations found.
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col">
-                                                        {filteredConversations.map((conv) => {
-                                                            const otherParticipant = conv.participants.find((p) => p.id !== userId);
-                                                            const lastMessage = conv.messages[0];
-                                                            const isActive = pathname === `/socials/${conv.id}`;
-
-                                                            return (
-                                                                <Link
-                                                                    key={conv.id}
-                                                                    href={`/socials/${conv.id}`}
-                                                                    className={cn(
-                                                                        "flex items-center gap-3 p-3 transition-colors hover:bg-sidebar-accent rounded-md",
-                                                                        isActive && "bg-sidebar-accent"
-                                                                    )}
-                                                                >
-                                                                    <Avatar>
-                                                                        <AvatarImage src={otherParticipant?.image || undefined} />
-                                                                        <AvatarFallback>
-                                                                            {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
-                                                                        </AvatarFallback>
-                                                                    </Avatar>
-                                                                    <div className="flex-1 min-w-0 text-sidebar-foreground">
-                                                                        <div className="flex items-center justify-between mb-1">
-                                                                            <span className="font-medium truncate">
-                                                                                {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
-                                                                            </span>
-                                                                            {lastMessage && (
-                                                                                <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                                                                                    {formatDistanceToNow(new Date(lastMessage.createdAt), {
-                                                                                        addSuffix: false,
-                                                                                    })}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                        <p className="text-sm truncate text-muted-foreground">
-                                                                            {lastMessage ? lastMessage.content : "No messages yet"}
-                                                                        </p>
-                                                                    </div>
-                                                                </Link>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
+                                            {/* Results List for standard view search */}
+                                            <div className="max-h-[300px] overflow-y-auto flex flex-col gap-1">
+                                                {filteredConversations.map(conv => {
+                                                    const otherParticipant = conv.participants.find(p => p.id !== userId);
+                                                    return (
+                                                        <Link key={conv.id} href={`/socials/${conv.id}`} className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
+                                                            <Avatar className="h-8 w-8">
+                                                                <AvatarImage src={otherParticipant?.image || undefined} />
+                                                                <AvatarFallback>{(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                            </Avatar>
+                                                            <span className="text-sm font-medium">{otherParticipant?.nickname || otherParticipant?.name}</span>
+                                                        </Link>
+                                                    )
+                                                })}
                                             </div>
                                         </div>
                                     </PopoverContent>
                                 </Popover>
 
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-md hover:bg-sidebar-accent text-sidebar-foreground"
-                                    onClick={() => setIsNewChatOpen(true)}
-                                >
-                                    <Plus className="w-4 h-4" />
-                                </Button>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" onClick={() => setIsNewChatOpen(true)}>
+                                                <Plus className="w-4 h-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>New Chat</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                         </>
                     )}
                 </div>
             )}
 
-            <div className="flex-1 overflow-y-auto">
-                {isCollapsed ? (
-                    <div className="flex flex-col gap-2 p-2 items-center">
-                        {filteredConversations.map((conv) => {
-                            const otherParticipant = conv.participants.find((p) => p.id !== userId);
-                            const isActive = pathname === `/socials/${conv.id}`;
-                            const lastMessage = conv.messages[0];
-                            // Check if unread: has last message, and user ID is NOT in readByIds
-                            const isUnread = lastMessage && !lastMessage.readByIds?.includes(userId);
-
-                            return (
-                                <TooltipProvider key={conv.id}>
-                                    <Tooltip delayDuration={0}>
-                                        <TooltipTrigger asChild>
-                                            <Link
-                                                href={`/socials/${conv.id}`}
-                                                className={cn(
-                                                    "flex items-center justify-center p-2 rounded-md transition-colors relative",
-                                                    "hover:bg-sidebar-accent",
-                                                    isActive && "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400"
-                                                )}
-                                            >
-                                                <Avatar>
-                                                    <AvatarImage src={otherParticipant?.image || undefined} />
-                                                    <AvatarFallback>
-                                                        {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                {isUnread && (
-                                                    <div className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background" />
-                                                )}
-                                            </Link>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="right">
-                                            {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
-                                            {isUnread && " (Unread)"}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    filteredConversations.length === 0 ? (
-                        <div className="p-4 text-center text-muted-foreground text-sm">
-                            No conversations found.
+            <ScrollArea className="flex-1">
+                <div className={cn("flex flex-col gap-1 p-2", isCollapsed ? "items-center" : "")}>
+                    {filteredConversations.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-sm">
+                            <p>No conversations found</p>
+                            <Button variant="link" onClick={() => setIsNewChatOpen(true)} className="mt-2 text-indigo-500">Start a new chat</Button>
                         </div>
                     ) : (
-                        <div className="flex flex-col">
-                            {filteredConversations.map((conv) => {
-                                const otherParticipant = conv.participants.find((p) => p.id !== userId);
-                                const lastMessage = conv.messages[0];
-                                const isActive = pathname === `/socials/${conv.id}`;
-                                // Check if unread: has last message, and user ID is NOT in readByIds
-                                const isUnread = lastMessage && !lastMessage.readByIds?.includes(userId);
+                        filteredConversations.map((conv) => {
+                            const otherParticipant = conv.participants.find((p) => p.id !== userId);
+                            const lastMessage = conv.messages[0];
+                            const isActive = pathname === `/socials/${conv.id}`;
+                            const isUnread = lastMessage && !lastMessage.readByIds?.includes(userId);
 
+                            if (isCollapsed) {
                                 return (
-                                    <Link
-                                        key={conv.id}
-                                        href={`/socials/${conv.id}`}
-                                        className={cn(
-                                            "flex items-center gap-3 p-3 transition-colors last:border-0 relative",
-                                            isSidebar
-                                                ? "hover:bg-sidebar-accent border-sidebar-border"
-                                                : "hover:bg-muted/50 border-b border-border/40",
-                                            isActive && (isSidebar
-                                                ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400"
-                                                : "bg-muted"
-                                            )
+                                    <TooltipProvider key={conv.id}>
+                                        <Tooltip delayDuration={0}>
+                                            <TooltipTrigger asChild>
+                                                <Link
+                                                    href={`/socials/${conv.id}`}
+                                                    className={cn(
+                                                        "relative flex items-center justify-center p-2 rounded-xl transition-all duration-200 group",
+                                                        isActive
+                                                            ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 shadow-sm ring-1 ring-indigo-100 dark:ring-indigo-900/30"
+                                                            : "hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-500"
+                                                    )}
+                                                >
+                                                    <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-slate-900 transition-all group-hover:scale-105">
+                                                        <AvatarImage src={otherParticipant?.image || undefined} />
+                                                        <AvatarFallback className={cn("bg-slate-200 dark:bg-slate-700", isActive && "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300")}>
+                                                            {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase()}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    {isUnread && (
+                                                        <span className="absolute top-1 right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-white dark:border-slate-900" />
+                                                    )}
+                                                </Link>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right">
+                                                <p className="font-medium">{otherParticipant?.nickname || otherParticipant?.name}</p>
+                                                {isUnread && <p className="text-xs text-red-400 font-bold">Unread</p>}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )
+                            }
+
+                            return (
+                                <Link
+                                    key={conv.id}
+                                    href={`/socials/${conv.id}`}
+                                    className={cn(
+                                        "group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-transparent",
+                                        isActive
+                                            ? "bg-indigo-50 dark:bg-indigo-900/20 shadow-sm border-indigo-100 dark:border-indigo-900/30"
+                                            : "hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:border-slate-100 dark:hover:border-slate-800"
+                                    )}
+                                >
+                                    <div className="relative">
+                                        <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-slate-900 group-hover:scale-105 transition-transform">
+                                            <AvatarImage src={otherParticipant?.image || undefined} />
+                                            <AvatarFallback className={cn("bg-slate-100 dark:bg-slate-800 text-slate-500", isActive && "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300")}>
+                                                {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        {isUnread && (
+                                            <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-red-500 border-2 border-white dark:border-slate-900 animate-pulse" />
                                         )}
-                                    >
-                                        <div className="relative">
-                                            <Avatar>
-                                                <AvatarImage src={otherParticipant?.image || undefined} />
-                                                <AvatarFallback>
-                                                    {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            {isUnread && (
-                                                <div className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 border-2 border-background" />
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <span className={cn(
+                                                "font-medium truncate text-sm transition-colors",
+                                                isActive ? "text-indigo-900 dark:text-indigo-100 font-bold" : "text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white",
+                                                isUnread && "font-bold text-slate-900 dark:text-white"
+                                            )}>
+                                                {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
+                                            </span>
+                                            {lastMessage && (
+                                                <span className={cn(
+                                                    "text-[10px] whitespace-nowrap ml-2",
+                                                    isUnread ? "text-indigo-600 font-bold" : "text-slate-400 group-hover:text-slate-500"
+                                                )}>
+                                                    {formatDistanceToNow(new Date(lastMessage.createdAt), { addSuffix: false })}
+                                                </span>
                                             )}
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className={cn("font-medium truncate", isUnread && "font-bold text-foreground")}>
-                                                    {otherParticipant?.nickname || otherParticipant?.name || "Unknown User"}
-                                                </span>
-                                                {lastMessage && (
-                                                    <span className={cn("text-xs whitespace-nowrap ml-2", isUnread ? "text-red-500 font-medium" : "text-muted-foreground")}>
-                                                        {formatDistanceToNow(new Date(lastMessage.createdAt), {
-                                                            addSuffix: false,
-                                                        })}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className={cn("text-sm truncate", isUnread ? "text-foreground font-medium" : "text-muted-foreground")}>
-                                                {lastMessage ? lastMessage.content : "No messages yet"}
-                                            </p>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
-                        </div>
-                    )
-                )}
-            </div>
+                                        <p className={cn(
+                                            "text-xs truncate transition-colors",
+                                            isActive ? "text-indigo-600/80 dark:text-indigo-300/80" : "text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400",
+                                            isUnread && "font-medium text-slate-800 dark:text-slate-200"
+                                        )}>
+                                            {lastMessage ? (
+                                                lastMessage.sender?.id === userId ? `You: ${lastMessage.content}` : lastMessage.content
+                                            ) : (
+                                                <span className="italic opacity-70">No messages yet</span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </Link>
+                            );
+                        })
+                    )}
+                </div>
+            </ScrollArea>
 
             <NewChatDialog
                 open={isNewChatOpen}

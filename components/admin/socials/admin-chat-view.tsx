@@ -62,73 +62,86 @@ export function AdminChatView({
     }, [conversationId, messages.length]);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-100px)] bg-background border rounded-lg overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-100px)] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
             {/* Header */}
-            <div className="flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
-                <Button variant="ghost" size="icon" asChild className="mr-2">
+            <div className="flex items-center gap-3 p-4 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl sticky top-0 z-10">
+                <Button variant="ghost" size="icon" asChild className="mr-2 h-8 w-8">
                     <Link href="/admin/socials">
                         <ArrowLeft className="w-4 h-4" />
                     </Link>
                 </Button>
-                <div className="flex -space-x-2 overflow-hidden">
-                    {participants.map((p) => (
-                        <Avatar key={p.id} className="inline-block border-2 border-background w-8 h-8">
+                <div className="flex -space-x-3 overflow-hidden">
+                    {participants.slice(0, 3).map((p) => (
+                        <Avatar key={p.id} className="inline-block border-2 border-white dark:border-slate-800 w-8 h-8 ring-1 ring-slate-100 dark:ring-slate-700">
                             <AvatarImage src={p.image || undefined} />
-                            <AvatarFallback>{p.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                            <AvatarFallback className="text-[10px] bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+                                {p.name?.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
                         </Avatar>
                     ))}
+                    {participants.length > 3 && (
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-800 text-[10px] font-medium text-slate-500">
+                            +{participants.length - 3}
+                        </div>
+                    )}
                 </div>
                 <div>
-                    <h3 className="font-semibold">
+                    <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                         {participants.map((p) => p.name).join(", ")}
                     </h3>
-                    <p className="text-xs text-muted-foreground">
-                        Read-only view
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <p className="text-xs text-slate-500 font-medium">Live Monitoring</p>
+                    </div>
                 </div>
             </div>
 
             {/* Messages Area */}
-            <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4 pb-4">
+            <ScrollArea className="flex-1 p-4 bg-slate-50/50 dark:bg-slate-950/50">
+                <div className="space-y-6 pb-4">
                     {messages.length === 0 ? (
-                        <div className="text-center text-muted-foreground py-10">
-                            No messages in this conversation.
+                        <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-2">
+                            <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
+                                <span className="text-xl">💬</span>
+                            </div>
+                            <p className="text-sm font-medium">No conversation history</p>
                         </div>
                     ) : (
                         messages.map((message) => {
-                            // In admin view, we don't distinguish "me" vs "them" by side, 
-                            // or maybe we do? Let's just align left for everyone but show avatar/name clearly.
-                            // Actually, standard chat UI usually aligns left for others. 
-                            // Since admin is neither, let's align everyone left but group by sender.
-
                             return (
                                 <div
                                     key={message.id}
-                                    className="flex w-full justify-start gap-2"
+                                    className="flex w-full justify-start gap-3 group"
                                 >
-                                    <Avatar className="w-8 h-8 mt-1">
+                                    <Avatar className="w-8 h-8 mt-1 ring-1 ring-slate-200 dark:ring-slate-800">
                                         <AvatarImage src={message.sender.image || undefined} />
-                                        <AvatarFallback>{message.sender.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                        <AvatarFallback className="bg-slate-200 dark:bg-slate-800 text-xs">
+                                            {message.sender.name?.slice(0, 2).toUpperCase()}
+                                        </AvatarFallback>
                                     </Avatar>
-                                    <div className="flex flex-col max-w-[70%]">
-                                        <span className="text-xs text-muted-foreground ml-1 mb-1">
-                                            {message.sender.name}
-                                        </span>
-                                        <div
-                                            className="flex flex-col gap-1 rounded-2xl px-4 py-2 text-sm shadow-sm bg-muted text-foreground rounded-tl-none"
-                                        >
-                                            <p>{message.content}</p>
-                                            <span className="text-[10px] self-end opacity-70">
+                                    <div className="flex flex-col max-w-[80%]">
+                                        <div className="flex items-baseline gap-2 ml-1 mb-1">
+                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                {message.sender.name}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400">
                                                 {format(new Date(message.createdAt), "HH:mm")}
                                             </span>
+                                        </div>
+                                        <div
+                                            className="rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm shadow-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-800"
+                                        >
+                                            <p className="leading-relaxed">{message.content}</p>
                                         </div>
                                     </div>
                                 </div>
                             );
                         })
                     )}
-                    <div ref={scrollRef} />
+                    <div ref={scrollRef} className="h-1" />
                 </div>
             </ScrollArea>
         </div>
