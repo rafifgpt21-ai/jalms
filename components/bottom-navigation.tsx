@@ -118,7 +118,7 @@ export function BottomNavigation({
     if (visibleTabs.length === 0) return null
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-white/20 dark:border-white/10 z-100 pb-safe shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
+        <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 border-t border-white/20 dark:border-white/10 z-100 pb-safe shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
             <div className="flex items-center h-16">
                 {/* Fixed Menu Button (Left) */}
                 <div className="flex-none w-16 border-r border-gray-100 flex items-center justify-center h-full p-0">
@@ -142,7 +142,7 @@ export function BottomNavigation({
                                 </div>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="w-[85vw] sm:w-80 bg-sidebar text-sidebar-foreground border-r-sidebar-border p-0 flex flex-col h-full inset-y-0 left-0">
+                        <SheetContent side="left" style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }} className="w-[85vw] sm:w-80 bg-sidebar/60 text-sidebar-foreground border-r border-sidebar-border/20 p-0 flex flex-col h-full inset-y-0 left-0 shadow-2xl">
                             {/* User Profile Header */}
                             <div className="p-4 border-b border-sidebar-border bg-sidebar-accent/10">
                                 <SheetTitle className="sr-only">User Menu</SheetTitle>

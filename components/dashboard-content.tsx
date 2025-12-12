@@ -14,7 +14,7 @@ export function DashboardContent({ children }: DashboardContentProps) {
 
     return (
         <main className={cn(
-            "flex-1 bg-gray-50 flex flex-col relative",
+            "flex-1 flex flex-col relative",
             isSocials
                 ? "h-full overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 p-0"
                 : "p-1.5 md:p-8 overflow-y-auto pb-20 md:pb-8"

@@ -4,7 +4,7 @@ export default function Loading() {
     return (
         <div className="flex flex-col h-full bg-background">
             {/* Header */}
-            <div className="flex items-center gap-3 p-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10">
+            <div style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="flex items-center gap-3 p-4 border-b bg-background/95 sticky top-0 z-10">
                 <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="space-y-2">
                     <Skeleton className="h-4 w-[150px]" />

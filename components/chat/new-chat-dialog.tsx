@@ -78,7 +78,7 @@ export function NewChatDialog({ open, onOpenChange, userId }: NewChatDialogProps
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-slate-200 dark:border-slate-800 shadow-2xl">
+            <DialogContent style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="sm:max-w-[425px] bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800 shadow-2xl">
                 <DialogHeader>
                     <DialogTitle className="font-heading text-xl">New Message</DialogTitle>
                 </DialogHeader>

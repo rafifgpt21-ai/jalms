@@ -77,7 +77,10 @@ export function WorkspaceTabs({ roles, userName, userNickname, userEmail, userIm
 
     return (
 
-        <div className="relative border-b bg-white/80 backdrop-blur-md px-6 py-1 flex items-center justify-between z-10 top-0 gap-4">
+        <div
+            style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
+            className="relative border-b bg-white/80 px-6 py-1 flex items-center justify-between z-10 top-0 gap-4"
+        >
             {/* Branding */}
             <div className="flex items-center gap-2 min-w-fit">
                 <div className="flex items-center justify-center">
@@ -88,7 +91,10 @@ export function WorkspaceTabs({ roles, userName, userNickname, userEmail, userIm
             {/* Tabs - Centered in available space */}
             <div className="flex-1 flex justify-center min-w-0 overflow-x-auto no-scrollbar mx-4">
                 {visibleTabs.length > 0 && (
-                    <div className="flex items-center p-1 bg-gray-100/50 backdrop-blur-sm border border-gray-200/50 rounded-full shadow-inner whitespace-nowrap relative ring-1 ring-black/5">
+                    <div
+                        style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+                        className="flex items-center p-1 bg-gray-100/50 border border-gray-200/50 rounded-full shadow-inner whitespace-nowrap relative ring-1 ring-black/5"
+                    >
                         {visibleTabs.map((tab) => {
                             const isOptimisticActive = optimisticPath ? optimisticPath.startsWith(tab.href) : tab.isActive
                             const hasBadge = (tab as any).hasBadge

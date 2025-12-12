@@ -76,7 +76,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                         <Search className="h-5 w-5" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="end" className="w-[calc(100vw-32px)] p-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-xl mt-2">
+                <PopoverContent side="bottom" align="end" style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="w-[calc(100vw-32px)] p-0 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xl mt-2">
                     <div className="p-4 space-y-4">
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -159,7 +159,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                     </Button>
                                 </PopoverTrigger>
                                 {/* Search Popover Content */}
-                                <PopoverContent side="right" className="w-80 p-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl ml-2">
+                                <PopoverContent side="right" style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="w-80 p-0 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-2xl ml-2">
                                     <div className="p-4 space-y-4">
                                         <div className="relative">
                                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -200,7 +200,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             <Search className="w-4 h-4" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent side="bottom" align="end" className="w-80 p-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-xl">
+                                    <PopoverContent side="bottom" align="end" style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="w-80 p-0 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xl">
                                         <div className="p-4 space-y-4">
                                             <div className="relative">
                                                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />

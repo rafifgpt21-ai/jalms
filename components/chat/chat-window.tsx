@@ -183,7 +183,7 @@ export function ChatWindow({
     return (
         <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-50/50 dark:bg-slate-950/50 relative">
             {/* Glass Header */}
-            <div className="hidden md:flex items-center gap-3 p-4 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl sticky top-0 z-10 shadow-sm">
+            <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="hidden md:flex items-center gap-3 p-4 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 sticky top-0 z-10 shadow-sm">
                 <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-slate-800 shadow-md">
                     <AvatarImage src={otherParticipant?.image || undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
@@ -252,7 +252,8 @@ export function ChatWindow({
             <div className="fixed bottom-16 left-0 right-0 z-20 md:absolute md:bottom-6 md:left-4 md:right-4 md:z-auto p-2">
                 <form
                     onSubmit={handleSend}
-                    className="flex gap-2 items-center max-w-4xl mx-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-2 rounded-full border border-slate-200/50 dark:border-slate-700/50 shadow-2xl ring-1 ring-black/5 dark:ring-white/5"
+                    style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
+                    className="flex gap-2 items-center max-w-4xl mx-auto bg-white/80 dark:bg-slate-900/80 p-2 rounded-full border border-slate-200/50 dark:border-slate-700/50 shadow-2xl ring-1 ring-black/5 dark:ring-white/5"
                 >
                     <Input
                         placeholder="Type a message..."

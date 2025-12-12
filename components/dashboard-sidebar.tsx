@@ -141,7 +141,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                     "flex items-center justify-center p-3 rounded-md transition-all duration-200 relative group",
                                     isActive
                                         ? "bg-linear-to-r from-indigo-500/10 to-violet-500/10 text-indigo-600 dark:text-indigo-400"
-                                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                        : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
                                 )}
                             >
                                 {isNavigating ? (
@@ -177,7 +177,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                     "flex items-center gap-3 rounded-md transition-all duration-200 relative overflow-hidden px-4 py-3 text-base",
                     isActive
                         ? "bg-linear-to-r from-indigo-500/10 to-violet-500/10 text-indigo-700 dark:text-indigo-400 font-medium"
-                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                        : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
                 )}
             >
                 {isActive && (
@@ -229,7 +229,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                         <div className="px-2 flex justify-center">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent">
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-sidebar-accent-foreground hover:bg-slate-200/40 dark:hover:bg-slate-800/40">
                                         <BookOpen className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -240,7 +240,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
-                                            className="hover:bg-sidebar-accent cursor-pointer focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                                            className="hover:bg-slate-200/40 dark:hover:bg-slate-800/40 cursor-pointer focus:bg-slate-200/40 dark:focus:bg-slate-800/40 focus:text-sidebar-accent-foreground"
                                         >
                                             {course.name}
                                         </DropdownMenuItem>
@@ -285,7 +285,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                         "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
                                                         pathname.includes("/tasks") && !pathname.includes("/tasks-summary")
                                                             ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
-                                                            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                            : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
                                                     )}
                                                 >
                                                     <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && "text-blue-600 dark:text-blue-400")} />
@@ -302,7 +302,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                         <Link
                                                             href={`/teacher/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                             className={cn(
-                                                                "w-full cursor-pointer hover:bg-sidebar-accent focus:bg-sidebar-accent focus:text-sidebar-accent-foreground",
+                                                                "w-full cursor-pointer hover:bg-slate-200/40 dark:hover:bg-slate-800/40 focus:bg-slate-200/40 dark:focus:bg-slate-800/40 focus:text-sidebar-accent-foreground",
                                                                 pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
                                                             )}
                                                         >
@@ -313,7 +313,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                 <div className="p-2 border-t border-sidebar-border">
                                                     <Link
                                                         href={`/teacher/courses/${selectedCourseId}/tasks/new`}
-                                                        className="w-full flex items-center justify-start px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                        className="w-full flex items-center justify-start px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
                                                     >
                                                         <Plus className="mr-2 h-4 w-4" />
                                                         Add Task
@@ -330,7 +330,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                 "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
                                                 pathname.includes("/tasks") && !pathname.includes("/tasks-summary")
                                                     ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
-                                                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                    : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
                                             )}
                                         >
                                             {pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && (
@@ -350,7 +350,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                         key={assignment.id}
                                                         href={`/teacher/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                         className={cn(
-                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors truncate",
+                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground transition-colors truncate",
                                                             pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary font-medium" : "text-muted-foreground"
                                                         )}
                                                     >
@@ -360,7 +360,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                 <div className="pt-1">
                                                     <Link
                                                         href={`/teacher/courses/${selectedCourseId}/tasks/new`}
-                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
                                                     >
                                                         <Plus className="h-4 w-4" />
                                                         Add Task
@@ -413,7 +413,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
-                                            className="hover:bg-sidebar-accent cursor-pointer focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                                            className="hover:bg-slate-200/40 dark:hover:bg-slate-800/40 cursor-pointer focus:bg-slate-200/40 dark:focus:bg-slate-800/40 focus:text-sidebar-accent-foreground"
                                         >
                                             {course.name}
                                         </DropdownMenuItem>
@@ -456,7 +456,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                         "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
                                                         pathname.includes("/tasks")
                                                             ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
-                                                            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                            : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
                                                     )}
                                                 >
                                                     <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-indigo-600 dark:text-indigo-400")} />
@@ -473,7 +473,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                         <Link
                                                             href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                             className={cn(
-                                                                "w-full cursor-pointer hover:bg-sidebar-accent focus:bg-sidebar-accent focus:text-sidebar-accent-foreground",
+                                                                "w-full cursor-pointer hover:bg-slate-200/40 dark:hover:bg-slate-800/40 focus:bg-slate-200/40 dark:focus:bg-slate-800/40 focus:text-sidebar-accent-foreground",
                                                                 pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
                                                             )}
                                                         >
@@ -492,7 +492,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                 "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
                                                 pathname.includes("/tasks")
                                                     ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
-                                                    : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                    : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
                                             )}
                                         >
                                             {pathname.includes("/tasks") && (
@@ -512,7 +512,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                         key={assignment.id}
                                                         href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                         className={cn(
-                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors truncate",
+                                                            "block px-2 py-1.5 text-sm rounded-md hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground transition-colors truncate",
                                                             pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
                                                         )}
                                                     >
@@ -555,8 +555,9 @@ export function DashboardSidebar({ userRoles, teacherCourses, studentCourses, co
 
     return (
         <aside
+            style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
             className={cn(
-                "bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 relative border-r border-sidebar-border",
+                "bg-sidebar/40 text-sidebar-foreground flex flex-col transition-all duration-300 relative border-r border-sidebar-border/30 shadow-sm",
                 isCollapsed ? "w-16" : "w-80" // Wider for chat
             )}
         >
@@ -583,7 +584,7 @@ export function DashboardSidebar({ userRoles, teacherCourses, studentCourses, co
                     variant="ghost"
                     size="icon"
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="w-full flex items-center justify-center hover:bg-sidebar-accent text-muted-foreground hover:text-sidebar-accent-foreground"
+                    className="w-full flex items-center justify-center hover:bg-slate-200/40 dark:hover:bg-slate-800/40 text-muted-foreground hover:text-sidebar-accent-foreground"
                 >
                     {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                 </Button>

@@ -71,7 +71,7 @@ export default async function UsersPage({
             </div>
 
             {/* Glass Container for Toolbar & Table */}
-            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shadow-sm overflow-hidden flex flex-col">
+            <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-sm overflow-hidden flex flex-col">
                 <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40">
                     <UserToolbar />
                 </div>

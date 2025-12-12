@@ -116,7 +116,7 @@ export function TeacherDashboardView({
 
                 {/* Classes Today Hero */}
                 <motion.div variants={item} className="w-full">
-                    <Card className="border-none shadow-xl bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
+                    <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="border-none shadow-xl bg-white/60 dark:bg-slate-900/40 overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
@@ -160,8 +160,8 @@ export function TeacherDashboardView({
 
                 {/* Assignment Manager Widget */}
                 <motion.div variants={item}>
-                    <Card className="border-none shadow-xl bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 h-[500px] flex flex-col">
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10">
+                    <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="border-none shadow-xl bg-white/60 dark:bg-slate-900/40 overflow-hidden ring-1 ring-black/5 dark:ring-white/10 h-[500px] flex flex-col">
+                        <div style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-slate-900/80 z-10">
                             <div>
                                 <h3 className="font-bold font-heading text-lg text-slate-800 dark:text-slate-200">Assignments Overview</h3>
                                 <p className="text-xs text-slate-500">Manage and track progress</p>
@@ -248,7 +248,7 @@ export function TeacherDashboardView({
 
             {/* Right Column: Recent Submissions (Span 1) */}
             <motion.div variants={item} className="lg:col-span-1 space-y-6">
-                <Card className="h-full min-h-[500px] border-none shadow-xl bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 flex flex-col">
+                <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="h-full min-h-[500px] border-none shadow-xl bg-white/60 dark:bg-slate-900/40 overflow-hidden ring-1 ring-black/5 dark:ring-white/10 flex flex-col">
                     <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
                         <CardTitle className="text-lg font-heading text-slate-800 dark:text-slate-200">
                             Recent Submissions
@@ -298,7 +298,7 @@ export function TeacherDashboardView({
 
 function StatCard({ title, value, icon: Icon, color, bg, desc }: any) {
     return (
-        <Card className="border-none shadow-lg bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl ring-1 ring-black/5 dark:ring-white/10">
+        <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="border-none shadow-lg bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5 dark:ring-white/10">
             <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className={cn("p-2 rounded-xl", bg, color)}>

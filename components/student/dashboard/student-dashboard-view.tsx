@@ -97,7 +97,7 @@ export function StudentDashboardView({
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/30 rounded-full blur-xl" />
 
                         <div className="relative z-10 text-white">
-                            <div className="flex items-center gap-2 text-indigo-100 bg-white/10 w-fit px-3 py-1 rounded-full text-sm backdrop-blur-sm border border-white/10">
+                            <div style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="flex items-center gap-2 text-indigo-100 bg-white/10 w-fit px-3 py-1 rounded-full text-sm border border-white/10">
                                 <Clock className="w-4 h-4" />
                                 <span>Up Next</span>
                             </div>
@@ -125,7 +125,7 @@ export function StudentDashboardView({
                                 {schedule.length} classes remaining today
                             </div>
 
-                            <div className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors backdrop-blur-sm cursor-pointer">
+                            <div style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors cursor-pointer">
                                 <ArrowRight className="w-6 h-6 text-white" />
                             </div>
                         </div>
@@ -139,7 +139,7 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5, delay: 0.1 }}
                     className="md:col-span-1"
                 >
-                    <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-3xl p-6 h-full flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-white/70 transition-colors">
+                    <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="bg-white/60 dark:bg-slate-900/40 border border-white/20 dark:border-white/5 rounded-3xl p-6 h-full flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-white/70 transition-colors">
                         <div className="p-3 bg-orange-100 dark:bg-orange-900/30 w-fit rounded-2xl text-orange-600 dark:text-orange-400 mb-4">
                             <AlertCircle className="w-6 h-6" />
                         </div>
@@ -159,7 +159,7 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5, delay: 0.2 }}
                     className="md:col-span-1"
                 >
-                    <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-3xl p-6 h-full flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-white/70 transition-colors">
+                    <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="bg-white/60 dark:bg-slate-900/40 border border-white/20 dark:border-white/5 rounded-3xl p-6 h-full flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-white/70 transition-colors">
                         <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 w-fit rounded-2xl text-emerald-600 dark:text-emerald-400 mb-4">
                             <GraduationCap className="w-6 h-6" />
                         </div>
@@ -180,7 +180,7 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="md:col-span-2 lg:col-span-2 row-span-2"
                 >
-                    <Card className="h-full border-none shadow-xl bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl ring-1 ring-black/5">
+                    <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="h-full border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 font-heading text-xl">
                                 <Calendar className="w-5 h-5 text-indigo-500" />
@@ -224,7 +224,7 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5, delay: 0.4 }}
                     className="md:col-span-2 lg:col-span-2 row-span-2"
                 >
-                    <Card className="h-full border-none shadow-xl bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl ring-1 ring-black/5">
+                    <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="h-full border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 font-heading text-xl">
                                 <BookOpen className="w-5 h-5 text-orange-500" />

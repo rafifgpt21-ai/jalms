@@ -48,7 +48,7 @@ export default async function StudentSchedulePage() {
             <MobileHeaderSetter title="My Weekly Schedule" />
 
             {/* Main Glass Card */}
-            <Card className="overflow-hidden border-none shadow-xl bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl ring-1 ring-black/5 dark:ring-white/10">
+            <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="overflow-hidden border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5 dark:ring-white/10">
                 <CardHeader className="border-b border-black/5 dark:border-white/5 pb-4">
                     <CardTitle className="font-heading text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
                         Weekly Schedule
@@ -59,11 +59,11 @@ export default async function StudentSchedulePage() {
                         <div className="min-w-[800px]">
                             {/* Header Row */}
                             <div className="grid grid-cols-8 gap-2 mb-2">
-                                <div className="p-3 font-heading font-bold text-center rounded-xl text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-sm">
+                                <div style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="p-3 font-heading font-bold text-center rounded-xl text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-800/50">
                                     Period
                                 </div>
                                 {days.map((day) => (
-                                    <div key={day} className="p-3 font-heading font-bold text-center rounded-xl text-white bg-indigo-600/90 shadow-lg shadow-indigo-600/20 backdrop-blur-sm">
+                                    <div key={day} style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="p-3 font-heading font-bold text-center rounded-xl text-white bg-indigo-600/90 shadow-lg shadow-indigo-600/20">
                                         {day}
                                     </div>
                                 ))}

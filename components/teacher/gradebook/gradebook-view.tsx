@@ -54,15 +54,16 @@ export function GradebookView({ data }: GradebookViewProps) {
                         placeholder="Search students..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200 dark:border-slate-800"
+                        className="pl-9 bg-white/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800"
+                        style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
                     />
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
-                    <Button variant="outline" className="flex-1 sm:flex-none border-dashed bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl">
+                    <Button variant="outline" style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="flex-1 sm:flex-none border-dashed bg-white/60 dark:bg-slate-900/40">
                         <Filter className="mr-2 h-4 w-4 opacity-50" />
                         Filter
                     </Button>
-                    <Button variant="outline" className="flex-1 sm:flex-none border-dashed bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl">
+                    <Button variant="outline" style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="flex-1 sm:flex-none border-dashed bg-white/60 dark:bg-slate-900/40">
                         <Download className="mr-2 h-4 w-4 opacity-50" />
                         Export
                     </Button>
@@ -70,7 +71,7 @@ export function GradebookView({ data }: GradebookViewProps) {
             </div>
 
             {/* Main Gradebook Container */}
-            <Card className="border-none shadow-xl bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
+            <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="border-none shadow-xl bg-white/60 dark:bg-slate-900/40 overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
                 <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40">
                     <div className="flex items-center justify-between">
                         <div>
@@ -87,7 +88,7 @@ export function GradebookView({ data }: GradebookViewProps) {
                         <TableHeader>
                             <TableRow className="hover:bg-transparent border-slate-100 dark:border-slate-800">
                                 {/* Sticky Student Column */}
-                                <TableHead className="w-[250px] sticky left-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-r border-slate-100 dark:border-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                <TableHead style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="w-[250px] sticky left-0 z-20 bg-white/95 dark:bg-slate-900/95 border-r border-slate-100 dark:border-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                     Student
                                 </TableHead>
 
@@ -124,7 +125,7 @@ export function GradebookView({ data }: GradebookViewProps) {
                                 filteredStudents.map((student) => (
                                     <TableRow key={student.studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 border-slate-100 dark:border-slate-800 group transition-colors">
                                         {/* Sticky Student Name */}
-                                        <TableCell className="sticky left-0 z-20 bg-white/60 dark:bg-slate-950/60 backdrop-blur-md border-r border-slate-100 dark:border-slate-800 font-medium text-slate-900 dark:text-slate-100 group-hover:bg-indigo-50/20 dark:group-hover:bg-indigo-900/10">
+                                        <TableCell style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="sticky left-0 z-20 bg-white/60 dark:bg-slate-950/60 border-r border-slate-100 dark:border-slate-800 font-medium text-slate-900 dark:text-slate-100 group-hover:bg-indigo-50/20 dark:group-hover:bg-indigo-900/10">
                                             <div className="flex items-center gap-3">
                                                 {/* <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
                                                     <AvatarImage src={student.studentImage} />

@@ -43,7 +43,7 @@ export default async function AdminDashboard() {
                         {format(new Date(), "EEEE, MMMM do yyyy")}
                     </p>
                 </div>
-                <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="flex items-center gap-2 bg-white/50 dark:bg-slate-900/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm">
                     <Shield className="h-4 w-4 text-indigo-500" />
                     <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Admin Access</span>
                 </div>
@@ -53,7 +53,7 @@ export default async function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
                 {/* 1. Today's Pulse - Large Card (Span 8) */}
-                <div className="md:col-span-8 group relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shadow-xl transition-all hover:shadow-2xl">
+                <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="md:col-span-8 group relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-xl transition-all hover:shadow-2xl">
                     <div className="absolute inset-0 bg-linear-to-br from-indigo-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     <div className="p-8 h-full flex flex-col justify-between relative z-10">
@@ -123,7 +123,7 @@ export default async function AdminDashboard() {
                                 </div>
                                 <p className="text-sm text-indigo-200/80 font-medium">Active Accounts</p>
                             </div>
-                            <Button size="sm" variant="secondary" className="w-fit mt-4 bg-white/10 hover:bg-white/20 border-0 text-white backdrop-blur-sm" asChild>
+                            <Button size="sm" variant="secondary" style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="w-fit mt-4 bg-white/10 hover:bg-white/20 border-0 text-white" asChild>
                                 <Link href="/admin/users" className="flex items-center gap-2">
                                     Manage <ArrowUpRight className="h-4 w-4" />
                                 </Link>
@@ -152,7 +152,7 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* 4. Recent Activity (Last Logged In) - Span 12 */}
-                <div className="md:col-span-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shadow-sm overflow-hidden">
+                <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="md:col-span-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Clock className="h-5 w-5 text-slate-400" />
