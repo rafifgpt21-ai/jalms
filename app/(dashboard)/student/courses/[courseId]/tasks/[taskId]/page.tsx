@@ -79,7 +79,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                     <div className="space-y-6">
 
                         {/* Instructions Panel */}
-                        <div className="group relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <div className="group relative overflow-hidden rounded-3xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-sm transition-all hover:shadow-md">
                             <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500/50" />
                             <div className="p-8">
                                 <h3 className="font-heading text-xl font-bold mb-6 flex items-center gap-3 text-slate-800 dark:text-slate-100">
@@ -125,7 +125,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                         )}
 
                         {/* Work Area */}
-                        <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-8">
+                        <div className="rounded-3xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-sm p-8">
                             <h3 className="font-heading text-xl font-bold mb-6 text-slate-800 dark:text-slate-200">
                                 Your Work
                             </h3>
@@ -185,7 +185,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                     <div className="sticky top-24 space-y-6">
 
                         {/* Status Card */}
-                        <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-6">
+                        <div className="rounded-3xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-sm p-6 space-y-6">
 
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Status</span>

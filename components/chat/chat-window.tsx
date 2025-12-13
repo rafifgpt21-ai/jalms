@@ -181,10 +181,10 @@ export function ChatWindow({
     };
 
     return (
-        <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-50/50 dark:bg-slate-950/50 relative">
+        <div className="flex flex-col flex-1 h-full min-h-0 relative bg-transparent ">
             {/* Glass Header */}
-            <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="hidden md:flex items-center gap-3 p-4 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 sticky top-0 z-10 shadow-sm">
-                <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-slate-800 shadow-md">
+            <div className="hidden md:flex items-center gap-3 p-4 border-b border-white/20 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+                <Avatar className="h-10 w-10 ring-2 ring-white/50 dark:ring-slate-800 shadow-md">
                     <AvatarImage src={otherParticipant?.image || undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
                         {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
@@ -201,8 +201,8 @@ export function ChatWindow({
             </div>
 
             {/* Messages Area - Enhanced with Motion */}
-            <ScrollArea className="flex-1 p-4">
-                <div className="space-y-6 pb-24 md:pb-14 max-w-4xl mx-auto">
+            <ScrollArea className="flex-1 ">
+                <div className="space-y-6 pb-24 md:pb-14 max-w-4xl mx-auto px-4">
                     {messages.map((message, index) => {
                         const isMe = message.sender.id === currentUserId;
                         const isLastFromUser = index === messages.length - 1 || messages[index + 1]?.sender.id !== message.sender.id;
@@ -216,21 +216,21 @@ export function ChatWindow({
                                 )}
                             >
                                 {!isMe && isLastFromUser && (
-                                    <Avatar className="h-6 w-6 mb-1 ring-1 ring-slate-100 dark:ring-slate-800">
+                                    <Avatar className="hidden md:flex h-6 w-6 mb-1 ring-1 ring-white/50 dark:ring-slate-800 shadow-sm">
                                         <AvatarImage src={message.sender.image || undefined} />
-                                        <AvatarFallback className="text-[9px] bg-slate-200">
+                                        <AvatarFallback className="text-[9px] bg-indigo-100 text-indigo-600">
                                             {message.sender.name?.slice(0, 2).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
                                 )}
-                                {!isMe && !isLastFromUser && <div className="w-6" />}
+                                {!isMe && !isLastFromUser && <div className="hidden md:block w-6" />}
 
                                 <div
                                     className={cn(
-                                        "flex flex-col gap-1 px-5 py-3 text-sm shadow-sm max-w-[75%] transition-all",
+                                        "flex flex-col gap-1 px-5 py-3 text-sm shadow-sm max-w-[85%] md:max-w-[75%] transition-all backdrop-blur-sm",
                                         isMe
-                                            ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm"
-                                            : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-slate-100 dark:border-slate-700"
+                                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm shadow-indigo-500/20"
+                                            : "bg-white/60 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-white/40 dark:border-slate-700/50 shadow-sm"
                                     )}
                                 >
                                     <p className="leading-relaxed">{message.content}</p>
@@ -244,16 +244,18 @@ export function ChatWindow({
                             </div>
                         );
                     })}
-                    <div ref={scrollRef} className="h-4" />
+                    <div ref={scrollRef} className="h-10" />
                 </div>
             </ScrollArea>
 
             {/* Floating Input Area */}
-            <div className="fixed bottom-16 left-0 right-0 z-20 md:absolute md:bottom-6 md:left-4 md:right-4 md:z-auto p-2">
+            <div
+                style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
+                className="fixed bottom-16 left-0 right-0 z-20 p-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl [-webkit-backdrop-filter:blur(16px)] border-t border-white/30 dark:border-slate-800 md:absolute md:bottom-0 md:left-0 md:right-0"
+            >
                 <form
                     onSubmit={handleSend}
-                    style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
-                    className="flex gap-2 items-center max-w-4xl mx-auto bg-white/80 dark:bg-slate-900/80 p-2 rounded-full border border-slate-200/50 dark:border-slate-700/50 shadow-2xl ring-1 ring-black/5 dark:ring-white/5"
+                    className="flex gap-2 items-center max-w-4xl mx-auto rounded-full bg-transparent border-0"
                 >
                     <Input
                         placeholder="Type a message..."

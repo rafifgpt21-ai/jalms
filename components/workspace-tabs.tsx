@@ -80,14 +80,14 @@ export function WorkspaceTabs({ roles, userName, userNickname, userEmail, userIm
         <div className="relative px-6 py-4 flex items-center justify-center z-10 top-0 gap-4 pointer-events-none">
             <div
                 style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
-                className="flex items-center gap-2 bg-white/60 dark:bg-slate-900/60 border border-white/20 dark:border-white/10 rounded-full py-2 pl-4 pr-2 shadow-sm pointer-events-auto ring-1 ring-black/5"
+                className="flex items-center gap-2 bg-white/30 dark:bg-slate-900/60 border border-white/20 dark:border-white/10 rounded-full py-2 pl-4 pr-2 shadow-sm pointer-events-auto ring-1 ring-black/5"
             >
                 {/* Branding */}
                 <div className="flex items-center gap-2 pr-4 border-r border-black/5 dark:border-white/10 mr-2">
                     <div className="flex items-center justify-center">
                         <img src="/arsync.svg" alt="Logo" className="h-8 w-auto" />
                     </div>
-                    <span className="font-bold text-lg bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent hidden xl:block">Arsync</span>
+                    <span className="font-bold text-lg bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent hidden xl:block">Arsync</span>
                 </div>
 
                 {/* Tabs */}
@@ -119,7 +119,7 @@ export function WorkspaceTabs({ roles, userName, userNickname, userEmail, userIm
                                         )}
                                         <span className="relative z-10">{tab.label}</span>
                                         {hasBadge && (
-                                            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white w-2 h-2" />
+                                            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
                                         )}
                                     </Link>
                                 )

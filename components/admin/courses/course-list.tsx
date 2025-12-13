@@ -105,7 +105,7 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
     return (
         <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4 w-full">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                     <CourseModal teachers={teachers} terms={terms} subjects={subjects} />
                 </div>
 

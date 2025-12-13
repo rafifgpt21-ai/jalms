@@ -26,8 +26,8 @@ export function SocialsMainView({ initialConversations, userId }: SocialsMainVie
             </div>
 
             {/* Desktop View: Empty State */}
-            <div className="hidden md:flex flex-col items-center justify-center h-full text-muted-foreground p-4 text-center bg-background">
-                <div className="bg-muted/20 p-4 rounded-full mb-4">
+            <div className="hidden md:flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400 p-4 text-center bg-white/30 dark:bg-slate-950/30 backdrop-blur-sm">
+                <div className="bg-white/50 dark:bg-slate-800/50 p-6 rounded-full mb-6 shadow-sm ring-1 ring-white/50 dark:ring-white/10">
                     <MessageSquare className="w-12 h-12" />
                 </div>
                 <h2 className="text-xl font-semibold mb-2">Select a chat to start messaging</h2>

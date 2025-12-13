@@ -35,6 +35,7 @@ type Conversation = {
         nickname?: string | null;
     }[];
     messages: {
+        sender: any;
         content: string;
         createdAt: Date;
         readByIds?: string[];
@@ -101,7 +102,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             <Link
                                                 key={conv.id}
                                                 href={`/socials/${conv.id}`}
-                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors"
                                             >
                                                 <Avatar>
                                                     <AvatarImage src={otherParticipant?.image || undefined} />
@@ -217,7 +218,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                 {filteredConversations.map(conv => {
                                                     const otherParticipant = conv.participants.find(p => p.id !== userId);
                                                     return (
-                                                        <Link key={conv.id} href={`/socials/${conv.id}`} className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
+                                                        <Link key={conv.id} href={`/socials/${conv.id}`} className="flex items-center gap-3 p-3 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
                                                             <Avatar className="h-8 w-8">
                                                                 <AvatarImage src={otherParticipant?.image || undefined} />
                                                                 <AvatarFallback>{(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -271,8 +272,8 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                     className={cn(
                                                         "relative flex items-center justify-center p-2 rounded-xl transition-all duration-200 group",
                                                         isActive
-                                                            ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 shadow-sm ring-1 ring-indigo-100 dark:ring-indigo-900/30"
-                                                            : "hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-500"
+                                                            ? "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 shadow-sm ring-1 ring-indigo-500/20"
+                                                            : "hover:bg-white/40 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400"
                                                     )}
                                                 >
                                                     <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-slate-900 transition-all group-hover:scale-105">
@@ -302,8 +303,8 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                     className={cn(
                                         "group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-transparent",
                                         isActive
-                                            ? "bg-indigo-50 dark:bg-indigo-900/20 shadow-sm border-indigo-100 dark:border-indigo-900/30"
-                                            : "hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:border-slate-100 dark:hover:border-slate-800"
+                                            ? "bg-indigo-500/10 dark:bg-indigo-500/20 shadow-sm border-indigo-500/20"
+                                            : "hover:bg-white/40 dark:hover:bg-slate-800/40 hover:border-white/20 dark:hover:border-slate-800"
                                     )}
                                 >
                                     <div className="relative">

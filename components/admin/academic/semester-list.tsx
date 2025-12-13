@@ -83,7 +83,7 @@ export function SemesterList({ terms }: SemesterListProps) {
     }
 
     return (
-        <div className="rounded-md border bg-white">
+        <div className="rounded-md border bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/20 dark:border-white/10 shadow-sm">
             <Table>
                 <TableHeader>
                     <TableRow>

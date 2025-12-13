@@ -70,20 +70,22 @@ export default async function DashboardLayout({
                     </div>
 
                     {/* Top Navigation Tabs (Desktop only) */}
-                    <div className="hidden md:block!">
-                        <WorkspaceTabs
-                            roles={userRoles}
-                            userName={session.user?.name}
-                            userNickname={session.user?.nickname}
-                            userEmail={session.user?.email}
-                            userImage={session.user?.image}
-                            hasUnreadMessages={hasUnreadMessages}
-                        />
+                    <div className="hidden md:block! absolute top-0 left-0 right-0 z-50 pointer-events-none">
+                        <div className="pointer-events-auto">
+                            <WorkspaceTabs
+                                roles={userRoles}
+                                userName={session.user?.name}
+                                userNickname={session.user?.nickname}
+                                userEmail={session.user?.email}
+                                userImage={session.user?.image}
+                                hasUnreadMessages={hasUnreadMessages}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex flex-1 overflow-hidden">
                         {/* Sidebar (Desktop only) */}
-                        <div className="hidden md:flex!">
+                        <div className="hidden md:flex! pt-16">
                             <DashboardSidebar
                                 userRoles={userRoles}
                                 teacherCourses={teacherCourses}
@@ -92,11 +94,11 @@ export default async function DashboardLayout({
                                 userId={session.user?.id}
                             />
                         </div>
-
                         {/* Main Content */}
                         <DashboardContent>
                             {children}
                         </DashboardContent>
+
                     </div>
 
                     <BottomNavigation

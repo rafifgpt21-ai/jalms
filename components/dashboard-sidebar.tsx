@@ -27,7 +27,9 @@ import {
     PieChart,
     Library,
     Table,
-    FileQuestion
+    FileQuestion,
+    ChevronsUpDown,
+    Check
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -36,13 +38,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+
 import { getCourseAssignments } from "@/lib/actions/teacher.actions"
 import { ChatSidebar } from "@/components/chat/chat-sidebar"
 import { useChatNotification } from "@/components/chat/chat-notification-provider"
@@ -172,7 +168,7 @@ interface SidebarNavProps {
     hasUnreadMessages?: boolean
 }
 
-export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses = [], studentCourses = [], isMobile = false, hasUnreadMessages = false }: SidebarNavProps) {
+export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacherCourses = [], studentCourses = [], isMobile = false, hasUnreadMessages = false }: SidebarNavProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
@@ -193,8 +189,10 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
         if (pathname.startsWith("/teacher/courses/")) {
             const courseId = pathname.split("/")[3]
             if (courseId && teacherCourses.some(c => c.id === courseId)) {
-                setSelectedCourseId(courseId)
-                setTasksExpanded(true)
+                if (selectedCourseId !== courseId) {
+                    setSelectedCourseId(courseId)
+                    setTasksExpanded(true)
+                }
             }
         } else if (pathname.startsWith("/student/courses/")) {
             const courseId = pathname.split("/")[3]
@@ -276,25 +274,51 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                         </div>
                     ) : (
                         <div className="px-2">
-                            <Select
-                                value={selectedCourseId || ""}
-                                onValueChange={(val) => {
-                                    setSelectedCourseId(val)
-                                    // Optional: Navigate to course home or just expand menu
-                                    // router.push(`/teacher/courses/${val}`)
-                                }}
-                            >
-                                <SelectTrigger className="w-full bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
-                                    <SelectValue placeholder="Select Course" />
-                                </SelectTrigger>
-                                <SelectContent>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="w-full flex items-center justify-between p-2 rounded-xl bg-white/10 dark:bg-slate-900/10 border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-slate-900/20 transition-all duration-200 outline-none group">
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-500/10 shrink-0">
+                                                {teacherCourses.find(c => c.id === selectedCourseId)?.name.charAt(0) || "C"}
+                                            </div>
+                                            <span className="truncate text-sm font-medium text-sidebar-foreground">
+                                                {teacherCourses.find(c => c.id === selectedCourseId)?.name || "Select Course"}
+                                            </span>
+                                        </div>
+                                        <ChevronsUpDown className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity shrink-0" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    className="w-(--radix-dropdown-menu-trigger-width) bg-popover/0 dark:bg-slate-900/60! border-white/20 dark:border-white/10 shadow-xl"
+                                    style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+                                    align="start"
+                                >
+                                    <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1.5">Switch Course</DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-white/10 dark:bg-white/5" />
                                     {teacherCourses.map(course => (
-                                        <SelectItem key={course.id} value={course.id}>
-                                            {course.name}
-                                        </SelectItem>
+                                        <DropdownMenuItem
+                                            key={course.id}
+                                            onClick={() => setSelectedCourseId(course.id)}
+                                            className="flex items-center justify-between p-2 cursor-pointer focus:bg-white/20 dark:focus:bg-white/10 rounded-md"
+                                        >
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <div className={cn(
+                                                    "h-6 w-6 rounded-md flex items-center justify-center text-xs font-medium border shrink-0",
+                                                    selectedCourseId === course.id
+                                                        ? "bg-indigo-500 text-white border-indigo-600"
+                                                        : "bg-white/10 dark:bg-white/5 border-transparent"
+                                                )}>
+                                                    {course.name.charAt(0)}
+                                                </div>
+                                                <span className="truncate">{course.name}</span>
+                                            </div>
+                                            {selectedCourseId === course.id && (
+                                                <Check className="h-4 w-4 text-indigo-500" />
+                                            )}
+                                        </DropdownMenuItem>
                                     ))}
-                                </SelectContent>
-                            </Select>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     )}
 
@@ -304,70 +328,84 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                             <div className="space-y-1">
                                 {isCollapsed ? (
                                     <div className="flex justify-center">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <div
-                                                    className={cn(
-                                                        "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
-                                                        pathname.includes("/tasks") && !pathname.includes("/tasks-summary")
-                                                            ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
-                                                            : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && "text-blue-600 dark:text-blue-400")} />
-                                                    {pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && (
-                                                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-blue-500" />
-                                                    )}
-                                                </div>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
-                                                <DropdownMenuLabel>Tasks</DropdownMenuLabel>
-                                                <DropdownMenuSeparator className="bg-sidebar-border" />
-                                                {assignments.map(assignment => (
-                                                    <DropdownMenuItem key={assignment.id} asChild>
-                                                        <Link
-                                                            href={`/teacher/courses/${selectedCourseId}/tasks/${assignment.id}`}
-                                                            className={cn(
-                                                                "w-full cursor-pointer hover:bg-slate-200/40 dark:hover:bg-slate-800/40 focus:bg-slate-200/40 dark:focus:bg-slate-800/40 focus:text-sidebar-accent-foreground",
-                                                                pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            {assignment.title}
-                                                        </Link>
-                                                    </DropdownMenuItem>
-                                                ))}
-                                                <div className="p-2 border-t border-sidebar-border">
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={0}>
+                                                <TooltipTrigger asChild>
                                                     <Link
-                                                        href={`/teacher/courses/${selectedCourseId}/tasks/new`}
-                                                        className="w-full flex items-center justify-start px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                        href={`/teacher/courses/${selectedCourseId}/tasks`}
+                                                        onClick={(e) => {
+                                                            if (pathname !== `/teacher/courses/${selectedCourseId}/tasks`) {
+                                                                setNavigatingTo(`/teacher/courses/${selectedCourseId}/tasks`)
+                                                            }
+                                                        }}
+                                                        className={cn(
+                                                            "flex items-center justify-center p-3 rounded-xl transition-all duration-200 relative group cursor-pointer z-10",
+                                                            (pathname.includes("/tasks") && !pathname.includes("/tasks-summary")) || navigatingTo === `/teacher/courses/${selectedCourseId}/tasks`
+                                                                ? "text-indigo-600 dark:text-indigo-300"
+                                                                : "hover:bg-white/20 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white text-slate-500 dark:text-slate-400"
+                                                        )}
                                                     >
-                                                        <Plus className="mr-2 h-4 w-4" />
-                                                        Add Task
+                                                        {((pathname.includes("/tasks") && !pathname.includes("/tasks-summary")) || navigatingTo === `/teacher/courses/${selectedCourseId}/tasks`) && (
+                                                            <motion.div
+                                                                layoutId="activeSidebarItemCollapsed"
+                                                                className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm backdrop-blur-md z-[-1]"
+                                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                                            />
+                                                        )}
+                                                        {navigatingTo === `/teacher/courses/${selectedCourseId}/tasks` ? (
+                                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                                        ) : (
+                                                            <ListTodo className={cn("h-5 w-5", ((pathname.includes("/tasks") && !pathname.includes("/tasks-summary")) || navigatingTo === `/teacher/courses/${selectedCourseId}/tasks`) && "text-indigo-600 dark:text-indigo-400")} />
+                                                        )}
+                                                        <span className="sr-only">Tasks</span>
                                                     </Link>
-                                                </div>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right">
+                                                    Tasks
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </div>
                                 ) : (
                                     <>
-                                        <button
-                                            onClick={() => setTasksExpanded(!tasksExpanded)}
+                                        <div
                                             className={cn(
-                                                "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
-                                                pathname.includes("/tasks") && !pathname.includes("/tasks-summary")
-                                                    ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
-                                                    : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                "w-full flex items-center justify-between rounded-xl transition-all duration-200 relative overflow-hidden text-base group",
+                                                (pathname.includes("/tasks") && !pathname.includes("/tasks-summary")) || navigatingTo === `/teacher/courses/${selectedCourseId}/tasks`
+                                                    ? "text-indigo-700 dark:text-indigo-300 font-medium bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 shadow-sm backdrop-blur-md"
+                                                    : "hover:bg-white/20 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white text-slate-500 dark:text-slate-400"
                                             )}
                                         >
-                                            {pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && (
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/50" />
-                                            )}
-                                            <div className="flex items-center gap-3">
-                                                <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && !pathname.includes("/tasks-summary") && "text-blue-600 dark:text-blue-400")} />
+
+
+                                            <Link
+                                                href={`/teacher/courses/${selectedCourseId}/tasks`}
+                                                onClick={(e) => {
+                                                    if (pathname !== `/teacher/courses/${selectedCourseId}/tasks`) {
+                                                        setNavigatingTo(`/teacher/courses/${selectedCourseId}/tasks`)
+                                                    }
+                                                }}
+                                                className="flex-1 flex items-center gap-3 px-4 py-3"
+                                            >
+                                                {navigatingTo === `/teacher/courses/${selectedCourseId}/tasks` ? (
+                                                    <Loader2 className="animate-spin h-5 w-5" />
+                                                ) : (
+                                                    <ListTodo className={cn("h-5 w-5", ((pathname.includes("/tasks") && !pathname.includes("/tasks-summary")) || navigatingTo === `/teacher/courses/${selectedCourseId}/tasks`) && "text-blue-600 dark:text-blue-400")} />
+                                                )}
                                                 <span>Tasks</span>
-                                            </div>
-                                            <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
-                                        </button>
+                                            </Link>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    setTasksExpanded(!tasksExpanded)
+                                                }}
+                                                className="px-4 py-3 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                            >
+                                                <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
+                                            </button>
+                                        </div>
 
                                         {tasksExpanded && (
                                             <div className="pl-9 space-y-1">
@@ -449,23 +487,51 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                         </div>
                     ) : (
                         <div className="px-2">
-                            <Select
-                                value={selectedCourseId || ""}
-                                onValueChange={(val) => {
-                                    setSelectedCourseId(val)
-                                }}
-                            >
-                                <SelectTrigger className="w-full bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
-                                    <SelectValue placeholder="Select Course" />
-                                </SelectTrigger>
-                                <SelectContent>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="w-full flex items-center justify-between p-2 rounded-xl bg-white/10 dark:bg-slate-900/10 border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-slate-900/20 transition-all duration-200 outline-none group">
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-500/10 shrink-0">
+                                                {studentCourses.find(c => c.id === selectedCourseId)?.name.charAt(0) || "C"}
+                                            </div>
+                                            <span className="truncate text-sm font-medium text-sidebar-foreground">
+                                                {studentCourses.find(c => c.id === selectedCourseId)?.name || "Select Course"}
+                                            </span>
+                                        </div>
+                                        <ChevronsUpDown className="h-4 w-4 text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity shrink-0" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    className="w-(--radix-dropdown-menu-trigger-width) bg-popover/0 dark:bg-slate-900/60! border-white/20 dark:border-white/10 shadow-xl"
+                                    style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+                                    align="start"
+                                >
+                                    <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1.5">Switch Course</DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-white/10 dark:bg-white/5" />
                                     {studentCourses.map(course => (
-                                        <SelectItem key={course.id} value={course.id}>
-                                            {course.name}
-                                        </SelectItem>
+                                        <DropdownMenuItem
+                                            key={course.id}
+                                            onClick={() => setSelectedCourseId(course.id)}
+                                            className="flex items-center justify-between p-2 cursor-pointer focus:bg-white/20 dark:focus:bg-white/10 rounded-md"
+                                        >
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <div className={cn(
+                                                    "h-6 w-6 rounded-md flex items-center justify-center text-xs font-medium border shrink-0",
+                                                    selectedCourseId === course.id
+                                                        ? "bg-indigo-500 text-white border-indigo-600"
+                                                        : "bg-white/10 dark:bg-white/5 border-transparent"
+                                                )}>
+                                                    {course.name.charAt(0)}
+                                                </div>
+                                                <span className="truncate">{course.name}</span>
+                                            </div>
+                                            {selectedCourseId === course.id && (
+                                                <Check className="h-4 w-4 text-indigo-500" />
+                                            )}
+                                        </DropdownMenuItem>
                                     ))}
-                                </SelectContent>
-                            </Select>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     )}
 
@@ -475,61 +541,82 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                             <div className="space-y-1">
                                 {isCollapsed ? (
                                     <div className="flex justify-center">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <div
-                                                    className={cn(
-                                                        "h-10 w-10 flex items-center justify-center rounded-md transition-all duration-200 relative group cursor-pointer",
-                                                        pathname.includes("/tasks")
-                                                            ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400"
-                                                            : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-indigo-600 dark:text-indigo-400")} />
-                                                    {pathname.includes("/tasks") && (
-                                                        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-indigo-500" />
-                                                    )}
-                                                </div>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
-                                                <DropdownMenuLabel>Tasks</DropdownMenuLabel>
-                                                <DropdownMenuSeparator className="bg-sidebar-border" />
-                                                {assignments.map(assignment => (
-                                                    <DropdownMenuItem key={assignment.id} asChild>
-                                                        <Link
-                                                            href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
-                                                            className={cn(
-                                                                "w-full cursor-pointer hover:bg-slate-200/40 dark:hover:bg-slate-800/40 focus:bg-slate-200/40 dark:focus:bg-slate-800/40 focus:text-sidebar-accent-foreground",
-                                                                pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            {assignment.title}
-                                                        </Link>
-                                                    </DropdownMenuItem>
-                                                ))}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={0}>
+                                                <TooltipTrigger asChild>
+                                                    <Link
+                                                        href={`/student/courses/${selectedCourseId}/tasks`}
+                                                        onClick={(e) => {
+                                                            if (pathname !== `/student/courses/${selectedCourseId}/tasks`) {
+                                                                setNavigatingTo(`/student/courses/${selectedCourseId}/tasks`)
+                                                            }
+                                                        }}
+                                                        className={cn(
+                                                            "flex items-center justify-center p-3 rounded-xl transition-all duration-200 relative group cursor-pointer z-10",
+                                                            pathname.includes("/tasks") || navigatingTo === `/student/courses/${selectedCourseId}/tasks`
+                                                                ? "text-indigo-600 dark:text-indigo-300"
+                                                                : "hover:bg-white/20 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white text-slate-500 dark:text-slate-400"
+                                                        )}
+                                                    >
+                                                        {(pathname.includes("/tasks") || navigatingTo === `/student/courses/${selectedCourseId}/tasks`) && (
+                                                            <motion.div
+                                                                layoutId="activeSidebarItemCollapsed"
+                                                                className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm backdrop-blur-md z-[-1]"
+                                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                                            />
+                                                        )}
+                                                        {navigatingTo === `/student/courses/${selectedCourseId}/tasks` ? (
+                                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                                        ) : (
+                                                            <ListTodo className={cn("h-5 w-5", (pathname.includes("/tasks") || navigatingTo === `/student/courses/${selectedCourseId}/tasks`) && "text-indigo-600 dark:text-indigo-400")} />
+                                                        )}
+                                                        <span className="sr-only">Tasks</span>
+                                                    </Link>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right">
+                                                    Tasks
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </div>
                                 ) : (
                                     <>
-                                        <button
-                                            onClick={() => setTasksExpanded(!tasksExpanded)}
+                                        <div
                                             className={cn(
-                                                "w-full flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 relative overflow-hidden text-base",
-                                                pathname.includes("/tasks")
-                                                    ? "bg-linear-to-r from-blue-500/10 to-cyan-500/10 text-blue-700 dark:text-blue-400 font-medium"
-                                                    : "hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground text-muted-foreground"
+                                                "w-full flex items-center justify-between rounded-xl transition-all duration-200 relative overflow-hidden text-base group",
+                                                pathname.includes("/tasks") || navigatingTo === `/student/courses/${selectedCourseId}/tasks`
+                                                    ? "text-indigo-700 dark:text-indigo-300 font-medium bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 shadow-sm backdrop-blur-md"
+                                                    : "hover:bg-white/20 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white text-slate-500 dark:text-slate-400"
                                             )}
                                         >
-                                            {pathname.includes("/tasks") && (
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500/50" />
-                                            )}
-                                            <div className="flex items-center gap-3">
-                                                <ListTodo className={cn("h-5 w-5", pathname.includes("/tasks") && "text-blue-600 dark:text-blue-400")} />
+                                            <Link
+                                                href={`/student/courses/${selectedCourseId}/tasks`}
+                                                onClick={(e) => {
+                                                    if (pathname !== `/student/courses/${selectedCourseId}/tasks`) {
+                                                        setNavigatingTo(`/student/courses/${selectedCourseId}/tasks`)
+                                                    }
+                                                }}
+                                                className="flex-1 flex items-center gap-3 px-4 py-3"
+                                            >
+                                                {navigatingTo === `/student/courses/${selectedCourseId}/tasks` ? (
+                                                    <Loader2 className="animate-spin h-5 w-5" />
+                                                ) : (
+                                                    <ListTodo className={cn("h-5 w-5", (pathname.includes("/tasks") || navigatingTo === `/student/courses/${selectedCourseId}/tasks`) && "text-blue-600 dark:text-blue-400")} />
+                                                )}
                                                 <span>Tasks</span>
-                                            </div>
-                                            <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
-                                        </button>
+                                            </Link>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    setTasksExpanded(!tasksExpanded)
+                                                }}
+                                                className="px-4 py-3 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                            >
+                                                <ChevronDown className={cn("h-4 w-4 transition-transform", !tasksExpanded && "-rotate-90")} />
+                                            </button>
+                                        </div>
 
                                         {tasksExpanded && (
                                             <div className="pl-9 space-y-1">
@@ -539,7 +626,7 @@ export function SidebarNav({ userRoles, isCollapsed, onNavigate, teacherCourses 
                                                         href={`/student/courses/${selectedCourseId}/tasks/${assignment.id}`}
                                                         className={cn(
                                                             "block px-2 py-1.5 text-sm rounded-md hover:bg-slate-200/40 dark:hover:bg-slate-800/40 hover:text-sidebar-accent-foreground transition-colors truncate",
-                                                            pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary" : "text-muted-foreground"
+                                                            pathname.includes(`/tasks/${assignment.id}`) ? "text-sidebar-primary font-medium" : "text-muted-foreground"
                                                         )}
                                                     >
                                                         {assignment.title}

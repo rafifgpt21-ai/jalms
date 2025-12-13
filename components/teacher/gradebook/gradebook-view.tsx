@@ -88,99 +88,68 @@ export function GradebookView({ data }: GradebookViewProps) {
                         <TableHeader>
                             <TableRow className="hover:bg-transparent border-slate-100 dark:border-slate-800">
                                 {/* Sticky Student Column */}
-                                <TableHead style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="w-[250px] sticky left-0 z-20 bg-white/40 dark:bg-slate-900/40 border-r border-slate-200/50 dark:border-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-xl">
+                                <TableHead className="w-[300px] border-r border-slate-200/50 dark:border-slate-800">
                                     Student
                                 </TableHead>
 
-                                <TableHead className="w-[100px] text-center font-bold text-slate-900 dark:text-white bg-slate-50/50 dark:bg-slate-800/50">
+                                <TableHead className="w-[150px] text-center bg-slate-50/50 dark:bg-slate-800/50">
+                                    Total Points Earned
+                                </TableHead>
+                                <TableHead className="w-[150px] text-center font-bold text-slate-900 dark:text-white bg-slate-50/50 dark:bg-slate-800/50">
                                     Grade
                                 </TableHead>
-                                <TableHead className="w-[100px] text-center bg-slate-50/50 dark:bg-slate-800/50">
-                                    Attendance
-                                </TableHead>
-
-                                {/* Assignment Columns */}
-                                {assignments.map((assignment) => (
-                                    <TableHead key={assignment.id} className="min-w-[150px] text-center bg-transparent">
-                                        <div className="flex flex-col items-center justify-center py-2">
-                                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[140px]" title={assignment.title}>
-                                                {assignment.title}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400 font-normal">
-                                                {assignment.maxPoints} pts
-                                            </span>
-                                        </div>
-                                    </TableHead>
-                                ))}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredStudents.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={assignments.length + 3} className="h-24 text-center text-slate-500">
+                                    <TableCell colSpan={3} className="h-24 text-center text-slate-500">
                                         No students found.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredStudents.map((student) => (
-                                    <TableRow key={student.studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 border-slate-100 dark:border-slate-800 group transition-colors">
-                                        {/* Sticky Student Name */}
-                                        <TableCell style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="sticky left-0 z-20 bg-white/40 dark:bg-slate-900/40 border-r border-slate-200/50 dark:border-slate-800 font-medium text-slate-900 dark:text-slate-100 group-hover:bg-white/60 dark:group-hover:bg-slate-800/60 transition-colors backdrop-blur-xl">
-                                            <div className="flex items-center gap-3">
-                                                {/* <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                                filteredStudents.map((student) => {
+                                    // Calculate total points earned
+                                    const totalPointsEarned = Object.values(student.scores as Record<string, number | null>)
+                                        .reduce((sum: number, score) => sum + (score || 0), 0);
+
+                                    return (
+                                        <TableRow key={student.studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 border-slate-100 dark:border-slate-800 group transition-colors">
+                                            {/* Sticky Student Name - No longer sticky */}
+                                            <TableCell className="border-r border-slate-200/50 dark:border-slate-800 font-medium text-slate-900 dark:text-slate-100 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    {/* <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
                                                     <AvatarImage src={student.studentImage} />
                                                     <AvatarFallback className="text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
                                                         {student.studentName.substring(0,2).toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar> */}
-                                                <div className="flex flex-col">
-                                                    <span>{student.studentName}</span>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-
-                                        {/* Total Grade */}
-                                        <TableCell className="text-center bg-slate-50/30 dark:bg-slate-800/30 font-bold group-hover:bg-indigo-50/10 dark:group-hover:bg-indigo-900/10">
-                                            <span className={cn(
-                                                "px-2 py-1 rounded-md text-sm",
-                                                student.totalScore >= 90 ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" :
-                                                    student.totalScore >= 80 ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" :
-                                                        student.totalScore >= 70 ? "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20" :
-                                                            "text-red-600 bg-red-50 dark:bg-red-900/20"
-                                            )}>
-                                                {student.totalScore}%
-                                            </span>
-                                        </TableCell>
-
-                                        {/* Attendance */}
-                                        <TableCell className="text-center bg-slate-50/30 dark:bg-slate-800/30 text-sm text-slate-600 dark:text-slate-400 group-hover:bg-indigo-50/10 dark:group-hover:bg-indigo-900/10">
-                                            {Math.round(student.attendancePercentage)}%
-                                        </TableCell>
-
-                                        {/* Assignment Scores */}
-                                        {assignments.map((assignment) => {
-                                            const score = student.scores[assignment.id]
-                                            return (
-                                                <TableCell key={assignment.id} className="text-center p-0">
-                                                    <div className="h-full w-full py-3 flex items-center justify-center">
-                                                        {score !== null ? (
-                                                            <span className={cn(
-                                                                "font-medium text-sm",
-                                                                score < assignment.maxPoints * 0.6 ? "text-red-500" :
-                                                                    score === assignment.maxPoints ? "text-emerald-600 dark:text-emerald-400" :
-                                                                        "text-slate-700 dark:text-slate-300"
-                                                            )}>
-                                                                {score}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-slate-300 dark:text-slate-700 text-xs">-</span>
-                                                        )}
+                                                    <div className="flex flex-col">
+                                                        <span>{student.studentName}</span>
                                                     </div>
-                                                </TableCell>
-                                            )
-                                        })}
-                                    </TableRow>
-                                ))
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Total Points Earned */}
+                                            <TableCell className="text-center bg-slate-50/30 dark:bg-slate-800/30 text-sm text-slate-600 dark:text-slate-400 group-hover:bg-indigo-50/10 dark:group-hover:bg-indigo-900/10">
+                                                {totalPointsEarned}
+                                            </TableCell>
+
+                                            {/* Total Grade Percentage */}
+                                            <TableCell className="text-center bg-slate-50/30 dark:bg-slate-800/30 font-bold group-hover:bg-indigo-50/10 dark:group-hover:bg-indigo-900/10">
+                                                <span className={cn(
+                                                    "px-2 py-1 rounded-md text-sm",
+                                                    student.totalScore >= 90 ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" :
+                                                        student.totalScore >= 80 ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" :
+                                                            student.totalScore >= 70 ? "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20" :
+                                                                "text-red-600 bg-red-50 dark:bg-red-900/20"
+                                                )}>
+                                                    {student.totalScore}%
+                                                </span>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })
                             )}
                         </TableBody>
                     </Table>
