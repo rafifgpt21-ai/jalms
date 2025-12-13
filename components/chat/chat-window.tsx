@@ -270,10 +270,10 @@ export function ChatWindow({
                         type="submit"
                         size="icon"
                         className={cn(
-                            "rounded-full h-10 w-10 shrink-0 transition-all duration-300",
+                            "rounded-full h-10 w-10 shrink-0 transition-all duration-300 backdrop-blur-sm",
                             newMessage.trim()
-                                ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/30"
-                                : "bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800"
+                                ? "bg-indigo-600/90 text-white hover:bg-indigo-700/90 shadow-lg shadow-indigo-500/30 border border-indigo-500/20"
+                                : "bg-slate-100/50 text-slate-400 hover:bg-slate-200/50 dark:bg-slate-800/50 border border-white/10"
                         )}
                         disabled={!newMessage.trim() || isSending}
                     >

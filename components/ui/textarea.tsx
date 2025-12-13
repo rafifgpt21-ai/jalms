@@ -8,9 +8,9 @@ const Textarea = React.forwardRef<
 >(({ className, ...props }, ref) => {
     return (
         <textarea
-            style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+            style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
             className={cn(
-                "flex min-h-[80px] w-full rounded-md border border-input bg-white/50 dark:bg-slate-900/50 px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                "flex min-h-[80px] w-full rounded-md border border-input/50 bg-white/10 dark:bg-slate-900/10 px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm backdrop-blur-md",
                 className
             )}
             ref={ref}

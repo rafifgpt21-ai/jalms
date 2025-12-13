@@ -276,7 +276,7 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                         <div className="px-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button className="w-full flex items-center justify-between p-2 rounded-xl bg-white/10 dark:bg-slate-900/10 border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-slate-900/20 transition-all duration-200 outline-none group">
+                                    <button className="w-full flex items-center justify-between p-2 rounded-xl bg-white/10 dark:bg-slate-900/10 border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-slate-900/20 transition-all duration-200 outline-none group backdrop-blur-md">
                                         <div className="flex items-center gap-3 overflow-hidden">
                                             <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-500/10 shrink-0">
                                                 {teacherCourses.find(c => c.id === selectedCourseId)?.name.charAt(0) || "C"}
