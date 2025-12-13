@@ -205,26 +205,30 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                             </div>
 
                             <div className="space-y-4 pt-2">
-                                <div className="flex items-start justify-between group">
-                                    <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
-                                        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
-                                            <Calendar className="w-4 h-4" />
+                                {assignment.type !== 'NON_SUBMISSION' && (
+                                    <div className="flex items-start justify-between group">
+                                        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                                            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+                                                <Calendar className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-semibold uppercase tracking-wider">Due Date</span>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-semibold uppercase tracking-wider">Due Date</span>
+                                        <div className="text-right">
+                                            <p className={`font-bold ${isLate ? "text-red-500" : "text-slate-900 dark:text-white"}`}>
+                                                {assignment.dueDate ? format(new Date(assignment.dueDate), "MMM d, yyyy") : "No Due Date"}
+                                            </p>
+                                            <p className="text-xs text-slate-400">
+                                                {assignment.dueDate ? format(new Date(assignment.dueDate), "h:mm a") : ""}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className={`font-bold ${isLate ? "text-red-500" : "text-slate-900 dark:text-white"}`}>
-                                            {assignment.dueDate ? format(new Date(assignment.dueDate), "MMM d, yyyy") : "No Due Date"}
-                                        </p>
-                                        <p className="text-xs text-slate-400">
-                                            {assignment.dueDate ? format(new Date(assignment.dueDate), "h:mm a") : ""}
-                                        </p>
-                                    </div>
-                                </div>
+                                )}
 
-                                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                                {assignment.type !== 'NON_SUBMISSION' && (
+                                    <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                                )}
 
                                 <div className="flex items-center justify-between group">
                                     <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">

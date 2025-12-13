@@ -234,7 +234,7 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                     <SidebarNavItem href="/admin/courses" icon={BookOpen} label="Courses" active={pathname.startsWith("/admin/courses")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                     <SidebarNavItem href="/admin/semesters" icon={CalendarRange} label="Semesters" active={pathname.startsWith("/admin/semesters")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                     <SidebarNavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname === "/admin/schedule" || pathname.startsWith("/admin/schedule/") && !pathname.includes("overview")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
-                    <SidebarNavItem href="/admin/schedule/overview" icon={Table} label="Master Timetable" active={pathname.startsWith("/admin/schedule/overview")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+
                     <SidebarNavItem href="/admin/socials" icon={MessageSquare} label="Socials Monitoring" active={pathname.startsWith("/admin/socials")} hasBadge={hasUnreadMessages} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                 </div>
             )}
@@ -670,7 +670,7 @@ export function DashboardSidebar({ userRoles, teacherCourses, studentCourses, co
         <aside
             style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
             className={cn(
-                "group/sidebar bg-white/50 dark:bg-slate-900/50 text-sidebar-foreground flex flex-col transition-all duration-300 relative border border-white/20 dark:border-white/10 shadow-lg rounded-3xl m-4 h-[calc(100%-2rem)] z-20 overflow-hidden",
+                "group/sidebar bg-white/40 dark:bg-slate-900/50 text-sidebar-foreground flex flex-col transition-all duration-300 relative border border-white/20 dark:border-white/10 shadow-lg rounded-3xl m-4 h-[calc(100%-2rem)] z-20 overflow-hidden",
                 isCollapsed ? "w-20" : "w-80" // Slightly wider collapsed state for better floating look
             )}
         >

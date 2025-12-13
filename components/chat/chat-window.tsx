@@ -186,7 +186,7 @@ export function ChatWindow({
             <div className="hidden md:flex items-center gap-3 p-4 border-b border-white/20 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md sticky top-0 z-10 shadow-sm">
                 <Avatar className="h-10 w-10 ring-2 ring-white/50 dark:ring-slate-800 shadow-md">
                     <AvatarImage src={otherParticipant?.image || undefined} />
-                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
+                    <AvatarFallback className="bg-linear-to-br from-indigo-500 to-purple-500 text-white">
                         {(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase() || "??"}
                     </AvatarFallback>
                 </Avatar>
@@ -226,11 +226,12 @@ export function ChatWindow({
                                 {!isMe && !isLastFromUser && <div className="hidden md:block w-6" />}
 
                                 <div
+                                    style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
                                     className={cn(
-                                        "flex flex-col gap-1 px-5 py-3 text-sm shadow-sm max-w-[85%] md:max-w-[75%] transition-all backdrop-blur-sm",
+                                        "flex flex-col gap-1 px-5 py-3 text-sm shadow-sm max-w-[85%] md:max-w-[75%] transition-all",
                                         isMe
-                                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm shadow-indigo-500/20"
-                                            : "bg-white/60 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-white/40 dark:border-slate-700/50 shadow-sm"
+                                            ? "bg-linear-to-r from-blue-600/80 to-indigo-600/80 text-white rounded-2xl rounded-tr-sm shadow-indigo-500/20 border border-white/10"
+                                            : "bg-white/40 dark:bg-slate-800/40 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-white/20 dark:border-slate-700/30 shadow-sm"
                                     )}
                                 >
                                     <p className="leading-relaxed">{message.content}</p>

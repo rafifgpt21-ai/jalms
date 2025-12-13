@@ -370,6 +370,36 @@ export async function uploadAvatarImage(formData: FormData) {
         return { success: true, imageUrl: publicUrl }
     } catch (error) {
         console.error("Error uploading avatar:", error)
+
         return { error: "Failed to upload avatar" }
+    }
+}
+
+export async function updateEmail(newEmail: string) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) {
+            return { error: "Unauthorized" }
+        }
+
+        // Check if email already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { email: newEmail }
+        })
+
+        if (existingUser) {
+            return { error: "Email already in use" }
+        }
+
+        await prisma.user.update({
+            where: { id: session.user.id },
+            data: { email: newEmail }
+        })
+
+        revalidatePath("/")
+        return { success: true }
+    } catch (error) {
+        console.error("Error updating email:", error)
+        return { error: "Failed to update email" }
     }
 }

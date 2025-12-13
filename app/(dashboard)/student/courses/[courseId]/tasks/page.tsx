@@ -31,7 +31,7 @@ export default async function StudentCourseTasksPage({ params }: { params: Promi
     const tasksWithStatus = assignments?.map(assignment => {
         const submission = studentSubmissions.find(s => s.assignmentId === assignment.id)
         const isSubmitted = !!submission
-        const isLate = assignment.dueDate && new Date() > new Date(assignment.dueDate) && !isSubmitted
+        const isLate = assignment.type !== 'NON_SUBMISSION' && assignment.dueDate && new Date() > new Date(assignment.dueDate) && !isSubmitted
         const isGraded = submission?.grade !== null && submission?.grade !== undefined
         // Determine if we should show the grade
         const showGrade = assignment.type !== 'QUIZ' || assignment.showGradeAfterSubmission
@@ -71,8 +71,12 @@ export default async function StudentCourseTasksPage({ params }: { params: Promi
                                     <div>
                                         <h3 className="font-semibold">{task.title}</h3>
                                         <div className="text-sm text-gray-500 flex gap-2">
-                                            <span>Due: {format(new Date(task.dueDate), "MMM d, h:mm a")}</span>
-                                            <span>•</span>
+                                            {task.type !== 'NON_SUBMISSION' && (
+                                                <>
+                                                    <span>Due: {format(new Date(task.dueDate), "MMM d, h:mm a")}</span>
+                                                    <span>•</span>
+                                                </>
+                                            )}
                                             <span>{task.maxPoints} pts</span>
                                         </div>
                                     </div>

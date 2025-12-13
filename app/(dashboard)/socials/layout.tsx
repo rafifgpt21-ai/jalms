@@ -19,7 +19,7 @@ export default async function SocialsLayout({
             {/* Ambient Background Gradient */}
             <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
                 <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[100px]" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 blur-[100px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500 blur-[100px]" />
             </div>
 
             {/* Desktop Sidebar */}

@@ -88,16 +88,16 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5 }}
                     className="md:col-span-2 lg:col-span-2 h-full"
                 >
-                    <div className="relative overflow-hidden rounded-3xl p-6 h-full min-h-[220px] flex flex-col justify-between shadow-xl shadow-indigo-500/20 group cursor-pointer hover:scale-[1.01] transition-transform duration-300">
+                    <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="relative overflow-hidden rounded-3xl p-6 h-full min-h-[220px] flex flex-col justify-between shadow-xl shadow-indigo-500/20 group cursor-pointer hover:scale-[1.01] transition-transform duration-300">
                         {/* Background Gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-violet-700 dark:from-indigo-900 dark:to-violet-950 z-0" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/90 to-violet-700/90 dark:from-indigo-900/90 dark:to-violet-950/90 z-0" />
 
                         {/* Decorative Circles */}
                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/30 rounded-full blur-xl" />
 
                         <div className="relative z-10 text-white">
-                            <div style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="flex items-center gap-2 text-indigo-100 bg-white/10 w-fit px-3 py-1 rounded-full text-sm border border-white/10">
+                            <div style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }} className="flex items-center gap-2 text-indigo-100 bg-white/10 w-fit px-3 py-1 rounded-full text-sm border border-white/10">
                                 <Clock className="w-4 h-4" />
                                 <span>Up Next</span>
                             </div>
@@ -125,7 +125,7 @@ export function StudentDashboardView({
                                 {schedule.length} classes remaining today
                             </div>
 
-                            <div style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors cursor-pointer">
+                            <div style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors cursor-pointer">
                                 <ArrowRight className="w-6 h-6 text-white" />
                             </div>
                         </div>

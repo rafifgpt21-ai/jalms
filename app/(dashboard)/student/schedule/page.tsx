@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 export default async function StudentSchedulePage() {
     const user = await getUser()
 
-    if (!user) {
+    if (!user?.id) {
         redirect("/sign-in")
     }
 
@@ -50,7 +50,7 @@ export default async function StudentSchedulePage() {
             {/* Main Glass Card */}
             <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="overflow-hidden border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5 dark:ring-white/10">
                 <CardHeader className="border-b border-black/5 dark:border-white/5 pb-4">
-                    <CardTitle className="font-heading text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                    <CardTitle className="font-heading text-2xl font-bold bg-linear-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
                         Weekly Schedule
                     </CardTitle>
                 </CardHeader>

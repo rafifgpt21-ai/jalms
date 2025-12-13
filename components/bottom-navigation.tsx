@@ -118,10 +118,10 @@ export function BottomNavigation({
     if (visibleTabs.length === 0) return null
 
     return (
-        <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 border-t border-white/20 dark:border-white/10 z-100 pb-safe shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
+        <div style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }} className="md:hidden fixed bottom-0 left-0 right-0 bg-white/60 dark:bg-slate-900/60 border-t border-white/20 dark:border-white/10 z-100 pb-safe shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
             <div className="flex items-center h-16">
                 {/* Fixed Menu Button (Left) */}
-                <div className="flex-none w-16 border-r border-gray-100 flex items-center justify-center h-full p-0">
+                <div className="flex-none w-16 border-r border-white/20 dark:border-white/10 flex items-center justify-center h-full p-0">
                     <Sheet open={open} onOpenChange={setOpen} modal={false}>
                         <SheetTrigger asChild>
                             <Button
@@ -129,8 +129,8 @@ export function BottomNavigation({
                                 className={cn(
                                     "w-full h-full rounded-none flex items-center justify-center transition-all duration-200",
                                     open
-                                        ? "bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                                        : "bg-indigo-50/50 hover:bg-indigo-100/50 text-indigo-600/70"
+                                        ? "bg-primary/20 text-primary dark:bg-primary/20 dark:text-primary"
+                                        : "hover:bg-white/20 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400"
                                 )}
                                 suppressHydrationWarning
                             >
@@ -138,7 +138,7 @@ export function BottomNavigation({
                                     "transition-transform duration-300 ease-in-out transform",
                                     open ? "rotate-90 scale-110" : "rotate-0 scale-100"
                                 )}>
-                                    {open ? <X className="h-10 w-10" /> : <Menu className="h-10 w-10" />}
+                                    {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                                 </div>
                             </Button>
                         </SheetTrigger>
@@ -163,7 +163,7 @@ export function BottomNavigation({
                                 {isSocials && userId ? (
                                     <ChatSidebar
                                         initialConversations={activeConversations}
-                                        userId={userId}
+                                        userId={userId!}
                                         variant="sidebar"
                                         disableMobileHeader={true}
                                         headerMode="show"
@@ -206,8 +206,8 @@ export function BottomNavigation({
                                 className={cn(
                                     "flex flex-col items-center justify-center min-w-16 h-full space-y-1 relative transition-colors select-none",
                                     tab.isActive
-                                        ? "text-indigo-600 dark:text-indigo-400 font-medium"
-                                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                                        ? "text-primary font-medium"
+                                        : "text-muted-foreground hover:text-foreground"
                                 )}
                             >
                                 <div className="relative">

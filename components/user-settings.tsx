@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { LogOut, Settings, User, KeyRound, Pencil } from "lucide-react"
+import { LogOut, Settings, User, KeyRound, Pencil, Mail } from "lucide-react"
 import { signOut } from "next-auth/react"
 
 import {
@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { NicknameDialog } from "@/components/user/nickname-dialog"
+import { ChangeEmailDialog } from "@/components/user/change-email-dialog"
 
 interface UserSettingsProps {
     email?: string | null
@@ -42,6 +43,7 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
     const [showPasswordDialog, setShowPasswordDialog] = useState(false)
     const [showAvatarDialog, setShowAvatarDialog] = useState(false)
     const [showNicknameDialog, setShowNicknameDialog] = useState(false)
+    const [showEmailDialog, setShowEmailDialog] = useState(false)
 
     return (
         <>
@@ -99,6 +101,10 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
                         <Pencil className="mr-2 h-4 w-4" />
                         <span>Edit Nickname</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowEmailDialog(true)}>
+                        <Mail className="mr-2 h-4 w-4" />
+                        <span>Change Email</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowPasswordDialog(true)}>
                         <KeyRound className="mr-2 h-4 w-4" />
                         <span>Change Password</span>
@@ -146,6 +152,12 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
                 open={showNicknameDialog}
                 onOpenChange={setShowNicknameDialog}
                 currentNickname={nickname}
+            />
+
+            <ChangeEmailDialog
+                open={showEmailDialog}
+                onOpenChange={setShowEmailDialog}
+                currentEmail={email}
             />
 
             <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>

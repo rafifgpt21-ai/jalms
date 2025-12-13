@@ -35,7 +35,8 @@ type Conversation = {
         nickname?: string | null;
     }[];
     messages: {
-        sender: any;
+        sender?: any;
+        senderId: string;
         content: string;
         createdAt: Date;
         readByIds?: string[];
@@ -343,7 +344,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             isUnread && "font-medium text-slate-800 dark:text-slate-200"
                                         )}>
                                             {lastMessage ? (
-                                                lastMessage.sender?.id === userId ? `You: ${lastMessage.content}` : lastMessage.content
+                                                lastMessage.senderId === userId ? `You: ${lastMessage.content}` : lastMessage.content
                                             ) : (
                                                 <span className="italic opacity-70">No messages yet</span>
                                             )}
