@@ -54,16 +54,15 @@ export function GradebookView({ data }: GradebookViewProps) {
                         placeholder="Search students..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 bg-white/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800"
-                        style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
+                        className="pl-9 bg-white/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 backdrop-blur-xl"
                     />
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
-                    <Button variant="outline" style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="flex-1 sm:flex-none border-dashed bg-white/60 dark:bg-slate-900/40">
+                    <Button variant="outline" className="flex-1 sm:flex-none border-dashed bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl">
                         <Filter className="mr-2 h-4 w-4 opacity-50" />
                         Filter
                     </Button>
-                    <Button variant="outline" style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="flex-1 sm:flex-none border-dashed bg-white/60 dark:bg-slate-900/40">
+                    <Button variant="outline" className="flex-1 sm:flex-none border-dashed bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl">
                         <Download className="mr-2 h-4 w-4 opacity-50" />
                         Export
                     </Button>
@@ -71,7 +70,7 @@ export function GradebookView({ data }: GradebookViewProps) {
             </div>
 
             {/* Main Gradebook Container */}
-            <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="border-none shadow-xl bg-white/60 dark:bg-slate-900/40 overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
+            <Card className="border-none shadow-xl bg-white/60 dark:bg-slate-900/40 overflow-hidden ring-1 ring-black/5 dark:ring-white/10 backdrop-blur-xl">
                 <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40">
                     <div className="flex items-center justify-between">
                         <div>

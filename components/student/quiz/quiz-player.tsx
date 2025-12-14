@@ -183,9 +183,8 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                             whileTap={!isReadOnly ? { scale: 0.99 } : {}}
                                             key={choice.id}
                                             onClick={() => handleAnswer(question.id, choice.id)}
-                                            style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
                                             className={cn(
-                                                "relative flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer overflow-hidden",
+                                                "relative flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer overflow-hidden backdrop-blur-sm",
                                                 answers[question.id] === choice.id
                                                     ? 'bg-indigo-50/80 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 shadow-sm'
                                                     : 'bg-white/40 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 hover:bg-white/60 dark:hover:bg-slate-900/60'

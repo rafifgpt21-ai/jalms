@@ -226,7 +226,6 @@ export function ChatWindow({
                                 {!isMe && !isLastFromUser && <div className="hidden md:block w-6" />}
 
                                 <div
-                                    style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
                                     className={cn(
                                         "flex flex-col gap-1 px-5 py-3 text-sm shadow-sm max-w-[85%] md:max-w-[75%] transition-all",
                                         isMe
@@ -251,8 +250,7 @@ export function ChatWindow({
 
             {/* Floating Input Area */}
             <div
-                style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
-                className="fixed bottom-16 left-0 right-0 z-20 p-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl [-webkit-backdrop-filter:blur(16px)] border-t border-white/30 dark:border-slate-800 md:absolute md:bottom-0 md:left-0 md:right-0"
+                className="fixed bottom-16 left-0 right-0 z-20 p-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-t border-white/30 dark:border-slate-800 md:absolute md:bottom-0 md:left-0 md:right-0"
             >
                 <form
                     onSubmit={handleSend}

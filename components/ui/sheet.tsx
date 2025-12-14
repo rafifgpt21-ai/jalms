@@ -69,7 +69,7 @@ function SheetContent({
           "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
           className
         )}
-        style={{ ...props.style, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
+        style={{ ...props.style }}
         {...props}
       >
         {children}

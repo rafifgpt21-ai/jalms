@@ -179,13 +179,7 @@ export default async function AdminDashboard() {
                                     </div>
                                 </div>
                                 <div className="flex flex-col md:flex-row items-end md:items-center gap-3 md:gap-6">
-                                    <div className="flex gap-1">
-                                        {user.roles.map(role => (
-                                            <span key={role} className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-bold border border-indigo-100 dark:border-indigo-800">
-                                                {role}
-                                            </span>
-                                        ))}
-                                    </div>
+
                                     <div className="text-xs font-medium text-slate-400 tabular-nums">
                                         {user.lastLoginAt ? format(new Date(user.lastLoginAt), "MMM d, h:mm a") : "Never"}
                                     </div>

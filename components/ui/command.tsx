@@ -20,9 +20,8 @@ function Command({
   return (
     <CommandPrimitive
       data-slot="command"
-      style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
       className={cn(
-        "bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/20 dark:border-white/10 text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
+        "bg-white dark:bg-slate-900 border-white/20 dark:border-white/10 text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
         className
       )}
       {...props}

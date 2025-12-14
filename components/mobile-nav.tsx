@@ -50,7 +50,7 @@ export function MobileNav({ userRoles }: MobileNavProps) {
 
     if (title) {
         return (
-            <div style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }} className="md:hidden px-4 py-2 bg-white/10 dark:bg-slate-900/80 text-slate-900 dark:text-slate-100 flex items-center gap-3 sticky top-0 z-50 border-b border-white/20 dark:border-white/10 min-h-[56px] shadow-sm">
+            <div className="md:hidden px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex items-center gap-3 sticky top-0 z-50 border-b border-gray-200 dark:border-slate-800 min-h-[56px] shadow-sm">
                 {leftAction}
                 {image && (
                     <Avatar className="h-8 w-8 border border-gray-200">
@@ -81,8 +81,7 @@ export function MobileNav({ userRoles }: MobileNavProps) {
 
     return (
         <div
-            style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
-            className="md:hidden px-4 py-3 bg-white/60 dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 flex items-center justify-start sticky top-0 z-50 border-b border-white/20 dark:border-white/10 h-[56px] shadow-sm"
+            className="md:hidden px-4 py-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex items-center justify-start sticky top-0 z-50 border-b border-gray-200 dark:border-slate-800 h-[56px] shadow-sm"
         >
             <span className="font-semibold text-sm truncate">
                 {currentTab.label}

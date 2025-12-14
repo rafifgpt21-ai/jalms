@@ -6,7 +6,6 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
-      style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
       className={cn(
         "bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/20 dark:border-white/10 text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
         className

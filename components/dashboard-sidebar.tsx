@@ -109,8 +109,7 @@ function SidebarNavItem({ href, icon: Icon, label, active, onClick, hasBadge, is
                             <span className="sr-only">{label}</span>
                             {isActive && (
                                 <motion.div
-                                    layoutId="activeSidebarItemCollapsed"
-                                    className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm backdrop-blur-md z-[-1]"
+                                    className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm z-[-1]"
                                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                 />
                             )}
@@ -139,7 +138,7 @@ function SidebarNavItem({ href, icon: Icon, label, active, onClick, hasBadge, is
             {isActive && (
                 <motion.div
                     layoutId="activeSidebarItem"
-                    className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm backdrop-blur-md z-[-1]"
+                    className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm z-[-1]"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
             )}
@@ -289,8 +288,7 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
-                                    className="w-(--radix-dropdown-menu-trigger-width) bg-popover/0 dark:bg-slate-900/60! border-white/20 dark:border-white/10 shadow-xl"
-                                    style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+                                    className="w-(--radix-dropdown-menu-trigger-width) bg-popover/0 dark:bg-slate-900/60! border-white/20 dark:border-white/10 shadow-xl backdrop-blur-xl"
                                     align="start"
                                 >
                                     <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1.5">Switch Course</DropdownMenuLabel>
@@ -348,7 +346,7 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                                         {((pathname.includes("/tasks") && !pathname.includes("/tasks-summary")) || navigatingTo === `/teacher/courses/${selectedCourseId}/tasks`) && (
                                                             <motion.div
                                                                 layoutId="activeSidebarItemCollapsed"
-                                                                className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm backdrop-blur-md z-[-1]"
+                                                                className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm z-[-1]"
                                                                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                                             />
                                                         )}
@@ -502,8 +500,7 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
-                                    className="w-(--radix-dropdown-menu-trigger-width) bg-popover/0 dark:bg-slate-900/60! border-white/20 dark:border-white/10 shadow-xl"
-                                    style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+                                    className="w-(--radix-dropdown-menu-trigger-width) bg-popover/0 dark:bg-slate-900/60! border-white/20 dark:border-white/10 shadow-xl backdrop-blur-xl"
                                     align="start"
                                 >
                                     <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1.5">Switch Course</DropdownMenuLabel>
@@ -561,7 +558,7 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                                         {(pathname.includes("/tasks") || navigatingTo === `/student/courses/${selectedCourseId}/tasks`) && (
                                                             <motion.div
                                                                 layoutId="activeSidebarItemCollapsed"
-                                                                className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm backdrop-blur-md z-[-1]"
+                                                                className="absolute inset-0 bg-white/40 dark:bg-white/10 border border-white/20 dark:border-white/10 rounded-xl shadow-sm z-[-1]"
                                                                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                                             />
                                                         )}
@@ -668,9 +665,8 @@ export function DashboardSidebar({ userRoles, teacherCourses, studentCourses, co
 
     return (
         <aside
-            style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
             className={cn(
-                "group/sidebar bg-white/40 dark:bg-slate-900/50 text-sidebar-foreground flex flex-col transition-all duration-300 relative border border-white/20 dark:border-white/10 shadow-lg rounded-3xl m-4 h-[calc(100%-2rem)] z-20 overflow-hidden",
+                "group/sidebar bg-white/40 dark:bg-slate-900/50 text-sidebar-foreground flex flex-col transition-all duration-300 relative border border-white/20 dark:border-white/10 shadow-lg rounded-3xl m-4 h-[calc(100%-2rem)] z-20 overflow-hidden backdrop-blur-xl",
                 isCollapsed ? "w-20" : "w-80" // Slightly wider collapsed state for better floating look
             )}
         >
