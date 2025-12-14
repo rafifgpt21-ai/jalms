@@ -44,7 +44,7 @@ export default async function StudentSchedulePage() {
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 ">
             <MobileHeaderSetter title="My Weekly Schedule" />
 
             {/* Main Glass Card */}
@@ -54,16 +54,16 @@ export default async function StudentSchedulePage() {
                         Weekly Schedule
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-0 sm:p-6">
-                    <div className="overflow-x-auto pb-4">
-                        <div className="min-w-[800px]">
+                <CardContent className="p-2 sm:p-6">
+                    <div className="overflow-x-auto">
+                        <div className="max-xl:hidden min-w-[800px]">
                             {/* Header Row */}
                             <div className="grid grid-cols-8 gap-2 mb-2">
-                                <div style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="p-3 font-heading font-bold text-center rounded-xl text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-800/50">
+                                <div className="p-3 font-heading font-bold text-center rounded-xl text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-800/50">
                                     Period
                                 </div>
                                 {days.map((day) => (
-                                    <div key={day} style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="p-3 font-heading font-bold text-center rounded-xl text-white bg-indigo-600/90 shadow-lg shadow-indigo-600/20">
+                                    <div key={day} className="p-3 font-heading font-bold text-center rounded-xl text-white bg-indigo-600/90 shadow-lg shadow-indigo-600/20">
                                         {day}
                                     </div>
                                 ))}
@@ -83,7 +83,7 @@ export default async function StudentSchedulePage() {
                                         return (
                                             <div
                                                 key={`${dayIdx}-${period}`}
-                                                className={`group relative p-2 min-h-[100px] rounded-2xl flex flex-col justify-center items-center text-center transition-all duration-300 ${course
+                                                className={`group relative p-2 min-h-[70px] rounded-2xl flex flex-col justify-center items-center text-center transition-all duration-300 ${course
                                                     ? "bg-white/80 dark:bg-slate-800/60 border border-indigo-100 dark:border-indigo-500/20 shadow-md shadow-indigo-500/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer"
                                                     : "bg-slate-50/30 dark:bg-slate-900/20 border border-dashed border-slate-200 dark:border-slate-800"
                                                     }`}
@@ -107,6 +107,63 @@ export default async function StudentSchedulePage() {
                                     })}
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Mobile View */}
+                        <div className="xl:hidden space-y-8">
+                            {days.map((day, dayIdx) => {
+                                // Check if day has any classes
+                                const hasClasses = periods.some(p => getCourseAtSlot(dayIdx, p));
+
+                                return (
+                                    <div key={day} className="space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-1 rounded-full bg-indigo-500" />
+                                            <h3 className="text-xl font-heading font-bold text-slate-800 dark:text-white">
+                                                {day}
+                                            </h3>
+                                        </div>
+
+                                        <div className="grid gap-3">
+                                            {periods.map((period) => {
+                                                const course = getCourseAtSlot(dayIdx, period);
+                                                if (!course) return null; // Only show active periods on mobile to save space
+
+                                                return (
+                                                    <div key={period} className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-indigo-100 dark:border-indigo-500/20 p-4 shadow-sm">
+                                                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500" />
+                                                        <div className="flex justify-between items-start gap-4">
+                                                            <div>
+                                                                <div className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">
+                                                                    {getPeriodLabel(period)}
+                                                                </div>
+                                                                <div className="font-heading font-bold text-slate-800 dark:text-white text-lg">
+                                                                    {course.reportName || course.name}
+                                                                </div>
+                                                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                                                                    {course.teacher.name}
+                                                                </div>
+                                                            </div>
+                                                            {course.code && (
+                                                                <div className="text-xs font-mono bg-slate-100 dark:bg-slate-900 text-slate-500 px-2 py-1 rounded-md">
+                                                                    {course.code}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+
+                                            {!hasClasses && (
+                                                <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 text-center">
+                                                    <p className="text-slate-400 dark:text-slate-600 text-sm">No classes scheduled</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </CardContent>

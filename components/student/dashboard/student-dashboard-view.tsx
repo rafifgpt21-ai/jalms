@@ -88,16 +88,16 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5 }}
                     className="md:col-span-2 lg:col-span-2 h-full"
                 >
-                    <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="relative overflow-hidden rounded-3xl p-6 h-full min-h-[220px] flex flex-col justify-between shadow-xl shadow-indigo-500/20 group cursor-pointer hover:scale-[1.01] transition-transform duration-300">
+                    <div className="relative overflow-hidden rounded-3xl p-6 h-full min-h-[220px] flex flex-col justify-between shadow-xl shadow-indigo-500/20 group cursor-pointer hover:scale-[1.01] transition-transform duration-300">
                         {/* Background Gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/90 to-violet-700/90 dark:from-indigo-900/90 dark:to-violet-950/90 z-0" />
+                        <div className="absolute inset-0 bg-linear-to-br from-indigo-600/90 to-violet-700/90 dark:from-indigo-900/90 dark:to-violet-950/90 z-0" />
 
                         {/* Decorative Circles */}
                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/30 rounded-full blur-xl" />
 
                         <div className="relative z-10 text-white">
-                            <div style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }} className="flex items-center gap-2 text-indigo-100 bg-white/10 w-fit px-3 py-1 rounded-full text-sm border border-white/10">
+                            <div className="flex items-center gap-2 text-indigo-100 bg-white/10 w-fit px-3 py-1 rounded-full text-sm border border-white/10">
                                 <Clock className="w-4 h-4" />
                                 <span>Up Next</span>
                             </div>
@@ -125,7 +125,7 @@ export function StudentDashboardView({
                                 {schedule.length} classes remaining today
                             </div>
 
-                            <div style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors cursor-pointer">
+                            <div className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors cursor-pointer">
                                 <ArrowRight className="w-6 h-6 text-white" />
                             </div>
                         </div>
@@ -139,7 +139,7 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5, delay: 0.1 }}
                     className="md:col-span-1"
                 >
-                    <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="bg-white/60 dark:bg-slate-900/40 border border-white/20 dark:border-white/5 rounded-3xl p-6 h-full flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-white/70 transition-colors">
+                    <div className="bg-white/60 dark:bg-slate-900/40 border border-white/20 dark:border-white/5 rounded-3xl p-6 h-full flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-white/70 transition-colors">
                         <div className="p-3 bg-orange-100 dark:bg-orange-900/30 w-fit rounded-2xl text-orange-600 dark:text-orange-400 mb-4">
                             <AlertCircle className="w-6 h-6" />
                         </div>
@@ -159,7 +159,7 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5, delay: 0.2 }}
                     className="md:col-span-1"
                 >
-                    <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="bg-white/60 dark:bg-slate-900/40 border border-white/20 dark:border-white/5 rounded-3xl p-6 h-full flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-white/70 transition-colors">
+                    <div className="bg-white/60 dark:bg-slate-900/40 border border-white/20 dark:border-white/5 rounded-3xl p-6 h-full flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none hover:bg-white/70 transition-colors">
                         <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 w-fit rounded-2xl text-emerald-600 dark:text-emerald-400 mb-4">
                             <GraduationCap className="w-6 h-6" />
                         </div>
@@ -180,7 +180,7 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="md:col-span-2 lg:col-span-2 row-span-2"
                 >
-                    <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="h-full border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5">
+                    <Card className="h-full border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 font-heading text-xl">
                                 <Calendar className="w-5 h-5 text-indigo-500" />
@@ -190,11 +190,11 @@ export function StudentDashboardView({
                         <CardContent className="space-y-3">
                             {schedule.length > 0 ? schedule.map((slot, i) => (
                                 <div key={i} className="group flex items-center gap-4 p-3 rounded-2xl hover:bg-white/50 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-indigo-100 dark:hover:border-indigo-900 cursor-pointer">
-                                    <div className="flex flex-col items-center justify-center min-w-[3rem] text-center">
+                                    <div className="flex flex-col items-center justify-center min-w-12 text-center">
                                         <div className="text-sm font-bold text-slate-400 font-heading tracking-wide uppercase">Period</div>
                                         <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{getPeriodLabel(slot.period)}</div>
                                     </div>
-                                    <div className="h-10 w-[1px] bg-slate-200 dark:bg-slate-700" />
+                                    <div className="h-10 w-px bg-slate-200 dark:bg-slate-700" />
                                     <div className="flex-1">
                                         <h4 className="font-bold text-slate-800 dark:text-slate-200 text-lg group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">
                                             {slot.course.reportName || slot.course.name}
@@ -224,7 +224,7 @@ export function StudentDashboardView({
                     transition={{ duration: 0.5, delay: 0.4 }}
                     className="md:col-span-2 lg:col-span-2 row-span-2"
                 >
-                    <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="h-full border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5">
+                    <Card className="h-full border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 font-heading text-xl">
                                 <BookOpen className="w-5 h-5 text-orange-500" />

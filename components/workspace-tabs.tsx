@@ -78,8 +78,8 @@ export function WorkspaceTabs({ roles, userName, userNickname, userEmail, userIm
     return (
 
         <div className="relative px-6 py-4 flex items-center justify-center z-10 top-0 gap-4 pointer-events-none">
-            <div
-                className="flex items-center gap-2 bg-white/40 dark:bg-slate-900/60 border border-white/20 dark:border-white/10 rounded-full py-2 pl-4 pr-2 shadow-sm pointer-events-auto ring-1 ring-black/5 backdrop-blur-xl"
+            <div style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
+                className="flex items-center gap-2 bg-white/40 dark:bg-slate-900/60 border border-white/20 dark:border-white/10 rounded-full py-2 pl-4 pr-2 shadow-sm pointer-events-auto ring-1 ring-black/5 drop-shadow-black"
             >
                 {/* Branding */}
                 <div className="flex items-center gap-2 pr-4 border-r border-black/5 dark:border-white/10 mr-2">

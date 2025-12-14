@@ -49,8 +49,8 @@ export default async function AttendancePage({
             )}
 
             {!schedules || schedules.length === 0 ? (
-                <div className="text-center py-12 border rounded-lg bg-gray-50">
-                    <p className="text-muted-foreground">No classes scheduled for {format(date, "EEEE, MMMM d, yyyy")}.</p>
+                <div className="text-center py-12 border rounded-lg bg-gray-50/5">
+                    <p className="text-muted-foreground">No classes scheduled for {format(date, "EEEE, MMMM d, yyyy")}. :D</p>
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

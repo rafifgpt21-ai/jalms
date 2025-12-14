@@ -14,7 +14,7 @@ export default async function QuizManagerPage() {
     const { quizzes, error } = await getQuizzes()
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
             <MobileHeaderSetter title="Quiz Manager" />
             <div className="flex flex-col sm:flex-row justify-between items-end gap-4">
                 <CreateQuizDialog />

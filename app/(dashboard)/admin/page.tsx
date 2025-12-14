@@ -43,7 +43,7 @@ export default async function AdminDashboard() {
                         {format(new Date(), "EEEE, MMMM do yyyy")}
                     </p>
                 </div>
-                <div style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="flex items-center gap-2 bg-white/50 dark:bg-slate-900/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-900/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm">
                     <Shield className="h-4 w-4 text-indigo-500" />
                     <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Admin Access</span>
                 </div>
@@ -53,7 +53,7 @@ export default async function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
                 {/* 1. Today's Pulse - Large Card (Span 8) */}
-                <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="md:col-span-8 group relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-xl transition-all hover:shadow-2xl">
+                <div className="md:col-span-8 group relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-xl transition-all hover:shadow-2xl">
                     <div className="absolute inset-0 bg-linear-to-br from-indigo-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     <div className="p-8 h-full flex flex-col justify-between relative z-10">
@@ -93,7 +93,7 @@ export default async function AdminDashboard() {
                             </div>
 
                             {/* Circular indicator */}
-                            <div className="hidden sm:flex h-24 w-24 rounded-full border-8 border-slate-100 dark:border-slate-800 items-center justify-center relative flex-shrink-0">
+                            <div className="hidden sm:flex h-24 w-24 rounded-full border-8 border-slate-100 dark:border-slate-800 items-center justify-center relative shrink-0">
                                 <div
                                     className="absolute inset-0 rounded-full border-8 border-indigo-500 border-t-transparent border-l-transparent transform -rotate-45 opacity-20"
                                 />
@@ -139,7 +139,6 @@ export default async function AdminDashboard() {
                         {quickActions.map((action) => (
                             <Link key={action.label} href={action.href}>
                                 <div
-                                    style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
                                     className="h-full flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-slate-900/40 transition-all hover:bg-white/60 dark:hover:bg-slate-900/60 hover:border-indigo-200/50 dark:hover:border-indigo-800/50 hover:shadow-lg hover:-translate-y-1 group text-center cursor-pointer shadow-sm"
                                 >
                                     <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm", action.bg, action.color)}>

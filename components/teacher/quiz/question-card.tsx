@@ -372,7 +372,7 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                                             <p className="text-sm font-medium line-clamp-1">
                                                 {pendingAudioFile ? pendingAudioFile.name : "Audio Attachment"}
                                             </p>
-                                            <audio controls className="h-8 w-full max-w-[200px]" src={getDisplayAudioUrl()!} />
+                                            <audio controls className="h-8 w-full" src={getDisplayAudioUrl()!} />
                                         </div>
                                     </div>
 
