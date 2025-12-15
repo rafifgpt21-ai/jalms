@@ -145,9 +145,9 @@ export default async function StudentSchedulePage() {
                                                                     {course.teacher.name}
                                                                 </div>
                                                             </div>
-                                                            {course.code && (
+                                                            {course.subject?.code && (
                                                                 <div className="text-xs font-mono bg-slate-100 dark:bg-slate-900 text-slate-500 px-2 py-1 rounded-md">
-                                                                    {course.code}
+                                                                    {course.subject.code}
                                                                 </div>
                                                             )}
                                                         </div>
