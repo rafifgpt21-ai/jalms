@@ -249,8 +249,8 @@ export function ChatWindow({
             </ScrollArea>
 
             {/* Floating Input Area */}
-            <div
-                className="fixed bottom-16 left-0 right-0 z-20 p-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-t border-white/30 dark:border-slate-800 md:absolute md:bottom-0 md:left-0 md:right-0"
+            <div style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
+                className="fixed bottom-16 left-0 right-0 z-20 p-4 bg-white/10 dark:bg-slate-900/70 backdrop-blur-xl border-t border-white/30 dark:border-slate-800 md:absolute md:bottom-0 md:left-0 md:right-0"
             >
                 <form
                     onSubmit={handleSend}
@@ -260,7 +260,7 @@ export function ChatWindow({
                         placeholder="Type a message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 h-auto placeholder:text-slate-400"
+                        className="bg-white/40 flex-1 border-0 focus-visible:ring-0 rounded-full focus-visible:ring-offset-0 px-4 py-3 h-auto placeholder:text-slate-400"
                         disabled={isSending}
                         autoComplete="off"
                     />

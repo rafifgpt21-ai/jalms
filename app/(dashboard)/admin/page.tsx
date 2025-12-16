@@ -154,7 +154,7 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* 4. Recent Activity (Last Logged In) - Span 12 */}
-                <div style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="md:col-span-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-sm overflow-hidden">
+                <div className="md:col-span-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Clock className="h-5 w-5 text-slate-400" />

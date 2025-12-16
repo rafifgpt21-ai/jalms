@@ -298,7 +298,7 @@ export function TeacherDashboardView({
 
 function StatCard({ title, value, icon: Icon, color, bg, desc }: any) {
     return (
-        <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="border-none shadow-lg bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5 dark:ring-white/10">
+        <Card className="border-none shadow-lg bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5 dark:ring-white/10">
             <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className={cn("p-2 rounded-xl", bg, color)}>

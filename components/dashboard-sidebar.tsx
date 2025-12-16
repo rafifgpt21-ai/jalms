@@ -288,23 +288,23 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
-                                    className="w-(--radix-dropdown-menu-trigger-width) bg-popover/0 dark:bg-slate-900/60! border-white/20 dark:border-white/10 shadow-xl backdrop-blur-xl"
+                                    className="w-(--radix-dropdown-menu-trigger-width) bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-xl"
                                     align="start"
                                 >
                                     <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1.5">Switch Course</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-white/10 dark:bg-white/5" />
+                                    <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700" />
                                     {teacherCourses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
-                                            className="flex items-center justify-between p-2 cursor-pointer focus:bg-white/20 dark:focus:bg-white/10 rounded-md"
+                                            className="flex items-center justify-between p-2 cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800 rounded-md"
                                         >
                                             <div className="flex items-center gap-2 overflow-hidden">
                                                 <div className={cn(
                                                     "h-6 w-6 rounded-md flex items-center justify-center text-xs font-medium border shrink-0",
                                                     selectedCourseId === course.id
                                                         ? "bg-indigo-500 text-white border-indigo-600"
-                                                        : "bg-white/10 dark:bg-white/5 border-transparent"
+                                                        : "bg-slate-100 dark:bg-slate-800 border-transparent"
                                                 )}>
                                                     {course.name.charAt(0)}
                                                 </div>
@@ -500,23 +500,23 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
-                                    className="w-(--radix-dropdown-menu-trigger-width) bg-popover/0 dark:bg-slate-900/60! border-white/20 dark:border-white/10 shadow-xl backdrop-blur-xl"
+                                    className="w-(--radix-dropdown-menu-trigger-width) bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-xl"
                                     align="start"
                                 >
                                     <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1.5">Switch Course</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-white/10 dark:bg-white/5" />
+                                    <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700" />
                                     {studentCourses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
-                                            className="flex items-center justify-between p-2 cursor-pointer focus:bg-white/20 dark:focus:bg-white/10 rounded-md"
+                                            className="flex items-center justify-between p-2 cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800 rounded-md"
                                         >
                                             <div className="flex items-center gap-2 overflow-hidden">
                                                 <div className={cn(
                                                     "h-6 w-6 rounded-md flex items-center justify-center text-xs font-medium border shrink-0",
                                                     selectedCourseId === course.id
                                                         ? "bg-indigo-500 text-white border-indigo-600"
-                                                        : "bg-white/10 dark:bg-white/5 border-transparent"
+                                                        : "bg-slate-100 dark:bg-slate-800 border-transparent"
                                                 )}>
                                                     {course.name.charAt(0)}
                                                 </div>
