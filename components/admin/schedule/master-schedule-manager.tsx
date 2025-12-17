@@ -200,7 +200,7 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
 
                     {viewMode === "day" && (
                         <Tabs value={selectedDay} onValueChange={setSelectedDay} className="w-full md:w-auto">
-                            <TabsList className="grid grid-cols-4 md:grid-cols-7 h-auto p-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10">
+                            <TabsList className="grid grid-cols-4 md:grid-cols-7 h-auto p-1 bg-white/40 dark:bg-slate-900/40 border border-white/20 dark:border-white/10">
                                 {UI_DAYS.map(day => (
                                     <TabsTrigger key={day} value={day} className="text-xs md:text-sm px-2 py-1.5">
                                         {day.slice(0, 3)}
@@ -215,7 +215,7 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
                     <Input
                         placeholder="Search teachers..."
-                        className="pl-9 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-white/10 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-slate-900/80 transition-all rounded-xl"
+                        className="pl-9 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-white/10 focus:bg-white/80 dark:focus:bg-slate-900/80 transition-all rounded-xl"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -223,12 +223,12 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
             </div>
 
             {/* Main Grid */}
-            <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-white/40 dark:bg-slate-900/40 border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden flex flex-col">
                 <div className="overflow-x-auto max-w-[100vw] md:max-w-[calc(100vw-3rem)]">
                     <Table className="relative min-w-full w-auto">
-                        <TableHeader className="sticky top-0 bg-white/20 dark:bg-slate-900/20 backdrop-blur-md z-20 shadow-sm border-b border-white/10">
+                        <TableHeader className="sticky top-0 bg-white/20 dark:bg-slate-900/20 z-20 shadow-sm border-b border-white/10">
                             <TableRow className="hover:bg-transparent border-white/10">
-                                <TableHead className="w-[200px] min-w-[200px] max-w-[200px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl z-30 sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-slate-700 dark:text-slate-200 font-medium border-b border-r border-white/20 dark:border-white/10">
+                                <TableHead className="w-[200px] min-w-[200px] max-w-[200px] bg-white/40 dark:bg-slate-900/40 z-30 sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-slate-700 dark:text-slate-200 font-medium border-b border-r border-white/20 dark:border-white/10">
                                     Teacher
                                 </TableHead>
 
@@ -258,7 +258,7 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                                 filteredTeachers.map(teacher => (
                                     <TableRow key={teacher.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
                                         {/* Teacher Sticky Column */}
-                                        <TableCell className="font-medium sticky left-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[200px] min-w-[200px] align-top py-2 border-b border-r border-white/20 dark:border-white/10 transition-colors group-hover:bg-white/60 dark:group-hover:bg-slate-800/60">
+                                        <TableCell className="font-medium sticky left-0 bg-white/40 dark:bg-slate-900/40 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[200px] min-w-[200px] align-top py-2 border-b border-r border-white/20 dark:border-white/10 transition-colors group-hover:bg-white/60 dark:group-hover:bg-slate-800/60">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={teacher.image || ""} />

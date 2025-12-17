@@ -101,12 +101,12 @@ export function MasterScheduleView({ schedules }: MasterScheduleViewProps) {
             </div>
 
             {/* Timetable Grid */}
-            <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white/40 dark:bg-slate-900/40 border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <Table className="min-w-[1000px]">
                         <TableHeader className="bg-white/20 dark:bg-white/5 border-b border-white/10">
                             <TableRow className="hover:bg-transparent border-white/10">
-                                <TableHead className="w-[250px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky left-0 z-10 border-r border-white/10 text-slate-700 dark:text-slate-200 font-medium">Teacher</TableHead>
+                                <TableHead className="w-[250px] bg-white/80 dark:bg-slate-900/80 sticky left-0 z-10 border-r border-white/10 text-slate-700 dark:text-slate-200 font-medium">Teacher</TableHead>
                                 {PERIODS.map(period => (
                                     <TableHead key={period} className="text-center w-[150px] border-r border-white/10 last:border-r-0 text-slate-700 dark:text-slate-200 font-medium">
                                         {getPeriodLabel(period)}
@@ -124,7 +124,7 @@ export function MasterScheduleView({ schedules }: MasterScheduleViewProps) {
                             ) : (
                                 teachers.map(teacher => (
                                     <TableRow key={teacher.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
-                                        <TableCell className="font-medium bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky left-0 z-10 border-r border-white/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                        <TableCell className="font-medium bg-white/80 dark:bg-slate-900/80 sticky left-0 z-10 border-r border-white/10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={teacher.image || undefined} />
