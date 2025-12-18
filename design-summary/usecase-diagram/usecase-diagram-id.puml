@@ -1,0 +1,70 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "User" as user
+actor "Admin" as admin
+actor "Teacher" as teacher
+actor "Homeroom Teacher" as hrTeacher
+actor "Student" as student
+
+' Actor Inheritance
+user <|-- admin
+user <|-- teacher
+user <|-- student
+teacher <|-- hrTeacher
+
+package "Operasi General User" {
+    usecase "Ubah Password" as UC_PW
+    usecase "Perbarui Profil & Avatar" as UC_Profile
+    usecase "Perbarui Email" as UC_Email
+}
+
+package "Operasi Admin" {
+    usecase "Kelola Users" as UC_M_User
+    usecase "Kelola Courses" as UC_M_Course
+    usecase "Kelola Classes" as UC_M_Class
+    usecase "Kelola Subjects" as UC_M_Subj
+    usecase "Kelola Semesters" as UC_M_Sem
+    usecase "Kelola Schedule" as UC_M_Sched
+}
+
+package "Operasi Teacher" {
+    usecase "Kelola Materials" as UC_Mat
+    usecase "Kelola Assignment" as UC_Assign
+    usecase "Catat Attendance" as UC_Att
+    usecase "Buat Report Cards" as UC_Report
+}
+
+package "Operasi Student" {
+    usecase "Submit Assignments" as UC_Submit
+    usecase "Akses Learning Materials" as UC_ViewMat
+    usecase "Cek Grades" as UC_Grades
+    usecase "Lihat Personal Schedule" as UC_ViewSched
+}
+
+' Role-Specific Connections
+user --> UC_PW
+user --> UC_Profile
+user --> UC_Email
+
+admin --> UC_M_User
+admin --> UC_M_Course
+admin --> UC_M_Class
+admin --> UC_M_Subj
+admin --> UC_M_Sem
+admin --> UC_M_Sched
+
+teacher --> UC_Mat
+teacher --> UC_Assign
+teacher --> UC_Att
+
+hrTeacher --> UC_Report
+
+student --> UC_Submit
+student --> UC_ViewMat
+student --> UC_Grades
+student --> UC_ViewSched
+
+@enduml

@@ -1,0 +1,17 @@
+@startuml
+title Generate Report Cards Activity Diagram
+|Homeroom Teacher|
+start
+:Select Class (Homeroom);
+|System|
+:Fetch Student Grades;
+:Calculate GPA/Standings;
+:Generate PDF/Report Data;
+:Display Report Cards;
+|Homeroom Teacher|
+if (Download?) then (Yes)
+    :Download PDF;
+endif
+
+stop
+@enduml

@@ -1,0 +1,34 @@
+@startuml
+title Submit Assignment Sequence Diagram
+autonumber
+
+actor "Student" as Student
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+Student -> UI: View Assignment Details
+activate UI
+Student -> UI: Upload Submission
+activate UI
+UI -> Action: submitAssignment(assignmentId, file)
+activate Action
+Action -> Action: Upload File
+activate Action
+deactivate Action
+Action -> Prisma: create({ data: { submission } })
+activate Prisma
+Prisma -> DB: INSERT INTO Submission...
+activate DB
+DB --> Prisma: Success
+deactivate DB
+Prisma --> Action: Success
+deactivate Prisma
+Action --> UI: Success
+UI --> Student: Submitted Successfully
+deactivate Action
+deactivate UI
+deactivate UI
+
+@enduml

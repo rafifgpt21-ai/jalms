@@ -1,0 +1,39 @@
+@startuml
+title Manage Materials Activity Diagram
+|Teacher|
+start
+:View Materials List;
+|System|
+:Display Materials List;
+|Teacher|
+if (Action?) then (Upload Material)
+    :Click "Upload Material";
+    |System|
+    :Display Upload Form;
+    |Teacher|
+    :Select File;
+    :Enter Title & Description;
+    :Submit Upload;
+    |System|
+    if (Validation?) then (Valid)
+        :Save Material Record;
+        :Show Success;
+    else (Invalid)
+        :Show Error;
+        stop
+    endif
+else (Assign to Course)
+    :Select Material;
+    :Click "Assign";
+    |System|
+    :Display Course Search;
+    |Teacher|
+    :Search/Select Course;
+    :Confirm Assignment;
+    |System|
+    :Create Assignment Record;
+    :Show Success;
+endif
+
+stop
+@enduml

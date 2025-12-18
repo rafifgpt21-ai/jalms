@@ -1,0 +1,16 @@
+@startuml
+title Update Profile Activity Diagram
+|User|
+start
+:Edit Profile Details;
+if (Upload Avatar?) then (yes)
+    :Select Image File;
+    |System|
+    :Upload Image;
+    |User|
+endif
+:Submit Updates;
+|System|
+:Save Profile;
+stop
+@enduml

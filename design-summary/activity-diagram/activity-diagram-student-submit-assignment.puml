@@ -1,0 +1,22 @@
+@startuml
+title Submit Assignment Activity Diagram
+|Student|
+start
+:View Assignment Details;
+|System|
+if (Submission Open?) then (Yes)
+    |Student|
+    :Click "Submit";
+    :Select File to Upload;
+    :Confirm Submission;
+    |System|
+    :Upload File;
+    :Create Submission Record;
+    :Show Success;
+else (No)
+    :Show "Late" or "Closed" Status;
+    stop
+endif
+
+stop
+@enduml

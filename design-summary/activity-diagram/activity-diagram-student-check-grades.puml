@@ -1,0 +1,17 @@
+@startuml
+title Check Grades Activity Diagram
+|Student|
+start
+:Navigate to Grades Section;
+|System|
+:Fetch Student Grades;
+:Display Grade Overview;
+|Student|
+if (View Details?) then (Yes)
+    :Click on Specific Subject/Assignment;
+    |System|
+    :Show Detailed Feedback/Score;
+endif
+
+stop
+@enduml

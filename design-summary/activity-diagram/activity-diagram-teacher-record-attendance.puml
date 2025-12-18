@@ -1,0 +1,17 @@
+@startuml
+title Record Attendance Activity Diagram
+|Teacher|
+start
+:Select Class and Date;
+|System|
+:Fetch Student List;
+:Display Attendance Sheet;
+|Teacher|
+:Mark Present/Absent/Late for Students;
+:Submit Attendance;
+|System|
+:Save Records to Database;
+:Show Confirmation;
+
+stop
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+title Access Learning Materials Sequence Diagram
+autonumber
+
+actor "Student" as Student
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+Student -> UI: View Class Materials
+activate UI
+UI -> Action: getMaterials(classId)
+activate Action
+Action -> Prisma: findMany()
+activate Prisma
+Prisma -> DB: SELECT * FROM Material...
+activate DB
+DB --> Prisma: Materials[]
+deactivate DB
+Prisma --> Action: Materials[]
+deactivate Prisma
+Action --> UI: Materials[]
+deactivate Action
+UI --> Student: Display Materials List
+deactivate UI
+
+Student -> UI: Click Material
+activate UI
+UI --> Student: Download/View File
+deactivate UI
+
+@enduml

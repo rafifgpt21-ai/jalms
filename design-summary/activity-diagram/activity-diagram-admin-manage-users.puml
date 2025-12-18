@@ -1,0 +1,25 @@
+@startuml
+title Manage Users Activity Diagram
+|Admin|
+start
+:View Users List;
+|System|
+:Display User List;
+|Admin|
+:Click "Add User";
+|System|
+:Display Add Form;
+|Admin|
+:Fill User Details (Name, Email, Role);
+:Submit Form;
+|System|
+if (Validation?) then (Valid)
+    :Create User Record;
+    :Show Success Message;
+else (Invalid)
+    :Show Error Message;
+    stop
+endif
+
+stop
+@enduml

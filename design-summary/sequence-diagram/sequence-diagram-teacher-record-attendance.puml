@@ -1,0 +1,41 @@
+@startuml
+title Record Attendance Sequence Diagram
+autonumber
+
+actor "Teacher" as Teacher
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+Teacher -> UI: View Class Attendance
+activate UI
+UI -> Action: getAttendance(classId, date)
+activate Action
+Action -> Prisma: findMany()
+activate Prisma
+Prisma --> Action: Attendance List
+deactivate Prisma
+Action --> UI: List
+deactivate Action
+UI --> Teacher: Display List
+deactivate UI
+
+Teacher -> UI: Mark/Update Attendance
+activate UI
+UI -> Action: updateAttendance(studentIds, status)
+activate Action
+Action -> Prisma: updateMany()
+activate Prisma
+Prisma -> DB: UPDATE Attendance...
+activate DB
+DB --> Prisma: Success
+deactivate DB
+Prisma --> Action: Success
+deactivate Prisma
+Action --> UI: Success
+UI --> Teacher: Attendance Recorded
+deactivate Action
+deactivate UI
+
+@enduml

@@ -1,0 +1,25 @@
+@startuml
+title Manage Assignments Activity Diagram
+|Teacher|
+start
+:View Assignments List;
+|System|
+:Display Assignments List;
+|Teacher|
+:Click "Create Assignment";
+|System|
+:Display Create Form;
+|Teacher|
+:Fill details (Title, Due Date, Course);
+:Submit Form;
+|System|
+if (Validation?) then (Valid)
+    :Create Assignment Record;
+    :Show Success Message;
+else (Invalid)
+    :Show Error Message;
+    stop
+endif
+
+stop
+@enduml

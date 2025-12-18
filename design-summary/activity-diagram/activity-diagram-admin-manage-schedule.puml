@@ -1,0 +1,26 @@
+@startuml
+title Manage Schedule Activity Diagram
+|Admin|
+start
+:View Schedule Grid;
+|System|
+:Display Schedule Grid;
+|Admin|
+:Click Empty Cell / "Add Entry";
+|System|
+:Display Add Form;
+|Admin|
+:Select Subject, Class, Teacher;
+:Set Time Slot;
+:Submit Form;
+|System|
+if (Validation?) then (Valid)
+    :Create Schedule Entry;
+    :Show Success Message;
+else (Invalid)
+    :Show Error Message;
+    stop
+endif
+
+stop
+@enduml

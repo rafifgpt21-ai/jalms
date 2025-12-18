@@ -1,0 +1,39 @@
+@startuml
+title Manage Classes Activity Diagram
+|Admin|
+start
+:View Classes List;
+|System|
+:Display Class List;
+|Admin|
+if (Action?) then (Create Class)
+    :Click "Add Class";
+    |System|
+    :Display Add Form;
+    |Admin|
+    :Fill Class Details (Name, Grade);
+    :Assign Homeroom Teacher;
+    :Submit Form;
+    |System|
+    if (Validation?) then (Valid)
+        :Create Class Record;
+        :Show Success Message;
+    else (Invalid)
+        :Show Error Message;
+        stop
+    endif
+else (Assign Students)
+    :Select Class;
+    :Click "Assign Students";
+    |System|
+    :Display Student Search/List;
+    |Admin|
+    :Select Students to Assign;
+    :Confirm Assignment;
+    |System|
+    :Update Class Membership;
+    :Show Success Message;
+endif
+
+stop
+@enduml

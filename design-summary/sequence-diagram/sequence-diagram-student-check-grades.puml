@@ -1,0 +1,28 @@
+@startuml
+title Check Grades Sequence Diagram
+autonumber
+
+actor "Student" as Student
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+Student -> UI: View Grades
+activate UI
+UI -> Action: getGrades(studentId)
+activate Action
+Action -> Prisma: findMany()
+activate Prisma
+Prisma -> DB: SELECT * FROM Grade...
+activate DB
+DB --> Prisma: Grades[]
+deactivate DB
+Prisma --> Action: Grades[]
+deactivate Prisma
+Action --> UI: Grades[]
+deactivate Action
+UI --> Student: Display Grades
+deactivate UI
+
+@enduml

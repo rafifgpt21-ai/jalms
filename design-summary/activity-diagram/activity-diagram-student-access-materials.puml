@@ -1,0 +1,14 @@
+@startuml
+title Access Materials Activity Diagram
+|Student|
+start
+:View Course/Class;
+|System|
+:List Available Materials;
+|Student|
+:Select Material;
+|System|
+:Download or View Material;
+
+stop
+@enduml

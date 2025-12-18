@@ -1,43 +1,43 @@
 @startuml
-title Manage Subject Sequence Diagram
+title Manage Courses Sequence Diagram
 autonumber
 
 actor "Admin" as Admin
-participant "Web/UI" as UI
+participant "Web Client" as UI
 participant "Server Action" as Action
 participant "Prisma ORM" as Prisma
 database "Database" as DB
 
-' View Subjects Flow
-Admin -> UI: View Subjects List
+' View Courses Flow
+Admin -> UI: View Courses List
 activate UI
-UI -> Action: getSubjects()
+UI -> Action: getCourses()
 activate Action
 Action -> Prisma: findMany()
 activate Prisma
-Prisma -> DB: SELECT * FROM Subject...
+Prisma -> DB: SELECT * FROM Course...
 activate DB
-DB --> Prisma: Subject[]
+DB --> Prisma: Course[]
 deactivate DB
-Prisma --> Action: Subject[]
+Prisma --> Action: Course[]
 deactivate Prisma
-Action --> UI: Subject[]
+Action --> UI: Course[]
 deactivate Action
-UI --> Admin: Display List of Subjects
+UI --> Admin: Display List of Courses
 deactivate UI
 
 ' User Action Choices
-alt Create Subject
-    Admin -> UI: Click "Add Subject"
+alt Create Course
+    Admin -> UI: Click "Add Course"
     activate UI
     UI --> Admin: Display Create Form
     deactivate UI
 
     Admin -> UI: Fill Details & Submit
     activate UI
-    note right of Admin: Name, Code, Description
+    note right of Admin: Title, Department, etc.
 
-    UI -> Action: createSubject(data)
+    UI -> Action: createCourse(data)
     activate Action
     Action -> Action: Validate Data
     activate Action
@@ -46,11 +46,11 @@ alt Create Subject
     opt Validation Pass
         Action -> Prisma: create({ data })
         activate Prisma
-        Prisma -> DB: INSERT INTO Subject...
+        Prisma -> DB: INSERT INTO Course...
         activate DB
-        DB --> Prisma: Created Subject
+        DB --> Prisma: Created Course
         deactivate DB
-        Prisma --> Action: Subject Object
+        Prisma --> Action: Course Object
         deactivate Prisma
         Action --> UI: Success Response
         UI --> Admin: Show Success & Refresh List
@@ -61,27 +61,27 @@ alt Create Subject
     deactivate Action
     deactivate UI
 
-else Edit Subject
-    Admin -> UI: Click "Edit" on Subject
+else Edit Course
+    Admin -> UI: Click "Edit" on Course
     activate UI
-    UI -> Action: getSubject(id)
+    UI -> Action: getCourse(id)
     activate Action
     Action -> Prisma: findUnique({ where: { id } })
     activate Prisma
-    Prisma -> DB: SELECT * FROM Subject...
+    Prisma -> DB: SELECT * FROM Course...
     activate DB
-    DB --> Prisma: Subject Data
+    DB --> Prisma: Course Data
     deactivate DB
-    Prisma --> Action: Subject Data
+    Prisma --> Action: Course Data
     deactivate Prisma
-    Action --> UI: Subject Data
+    Action --> UI: Course Data
     deactivate Action
     UI --> Admin: Display Edit Form with Data
     deactivate UI
 
     Admin -> UI: Update Details & Submit
     activate UI
-    UI -> Action: updateSubject(id, data)
+    UI -> Action: updateCourse(id, data)
     activate Action
     Action -> Action: Validate Data
     activate Action
@@ -90,11 +90,11 @@ else Edit Subject
     opt Validation Pass
         Action -> Prisma: update({ where: { id }, data })
         activate Prisma
-        Prisma -> DB: UPDATE Subject...
+        Prisma -> DB: UPDATE Course...
         activate DB
-        DB --> Prisma: Updated Subject
+        DB --> Prisma: Updated Course
         deactivate DB
-        Prisma --> Action: Subject Object
+        Prisma --> Action: Course Object
         deactivate Prisma
         Action --> UI: Success Response
         UI --> Admin: Show Success & Refresh List
@@ -105,19 +105,19 @@ else Edit Subject
     deactivate Action
     deactivate UI
 
-else Delete Subject
-    Admin -> UI: Click "Delete" on Subject
+else Delete Course
+    Admin -> UI: Click "Delete" on Course
     activate UI
     UI --> Admin: Confirm Deletion?
     deactivate UI
     
     Admin -> UI: Confirm Yes
     activate UI
-    UI -> Action: deleteSubject(id)
+    UI -> Action: deleteCourse(id)
     activate Action
     Action -> Prisma: delete({ where: { id } })
     activate Prisma
-    Prisma -> DB: DELETE FROM Subject...
+    Prisma -> DB: DELETE FROM Course...
     activate DB
     DB --> Prisma: Success
     deactivate DB

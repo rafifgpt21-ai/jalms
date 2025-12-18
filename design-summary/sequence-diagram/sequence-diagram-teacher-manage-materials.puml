@@ -1,0 +1,67 @@
+@startuml
+title Manage Materials Sequence Diagram
+autonumber
+
+actor "Teacher" as Teacher
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+group Upload Material
+    Teacher -> UI: Upload Material
+    activate UI
+    UI -> Action: createMaterial(file, metadata)
+    activate Action
+    Action -> Action: Upload File
+    activate Action
+    deactivate Action
+    Action -> Prisma: create({ data })
+    activate Prisma
+    Prisma -> DB: INSERT INTO Material...
+    activate DB
+    DB --> Prisma: Success
+    deactivate DB
+    Prisma --> Action: Success
+    deactivate Prisma
+    Action --> UI: Success
+    UI --> Teacher: Material Uploaded
+    deactivate Action
+    deactivate UI
+end
+
+group Assign Material to Course
+    Teacher -> UI: Click "Assign" on Material
+    activate UI
+    Teacher -> UI: Search for Course
+    UI -> Action: searchTeacherCourses(query)
+    activate Action
+    Action -> Prisma: findMany(Course)
+    activate Prisma
+    Prisma -> DB: SELECT Courses...
+    activate DB
+    DB --> Prisma: Course List
+    deactivate DB
+    Prisma --> Action: Course List
+    deactivate Prisma
+    Action --> UI: Display Course Options
+    deactivate Action
+
+    Teacher -> UI: Select Course
+    UI -> Action: assignMaterialToCourse(materialId, courseId)
+    activate Action
+    Action -> Prisma: create(MaterialAssignment)
+    activate Prisma
+    Prisma -> DB: INSERT INTO MaterialAssignment...
+    activate DB
+    DB --> Prisma: Success
+    deactivate DB
+    Prisma --> Action: Success
+    deactivate Prisma
+    Action --> UI: Success
+    UI --> Teacher: Material Assigned
+    deactivate Action
+    deactivate UI
+end
+
+@enduml

@@ -1,0 +1,28 @@
+@startuml
+title View Personal Schedule Sequence Diagram
+autonumber
+
+actor "Student" as Student
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+Student -> UI: View Schedule
+activate UI
+UI -> Action: getStudentSchedule(studentId)
+activate Action
+Action -> Prisma: findMany()
+activate Prisma
+Prisma -> DB: SELECT * FROM Schedule JOIN Enrollment...
+activate DB
+DB --> Prisma: Schedule[]
+deactivate DB
+Prisma --> Action: Schedule[]
+deactivate Prisma
+Action --> UI: Schedule[]
+deactivate Action
+UI --> Student: Display Personal Schedule
+deactivate UI
+
+@enduml

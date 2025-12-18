@@ -1,0 +1,33 @@
+@startuml
+title Generate Report Cards Sequence Diagram
+autonumber
+
+actor "Homeroom Teacher" as Teacher
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+Teacher -> UI: Request Report Cards (Class)
+activate UI
+UI -> Action: generateReports(classId)
+activate Action
+Action -> Prisma: findMany({ include: { grades: true } })
+activate Prisma
+Prisma -> DB: SELECT Students & Grades...
+activate DB
+DB --> Prisma: Data
+deactivate DB
+Prisma --> Action: Data
+deactivate Prisma
+
+Action -> Action: Calculate GPA/Standings
+activate Action
+deactivate Action
+
+Action --> UI: Report Data / PDF
+deactivate Action
+UI --> Teacher: Display/Download Reports
+deactivate UI
+
+@enduml

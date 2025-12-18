@@ -1,43 +1,43 @@
 @startuml
-title Manage Semester Sequence Diagram
+title Manage Classes Sequence Diagram
 autonumber
 
 actor "Admin" as Admin
-participant "Web/UI" as UI
+participant "Web Client" as UI
 participant "Server Action" as Action
 participant "Prisma ORM" as Prisma
 database "Database" as DB
 
-' View Semesters Flow
-Admin -> UI: View Academic Year Details
+' View Classes Flow
+Admin -> UI: View Classes List
 activate UI
-UI -> Action: fetchSemesters(academicYearId)
+UI -> Action: getClasses()
 activate Action
-Action -> Prisma: findMany({ where: { academicYearId } })
+Action -> Prisma: findMany()
 activate Prisma
-Prisma -> DB: SELECT * FROM Semester...
+Prisma -> DB: SELECT * FROM Class...
 activate DB
-DB --> Prisma: Semester[]
+DB --> Prisma: Class[]
 deactivate DB
-Prisma --> Action: Semester[]
+Prisma --> Action: Class[]
 deactivate Prisma
-Action --> UI: Semester[]
+Action --> UI: Class[]
 deactivate Action
-UI --> Admin: Display List of Semesters
+UI --> Admin: Display List of Classes
 deactivate UI
 
 ' User Action Choices
-alt Create Semester
-    Admin -> UI: Click "Add Semester"
+alt Create Class
+    Admin -> UI: Click "Add Class"
     activate UI
     UI --> Admin: Display Create Form
     deactivate UI
 
     Admin -> UI: Fill Details & Submit
     activate UI
-    note right of Admin: Type, Start Date, End Date
+    note right of Admin: Name, Grade, Homeroom Teacher
 
-    UI -> Action: createSemester(data)
+    UI -> Action: createClass(data)
     activate Action
     Action -> Action: Validate Data
     activate Action
@@ -46,11 +46,11 @@ alt Create Semester
     opt Validation Pass
         Action -> Prisma: create({ data })
         activate Prisma
-        Prisma -> DB: INSERT INTO Semester...
+        Prisma -> DB: INSERT INTO Class...
         activate DB
-        DB --> Prisma: Created Semester
+        DB --> Prisma: Created Class
         deactivate DB
-        Prisma --> Action: Semester Object
+        Prisma --> Action: Class Object
         deactivate Prisma
         Action --> UI: Success Response
         UI --> Admin: Show Success & Refresh List
@@ -61,27 +61,27 @@ alt Create Semester
     deactivate Action
     deactivate UI
 
-else Edit Semester
-    Admin -> UI: Click "Edit" on Semester
+else Edit Class
+    Admin -> UI: Click "Edit" on Class
     activate UI
-    UI -> Action: getSemester(id)
+    UI -> Action: getClass(id)
     activate Action
     Action -> Prisma: findUnique({ where: { id } })
     activate Prisma
-    Prisma -> DB: SELECT * FROM Semester...
+    Prisma -> DB: SELECT * FROM Class...
     activate DB
-    DB --> Prisma: Semester Data
+    DB --> Prisma: Class Data
     deactivate DB
-    Prisma --> Action: Semester Data
+    Prisma --> Action: Class Data
     deactivate Prisma
-    Action --> UI: Semester Data
+    Action --> UI: Class Data
     deactivate Action
     UI --> Admin: Display Edit Form with Data
     deactivate UI
 
     Admin -> UI: Update Details & Submit
     activate UI
-    UI -> Action: updateSemester(id, data)
+    UI -> Action: updateClass(id, data)
     activate Action
     Action -> Action: Validate Data
     activate Action
@@ -90,11 +90,11 @@ else Edit Semester
     opt Validation Pass
         Action -> Prisma: update({ where: { id }, data })
         activate Prisma
-        Prisma -> DB: UPDATE Semester...
+        Prisma -> DB: UPDATE Class...
         activate DB
-        DB --> Prisma: Updated Semester
+        DB --> Prisma: Updated Class
         deactivate DB
-        Prisma --> Action: Semester Object
+        Prisma --> Action: Class Object
         deactivate Prisma
         Action --> UI: Success Response
         UI --> Admin: Show Success & Refresh List
@@ -105,19 +105,19 @@ else Edit Semester
     deactivate Action
     deactivate UI
 
-else Delete Semester
-    Admin -> UI: Click "Delete" on Semester
+else Delete Class
+    Admin -> UI: Click "Delete" on Class
     activate UI
     UI --> Admin: Confirm Deletion?
     deactivate UI
     
     Admin -> UI: Confirm Yes
     activate UI
-    UI -> Action: deleteSemester(id)
+    UI -> Action: deleteClass(id)
     activate Action
     Action -> Prisma: delete({ where: { id } })
     activate Prisma
-    Prisma -> DB: DELETE FROM Semester...
+    Prisma -> DB: DELETE FROM Class...
     activate DB
     DB --> Prisma: Success
     deactivate DB

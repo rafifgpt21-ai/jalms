@@ -1,0 +1,28 @@
+@startuml
+title Manage Assignments Sequence Diagram
+autonumber
+
+actor "Teacher" as Teacher
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+Teacher -> UI: Create Assignment
+activate UI
+UI -> Action: createAssignment(data)
+activate Action
+Action -> Prisma: create({ data })
+activate Prisma
+Prisma -> DB: INSERT INTO Assignment...
+activate DB
+DB --> Prisma: Assignment
+deactivate DB
+Prisma --> Action: Assignment
+deactivate Prisma
+Action --> UI: Success
+UI --> Teacher: Assignment Created
+deactivate Action
+deactivate UI
+
+@enduml

@@ -1,0 +1,52 @@
+@startuml
+title Update Email Sequence Diagram
+autonumber
+
+actor "User" as User
+participant "Web Client" as UI
+participant "Server Action" as Action
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+User -> UI: Request Email Change
+activate UI
+UI --> User: Display Email Form
+deactivate UI
+
+User -> UI: Submit New Email
+activate UI
+UI -> Action: updateEmail(newEmail)
+activate Action
+Action -> Prisma: findUnique({ where: { email: newEmail } })
+activate Prisma
+Prisma -> DB: SELECT id FROM User WHERE email = ...
+activate DB
+
+alt Email Available
+    DB --> Prisma: null
+    deactivate DB
+    Prisma --> Action: null
+    deactivate Prisma
+    
+    Action -> Prisma: update({ where: { id }, data: { email: newEmail } })
+    activate Prisma
+    Prisma -> DB: UPDATE User...
+    activate DB
+    DB --> Prisma: Success
+    deactivate DB
+    Prisma --> Action: Success
+    deactivate Prisma
+    Action --> UI: Success Response
+    UI --> User: Email Updated
+else Email Taken
+    DB --> Prisma: User Object
+    deactivate DB
+    Prisma --> Action: User Object
+    deactivate Prisma
+    Action --> UI: Error Response (Email Taken)
+    UI --> User: Show Error Message
+end
+deactivate Action
+deactivate UI
+
+@enduml
