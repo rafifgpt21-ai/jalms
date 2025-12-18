@@ -1,0 +1,70 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "User" as user
+actor "Admin" as admin
+actor "Teacher" as teacher
+actor "Homeroom Teacher" as hrTeacher
+actor "Student" as student
+
+' Actor Inheritance
+user <|-- admin
+user <|-- teacher
+user <|-- student
+teacher <|-- hrTeacher
+
+package "General User Operations" {
+    usecase "Change Password" as UC_PW
+    usecase "Update Profile & Avatar" as UC_Profile
+    usecase "Update Email" as UC_Email
+}
+
+package "Admin Operations" {
+    usecase "Manage Users" as UC_M_User
+    usecase "Manage Courses" as UC_M_Course
+    usecase "Manage Classes" as UC_M_Class
+    usecase "Manage Subjects" as UC_M_Subj
+    usecase "Manage Semesters" as UC_M_Sem
+    usecase "Manage Schedule" as UC_M_Sched
+}
+
+package "Teacher Operations" {
+    usecase "Manage Materials" as UC_Mat
+    usecase "Manage Assignment" as UC_Assign
+    usecase "Record Attendance" as UC_Att
+    usecase "Generate Report Cards" as UC_Report
+}
+
+package "Student Operations" {
+    usecase "Submit Assignments" as UC_Submit
+    usecase "Access Learning Materials" as UC_ViewMat
+    usecase "Check Grades" as UC_Grades
+    usecase "View Personal Schedule" as UC_ViewSched
+}
+
+' Role-Specific Connections
+user --> UC_PW
+user --> UC_Profile
+user --> UC_Email
+
+admin --> UC_M_User
+admin --> UC_M_Course
+admin --> UC_M_Class
+admin --> UC_M_Subj
+admin --> UC_M_Sem
+admin --> UC_M_Sched
+
+teacher --> UC_Mat
+teacher --> UC_Assign
+teacher --> UC_Att
+
+hrTeacher --> UC_Report
+
+student --> UC_Submit
+student --> UC_ViewMat
+student --> UC_Grades
+student --> UC_ViewSched
+
+@enduml

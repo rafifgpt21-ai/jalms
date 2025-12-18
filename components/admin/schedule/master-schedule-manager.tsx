@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback, memo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,10 +22,11 @@ import {
     CommandList,
 } from "@/components/ui/command"
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
     AlertDialog,
@@ -47,13 +48,6 @@ import { cn } from "@/lib/utils"
 // Constants
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-// Map UI day index (0-6) to DB day (1-7, where 7 is Sunday usually, but let's check legacy)
-// Prisams Day: 0=Sunday, 1=Monday... 6=Saturday based on schema comment?
-// Schema: "0=Sunday, 1=Monday, ... 6=Saturday"
-// So UI "Monday" (index 0) should map to DB 1?
-// Let's verify schema comment: "214:   dayOfWeek Int // 0=Sunday, 1=Monday, ... 6=Saturday"
-// So Monday is 1. Saturday is 6. Sunday is 0.
-
 const UI_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 const DB_DAY_MAPPING: Record<string, number> = {
     "Monday": 1,
@@ -94,6 +88,168 @@ interface MasterScheduleManagerProps {
     teachers: Teacher[]
 }
 
+interface EditingSlot {
+    teacherId: string
+    teacherName: string
+    period: number
+    dayStr: string
+    currentCourseId: string | null
+    availableCourses: Course[]
+}
+
+// ----------------------------------------------------------------------
+// Memoized Components
+// ----------------------------------------------------------------------
+
+interface ScheduleCellProps {
+    assignedCourse: Course | null
+    onClick: () => void
+    disabled: boolean
+    compact?: boolean
+}
+
+const ScheduleCell = memo(function ScheduleCell({ assignedCourse, onClick, disabled, compact }: ScheduleCellProps) {
+    return (
+        <div
+            onClick={disabled ? undefined : onClick}
+            className={cn(
+                "rounded-md border flex flex-col items-center justify-center text-center cursor-pointer", // Removed dashed border for solid cleaner look
+                compact ? "h-[40px] p-0.5 text-[9px]" : "h-[50px] p-1",
+                assignedCourse
+                    ? "bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-200 dark:hover:bg-indigo-900/60" // Solid colors
+                    : "bg-background border-border hover:bg-muted", // Solid background
+                disabled && "opacity-50 cursor-wait"
+            )}
+        >
+            {assignedCourse ? (
+                <>
+                    <span className={cn("font-medium text-slate-900 dark:text-slate-100 leading-tight line-clamp-1", compact ? "text-[9px]" : "text-xs line-clamp-2")}>
+                        {assignedCourse.name}
+                    </span>
+                    {!compact && (
+                        <span className="text-[10px] text-muted-foreground mt-0.5 max-w-full truncate">
+                            {assignedCourse.class?.name}
+                        </span>
+                    )}
+                </>
+            ) : (
+                <div className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity">
+                    <Plus className={cn("text-muted-foreground", compact ? "h-3 w-3" : "h-4 w-4")} />
+                </div>
+            )}
+        </div>
+    )
+}, (prev, next) => {
+    return (
+        prev.assignedCourse?.id === next.assignedCourse?.id &&
+        prev.disabled === next.disabled &&
+        prev.compact === next.compact
+    )
+})
+
+interface TeacherScheduleRowProps {
+    teacher: Teacher
+    viewMode: "day" | "week"
+    selectedDay: string
+    isUpdating: boolean
+    assignmentMap: Record<string, Record<number, Record<number, Course>>>
+    onCellClick: (teacher: Teacher, period: number, dayStr: string, assignedCourse: Course | null) => void
+}
+
+const TeacherScheduleRow = memo(function TeacherScheduleRow({
+    teacher,
+    viewMode,
+    selectedDay,
+    isUpdating,
+    assignmentMap,
+    onCellClick
+}: TeacherScheduleRowProps) {
+    // Local helper to avoid passing the huge map down too deep if we extracted further
+    // But here we are just in the row.
+    const getAssignment = (period: number, dayStr: string) => {
+        const dbDay = DB_DAY_MAPPING[dayStr]
+        return assignmentMap[teacher.id]?.[dbDay]?.[period] || null
+    }
+
+    return (
+        <TableRow className="hover:bg-muted/50 border-b border-border transition-colors">
+            {/* Teacher Sticky Column */}
+            <TableCell className="font-medium sticky left-0 bg-background z-10 w-[200px] min-w-[200px] align-top py-2 border-b border-r border-border transition-colors group-hover:bg-muted/50">
+                <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={teacher.image || ""} />
+                        <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0">
+                        <span className="truncate text-sm font-medium">{teacher.name}</span>
+                        <span className="truncate text-xs text-muted-foreground">{teacher.nickname || teacher.email.split('@')[0]}</span>
+                    </div>
+                </div>
+            </TableCell>
+
+            {/* Period Cells */}
+            {viewMode === "day" ? (
+                PERIODS.map(period => {
+                    const assignedCourse = getAssignment(period, selectedDay)
+                    const handleClick = () => onCellClick(teacher, period, selectedDay, assignedCourse)
+                    return (
+                        <TableCell key={period} className="p-1 border-l border-border w-[140px]">
+                            <ScheduleCell
+                                assignedCourse={assignedCourse}
+                                onClick={handleClick}
+                                disabled={isUpdating}
+                            />
+                        </TableCell>
+                    )
+                })
+            ) : (
+                ALL_DAYS.map(day => (
+                    <TableCell key={day} className="p-1 border-l border-border w-[160px] align-top">
+                        <div className="grid grid-cols-1 gap-1">
+                            {PERIODS.map(period => {
+                                const assignedCourse = getAssignment(period, day)
+                                const handleClick = () => onCellClick(teacher, period, day, assignedCourse)
+                                return (
+                                    <div key={period} className="flex items-center gap-1">
+                                        <div className="w-4 text-[10px] text-muted-foreground font-mono shrink-0 text-right">
+                                            {period === 0 ? "M" : period === 7 ? "N" : period}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <ScheduleCell
+                                                assignedCourse={assignedCourse}
+                                                onClick={handleClick}
+                                                disabled={isUpdating}
+                                                compact={true}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </TableCell>
+                ))
+            )}
+        </TableRow>
+    )
+}, (prev, next) => {
+    // Custom comparison for performance
+    if (prev.viewMode !== next.viewMode) return false
+    if (prev.viewMode === 'day' && prev.selectedDay !== next.selectedDay) return false
+    if (prev.isUpdating !== next.isUpdating) return false
+    if (prev.teacher !== next.teacher) return false
+
+    if (prev.assignmentMap !== next.assignmentMap) {
+        return false
+    }
+
+    return true
+})
+
+
+// ----------------------------------------------------------------------
+// Main Component
+// ----------------------------------------------------------------------
+
 export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) {
     const router = useRouter()
     const [selectedDay, setSelectedDay] = useState("Monday")
@@ -102,6 +258,30 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
     const [viewMode, setViewMode] = useState<"day" | "week">("day")
     const [conflictDetails, setConflictDetails] = useState<string[] | null>(null)
     const [showConflictDialog, setShowConflictDialog] = useState(false)
+
+    // Editor State
+    const [editingSlot, setEditingSlot] = useState<EditingSlot | null>(null)
+
+    // Memoize assignment map for O(1) lookup
+    // Structure: map[teacherId][dayOfWeek][period] = Course
+    const assignmentMap = useMemo(() => {
+        const map: Record<string, Record<number, Record<number, Course>>> = {}
+
+        for (const teacher of teachers) {
+            map[teacher.id] = {}
+            for (const course of teacher.taughtCourses) {
+                for (const schedule of course.schedules) {
+                    if (schedule.deletedAt) continue
+
+                    if (!map[teacher.id][schedule.dayOfWeek]) {
+                        map[teacher.id][schedule.dayOfWeek] = {}
+                    }
+                    map[teacher.id][schedule.dayOfWeek][schedule.period] = course
+                }
+            }
+        }
+        return map
+    }, [teachers])
 
     // Filter teachers based on search
     const filteredTeachers = useMemo(() => {
@@ -114,24 +294,27 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
         )
     }, [teachers, searchQuery])
 
-    // Helper to find assignment
-    const getAssignment = (teacher: Teacher, period: number, dayStr: string) => {
-        const dbDay = DB_DAY_MAPPING[dayStr]
-        // Find course that has this schedule
-        for (const course of teacher.taughtCourses) {
-            const schedule = course.schedules.find(s =>
-                s.dayOfWeek === dbDay &&
-                s.period === period &&
-                !s.deletedAt
-            )
-            if (schedule) return course
-        }
-        return null
-    }
+    const handleCellClick = useCallback((teacher: Teacher, period: number, dayStr: string, assignedCourse: Course | null) => {
+        if (isUpdating) return
+        setEditingSlot({
+            teacherId: teacher.id,
+            teacherName: teacher.name,
+            period,
+            dayStr,
+            currentCourseId: assignedCourse?.id || null,
+            availableCourses: teacher.taughtCourses
+        })
+    }, [isUpdating])
 
-    const handleUpdateSchedule = async (teacherId: string, period: number, dayStr: string, courseId: string | null) => {
+    const handleUpdateSchedule = async (courseId: string | null) => {
+        if (!editingSlot) return
+
         try {
             setIsUpdating(true)
+            // Close dialog immediately for better UX assignment feel
+            const { teacherId, period, dayStr } = editingSlot
+            setEditingSlot(null) // Optimistically close
+
             const dbDay = DB_DAY_MAPPING[dayStr]
             const result = await updateSchedule(teacherId, dbDay, period, courseId)
 
@@ -176,10 +359,56 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                 </AlertDialogContent>
             </AlertDialog>
 
+            {/* Assignment Editor Dialog */}
+            <Dialog open={!!editingSlot} onOpenChange={(open) => !open && setEditingSlot(null)}>
+                <DialogContent className="p-0 gap-0 overflow-hidden max-w-sm">
+                    <DialogHeader className="px-4 py-2 bg-muted/50 border-b">
+                        <DialogTitle className="text-base">
+                            Edit Schedule
+                        </DialogTitle>
+                        <p className="text-xs text-muted-foreground">
+                            {editingSlot?.dayStr} • Period {editingSlot?.period !== undefined && getPeriodLabel(editingSlot.period)} • {editingSlot?.teacherName}
+                        </p>
+                    </DialogHeader>
+                    <Command className="border-none shadow-none">
+                        <CommandInput placeholder="Select course..." />
+                        <CommandList>
+                            <CommandEmpty>No courses found.</CommandEmpty>
+                            <CommandGroup heading="Actions">
+                                <CommandItem
+                                    onSelect={() => handleUpdateSchedule(null)}
+                                    className="text-red-600 cursor-pointer"
+                                >
+                                    <X className="mr-2 h-4 w-4" />
+                                    Clear Slot
+                                </CommandItem>
+                            </CommandGroup>
+                            <CommandGroup heading="Available Courses">
+                                {editingSlot?.availableCourses.map(course => (
+                                    <CommandItem
+                                        key={course.id}
+                                        onSelect={() => handleUpdateSchedule(course.id)}
+                                        className="cursor-pointer"
+                                    >
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium">{course.name}</span>
+                                            <span className="text-xs text-muted-foreground">{course.class?.name || "No Class"}</span>
+                                        </div>
+                                        {editingSlot.currentCourseId === course.id && (
+                                            <span className="ml-auto text-xs text-primary font-medium">Current</span>
+                                        )}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </DialogContent>
+            </Dialog>
+
             {/* Header Controls */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
                 <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto">
-                    <div className="flex items-center border rounded-lg p-1 bg-muted/50 whitespace-nowrap">
+                    <div className="flex items-center border rounded-lg p-1 bg-muted whitespace-nowrap">
                         <Button
                             variant={viewMode === "day" ? "secondary" : "ghost"}
                             size="sm"
@@ -200,7 +429,7 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
 
                     {viewMode === "day" && (
                         <Tabs value={selectedDay} onValueChange={setSelectedDay} className="w-full md:w-auto">
-                            <TabsList className="grid grid-cols-4 md:grid-cols-7 h-auto p-1 bg-white/40 dark:bg-slate-900/40 border border-white/20 dark:border-white/10">
+                            <TabsList className="grid grid-cols-4 md:grid-cols-7 h-auto p-1">
                                 {UI_DAYS.map(day => (
                                     <TabsTrigger key={day} value={day} className="text-xs md:text-sm px-2 py-1.5">
                                         {day.slice(0, 3)}
@@ -212,10 +441,10 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                 </div>
 
                 <div className="relative w-full md:w-64 min-w-[200px]">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search teachers..."
-                        className="pl-9 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-white/10 focus:bg-white/80 dark:focus:bg-slate-900/80 transition-all rounded-xl"
+                        className="pl-9 bg-background border-border rounded-xl"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -223,24 +452,24 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
             </div>
 
             {/* Main Grid */}
-            <div className="bg-white/40 dark:bg-slate-900/40 border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-background border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
                 <div className="overflow-x-auto max-w-[100vw] md:max-w-[calc(100vw-3rem)]">
                     <Table className="relative min-w-full w-auto">
-                        <TableHeader className="sticky top-0 bg-white/20 dark:bg-slate-900/20 z-20 shadow-sm border-b border-white/10">
-                            <TableRow className="hover:bg-transparent border-white/10">
-                                <TableHead className="w-[200px] min-w-[200px] max-w-[200px] bg-white/40 dark:bg-slate-900/40 z-30 sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-slate-700 dark:text-slate-200 font-medium border-b border-r border-white/20 dark:border-white/10">
+                        <TableHeader className="sticky top-0 bg-background z-20 shadow-sm border-b border-border">
+                            <TableRow className="hover:bg-transparent border-border">
+                                <TableHead className="w-[200px] min-w-[200px] max-w-[200px] bg-background z-30 sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-foreground font-medium border-b border-r border-border">
                                     Teacher
                                 </TableHead>
 
                                 {viewMode === "day" ? (
                                     PERIODS.map(period => (
-                                        <TableHead key={period} className="text-center min-w-[140px] w-[140px] px-2 border-l border-white/10 text-slate-700 dark:text-slate-200 font-medium">
+                                        <TableHead key={period} className="text-center min-w-[140px] w-[140px] px-2 border-l border-border text-foreground font-medium">
                                             {getPeriodLabel(period)}
                                         </TableHead>
                                     ))
                                 ) : (
                                     ALL_DAYS.map(day => (
-                                        <TableHead key={day} className="text-center min-w-[160px] w-[160px] px-1 border-l border-white/10 text-slate-700 dark:text-slate-200 font-medium">
+                                        <TableHead key={day} className="text-center min-w-[160px] w-[160px] px-1 border-l border-border text-foreground font-medium">
                                             {day}
                                         </TableHead>
                                     ))
@@ -256,68 +485,15 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                                 </TableRow>
                             ) : (
                                 filteredTeachers.map(teacher => (
-                                    <TableRow key={teacher.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
-                                        {/* Teacher Sticky Column */}
-                                        <TableCell className="font-medium sticky left-0 bg-white/40 dark:bg-slate-900/40 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] w-[200px] min-w-[200px] align-top py-2 border-b border-r border-white/20 dark:border-white/10 transition-colors group-hover:bg-white/60 dark:group-hover:bg-slate-800/60">
-                                            <div className="flex items-center gap-3">
-                                                <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={teacher.image || ""} />
-                                                    <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="truncate text-sm font-medium">{teacher.name}</span>
-                                                    <span className="truncate text-xs text-muted-foreground">{teacher.nickname || teacher.email.split('@')[0]}</span>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-
-                                        {/* Period Cells */}
-                                        {viewMode === "day" ? (
-                                            PERIODS.map(period => {
-                                                const assignedCourse = getAssignment(teacher, period, selectedDay)
-                                                return (
-                                                    <TableCell key={period} className="p-1 border-l border-white/10 w-[140px]">
-                                                        <ScheduleCell
-                                                            teacher={teacher}
-                                                            period={period}
-                                                            dayStr={selectedDay}
-                                                            assignedCourse={assignedCourse}
-                                                            onUpdate={handleUpdateSchedule}
-                                                            disabled={isUpdating}
-                                                        />
-                                                    </TableCell>
-                                                )
-                                            })
-                                        ) : (
-                                            ALL_DAYS.map(day => (
-                                                <TableCell key={day} className="p-1 border-l border-white/10 w-[160px] align-top bg-white/5">
-                                                    <div className="grid grid-cols-1 gap-1">
-                                                        {PERIODS.map(period => {
-                                                            const assignedCourse = getAssignment(teacher, period, day)
-                                                            return (
-                                                                <div key={period} className="flex items-center gap-1">
-                                                                    <div className="w-4 text-[10px] text-muted-foreground font-mono shrink-0 text-right">
-                                                                        {period === 0 ? "M" : period === 7 ? "N" : period}
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <ScheduleCell
-                                                                            teacher={teacher}
-                                                                            period={period}
-                                                                            dayStr={day}
-                                                                            assignedCourse={assignedCourse}
-                                                                            onUpdate={handleUpdateSchedule}
-                                                                            disabled={isUpdating}
-                                                                            compact={true}
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                </TableCell>
-                                            ))
-                                        )}
-                                    </TableRow>
+                                    <TeacherScheduleRow
+                                        key={teacher.id}
+                                        teacher={teacher}
+                                        viewMode={viewMode}
+                                        selectedDay={selectedDay}
+                                        isUpdating={isUpdating}
+                                        assignmentMap={assignmentMap}
+                                        onCellClick={handleCellClick}
+                                    />
                                 ))
                             )}
                         </TableBody>
@@ -329,89 +505,5 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                 Showing {filteredTeachers.length} teachers. Schedules are saved automatically.
             </div>
         </div>
-    )
-}
-
-interface ScheduleCellProps {
-    teacher: Teacher
-    period: number
-    dayStr: string
-    assignedCourse: Course | null
-    onUpdate: (teacherId: string, period: number, dayStr: string, courseId: string | null) => void
-    disabled: boolean
-    compact?: boolean
-}
-
-function ScheduleCell({ teacher, period, dayStr, assignedCourse, onUpdate, disabled, compact }: ScheduleCellProps) {
-    const [open, setOpen] = useState(false)
-
-    return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <div
-                    className={cn(
-                        "rounded-xl border border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200",
-                        compact ? "h-[40px] p-0.5 text-[9px]" : "h-[50px] p-1",
-                        assignedCourse
-                            ? "bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-200/50 dark:border-indigo-800/50 border-solid hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30"
-                            : "border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/5 hover:border-white/30",
-                        disabled && "opacity-50 cursor-wait"
-                    )}
-                >
-                    {assignedCourse ? (
-                        <>
-                            <span className={cn("font-medium text-slate-700 dark:text-slate-200 leading-tight line-clamp-1", compact ? "text-[9px]" : "text-xs line-clamp-2")}>
-                                {assignedCourse.name}
-                            </span>
-                            {!compact && (
-                                <span className="text-[10px] text-muted-foreground mt-0.5 max-w-full truncate">
-                                    {assignedCourse.class?.name}
-                                </span>
-                            )}
-                        </>
-                    ) : (
-                        <div className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity">
-                            <Plus className={cn("text-muted-foreground", compact ? "h-3 w-3" : "h-4 w-4")} />
-                        </div>
-                    )}
-                </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0" align="start">
-                <Command>
-                    <CommandInput placeholder="Select course..." />
-                    <CommandList>
-                        <CommandEmpty>No courses found.</CommandEmpty>
-                        <CommandGroup heading="Assignments">
-                            <CommandItem
-                                onSelect={() => {
-                                    onUpdate(teacher.id, period, dayStr, null)
-                                    setOpen(false)
-                                }}
-                                className="text-red-600 cursor-pointer"
-                            >
-                                <X className="mr-2 h-4 w-4" />
-                                Clear Slot
-                            </CommandItem>
-
-                            {teacher.taughtCourses.map(course => (
-                                <CommandItem
-                                    key={course.id}
-                                    onSelect={() => {
-                                        onUpdate(teacher.id, period, dayStr, course.id)
-                                        setOpen(false)
-                                    }}
-                                    className="cursor-pointer"
-                                >
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-medium">{course.name}</span>
-                                        <span className="text-xs text-muted-foreground">{course.class?.name || "No Class"}</span>
-                                    </div>
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-        </Popover>
     )
 }

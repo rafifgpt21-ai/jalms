@@ -1,0 +1,261 @@
+@startuml
+skinparam linetype ortho
+skinparam nodesep 20
+skinparam ranksep 20
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor #FFE4B5
+    BorderColor #B8860B
+    ArrowColor #B8860B
+}
+
+enum Role {
+  ADMIN
+  SUBJECT_TEACHER
+  HOMEROOM_TEACHER
+  STUDENT
+  PARENT
+}
+
+enum SemesterType {
+  ODD
+  EVEN
+}
+
+enum AssignmentType {
+  SUBMISSION
+  NON_SUBMISSION
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+  SKIPPED
+  PENDING
+}
+
+class User {
+  + id: string
+  + name: string
+  + nickname: string
+  + email: string
+  + roles: Role[]
+  + officialId: string
+  + isActive: boolean
+  + lastLoginAt: datetime
+  + changePassword(current: String, new: String): void
+  + updateAvatar(config: Map, url: String): void
+  + updateEmail(email: String): void
+}
+
+class Admin {
+  + getUsers(filter: UserFilter): User[]
+  + createUser(data: Map): User
+  + updateUser(id: String, data: Map): User
+  + deleteUser(id: String): void
+  + toggleUserStatus(id: String, isActive: Boolean): void
+}
+
+class Student {
+  + getStudentCourses(): Course[]
+  + getStudentGrades(termId: String): Grade[]
+  + getStudentDashboardStats(): Map
+  + getStudentSemesters(): Term[]
+}
+
+class Teacher {
+  + getTeachersWithCourses(search: String): User[]
+  + getTeacherActiveCourses(teacherId: String): Course[]
+  + getTeacherDashboardStats(): Map
+}
+
+class HomeroomTeacher {
+  + getManagedClass(): Class
+  + getClassGrades(classId: String): Map
+  + generateReportCard(studentId: String): File
+  + printReportCard(studentId: String): void
+}
+
+class AcademicYear {
+  + id: string
+  + name: string
+  + createAcademicYear(data: Map): void
+  + deleteAcademicYear(id: String): void
+  + setActiveAcademicYear(id: String): void
+  + getSemesters(): Term[]
+  + createSemester(data: Map): Term
+}
+
+class Term {
+  + id: string
+  + type: SemesterType
+  + startDate: datetime
+  + endDate: datetime
+  + isActive: boolean
+  + updateSemester(id: String, data: Map): void
+  + toggleSemesterStatus(id: String): void
+  + deleteSemester(id: String): void
+}
+
+class Class {
+  + id: string
+  + name: string
+  + getClasses(): Class[]
+  + createClass(data: Map): Class
+  + updateClass(id: String, data: Map): void
+  + deleteClass(id: String): void
+  + getHomeroomTeachers(): User[]
+  + getAvailableClassesForDropdown(search: String): Class[]
+}
+
+class Subject {
+  + id: string
+  + name: string
+  + code: string
+  + description: string
+  + getSubjects(): Subject[]
+  + createSubject(data: Map): Subject
+  + updateSubject(id: String, data: Map): void
+  + deleteSubject(id: String): void
+}
+
+class Course {
+  + id: string
+  + name: string
+  + reportName: string
+  + attendancePoolScore: int
+  + getCourses(options: Map): Course[]
+  + getCourse(id: String): Course
+  + createCourse(data: Map): void
+  + updateCourse(id: String, data: Map): void
+  + deleteCourse(id: String): void
+}
+
+class Enrollment {
+  + id: string
+  + getEnrolledStudents(classId: String): User[]
+  + getAvailableStudents(classId: String): User[]
+  + enrollStudent(classId: String, studentId: String): void
+  + removeStudent(classId: String, studentId: String): void
+  + enrollStudentToCourse(courseId: String, studentId: String): void
+  + removeStudentFromCourse(courseId: String, studentId: String): void
+  + enrollClassToCourse(courseId: String, classId: String): void
+  + enrollClassToClass(targetId: String, sourceId: String): void
+}
+
+class Schedule {
+  + id: string
+  + dayOfWeek: int
+  + period: int
+  + getTeacherSchedule(teacherId: String): Schedule[]
+  + updateSchedule(teacherId: String, day: Int, period: Int, courseId: String): void
+  + saveTeacherSchedule(teacherId: String, schedules: List): void
+  + getConflictingCourses(teacherId: String, day: Int, period: Int): Course[]
+  + getMasterSchedule(): Map
+  + getStudentSchedule(studentId: String): Schedule[]
+}
+
+class Material {
+  + id: string
+  + title: string
+  + description: string
+  + fileUrl: string
+  + uploadedAt: datetime
+  + createMaterial(data: Map): void
+  + updateMaterial(id: String, data: Map): void
+  + deleteMaterial(id: String): void
+  + deleteMaterialFile(id: String, url: String): void
+  + getTeacherMaterials(): Material[]
+  + assignMaterialToCourse(materialId: String, courseId: String): void
+  + removeMaterialFromCourse(materialId: String, courseId: String): void
+}
+
+class MaterialAssignment {
+  + id: string
+  + assignedAt: datetime
+}
+
+class Assignment {
+  + id: string
+  + title: string
+  + description: string
+  + dueDate: datetime
+  + type: AssignmentType
+  + maxPoints: int
+  + isExtraCredit: boolean
+  + latePenalty: int
+  + showGradeAfterSubmission: boolean
+  + createAssignment(data: Map): void
+  + updateAssignment(data: Map): void
+  + deleteAssignment(id: String): void
+  + getCourseAssignments(courseId: String): Assignment[]
+  + getAssignmentDetails(id: String): Assignment
+  + getCourseGradebook(courseId: String): Map
+  + getCourseTaskSummary(courseId: String): Map
+}
+
+class Submission {
+  + id: string
+  + grade: float
+  + feedback: string
+  + submissionUrl: string
+  + attachmentUrl: string
+  + link: string
+  + submittedAt: datetime
+  + submitAssignment(assignmentId: String, content: String): void
+  + deleteSubmissionFile(assignmentId: String, url: String): void
+  + updateSubmissionScore(assignmentId: String, studentId: String, score: Float): void
+}
+
+class Attendance {
+  + id: string
+  + date: datetime
+  + status: AttendanceStatus
+  + topic: string
+  + excuseReason: string
+  + period: int
+  + getDailySchedule(teacherId: String, date: Date): Map
+  + getCourseAttendance(courseId: String, date: Date, period: Int): Map
+  + saveAttendance(courseId: String, data: Map): void
+  + saveAttendanceTopic(courseId: String, topic: String): void
+  + skipSession(courseId: String, date: Date, period: Int): void
+  + unskipSession(courseId: String, date: Date, period: Int): void
+  + updateAttendancePoolScore(courseId: String, score: Int): void
+}
+
+' Inheritance
+User <|-- Admin
+User <|-- Student
+User <|-- Teacher
+Teacher <|-- HomeroomTeacher
+
+' Relationships
+
+AcademicYear "1" *-- "*" Term
+Term "1" *-- "*" Course
+Term "1" *-- "*" Class
+
+Class "1" -- "*" Enrollment
+Class "*" -- "0..1" HomeroomTeacher : homeroom >
+
+Subject "1" -- "*" Course
+
+Course "*" -- "1" Teacher
+Course "1" -- "*" Enrollment
+Course "1" -- "*" Schedule
+Course "1" -- "*" Assignment
+Course "1" -- "*" Attendance
+
+Enrollment "*" -- "1" Student
+
+Teacher "1" -- "*" Material
+Material "1" -- "*" MaterialAssignment
+Course "1" -- "*" MaterialAssignment
+
+Assignment "1" -- "*" Submission
+Student "1" -- "*" Submission
+
+Student "1" -- "*" Attendance
+
+@enduml
