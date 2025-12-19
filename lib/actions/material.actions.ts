@@ -3,11 +3,11 @@
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
 import { revalidatePath } from "next/cache"
-import { UTApi } from "uploadthing/server"
+
 import { unlink } from "fs/promises"
 import path from "path"
 
-const utapi = new UTApi()
+
 
 export async function deleteMaterialFile(materialId: string, fileUrl: string) {
     try {
@@ -33,13 +33,8 @@ export async function deleteMaterialFile(materialId: string, fileUrl: string) {
             } catch (error) {
                 console.error("Error deleting local file:", error)
             }
-        } else {
-            // UploadThing Deletion
-            const fileKey = fileUrl.split("/").pop()
-            if (fileKey) {
-                await utapi.deleteFiles(fileKey)
-            }
         }
+
 
         await prisma.material.update({
             where: { id: materialId },
@@ -245,11 +240,6 @@ export async function deleteMaterial(materialId: string) {
                     await unlink(fullPath)
                 } catch (error) {
                     console.error("Error deleting local file:", error)
-                }
-            } else {
-                const fileKey = material.fileUrl.split("/").pop()
-                if (fileKey) {
-                    await utapi.deleteFiles(fileKey)
                 }
             }
         }

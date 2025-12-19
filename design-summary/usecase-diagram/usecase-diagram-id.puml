@@ -2,6 +2,7 @@
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false
+skinparam linetype polyline
 
 actor "User" as user
 actor "Admin" as admin
@@ -45,26 +46,26 @@ package "Operasi Student" {
 }
 
 ' Role-Specific Connections
-user --> UC_PW
-user --> UC_Profile
-user --> UC_Email
+user -- UC_PW
+user -- UC_Profile
+user -- UC_Email
 
-admin --> UC_M_User
-admin --> UC_M_Course
-admin --> UC_M_Class
-admin --> UC_M_Subj
-admin --> UC_M_Sem
-admin --> UC_M_Sched
+admin -- UC_M_User
+admin -- UC_M_Course
+admin -- UC_M_Class
+admin -- UC_M_Subj
+admin -- UC_M_Sem
+admin -- UC_M_Sched
 
-teacher --> UC_Mat
-teacher --> UC_Assign
-teacher --> UC_Att
+teacher -- UC_Mat
+teacher -- UC_Assign
+teacher -- UC_Att
 
-hrTeacher --> UC_Report
+hrTeacher -- UC_Report
 
-student --> UC_Submit
-student --> UC_ViewMat
-student --> UC_Grades
-student --> UC_ViewSched
+student -- UC_Submit
+student -- UC_ViewMat
+student -- UC_Grades
+student -- UC_ViewSched
 
 @enduml

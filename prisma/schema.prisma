@@ -13,6 +13,7 @@ enum Role {
   HOMEROOM_TEACHER
   STUDENT
   PARENT
+
 }
 
 enum AttendanceStatus {
@@ -39,11 +40,7 @@ model User {
   officialId     String? // NIS or NIP
   creationSource String  @default("manual") // "manual" or "excel_import"
 
-  // Parent-Child Relation
-  parents     User[]   @relation("ParentChildren", fields: [parentIds], references: [id])
-  parentIds   String[] @db.ObjectId
-  children    User[]   @relation("ParentChildren", fields: [childrenIds], references: [id])
-  childrenIds String[] @db.ObjectId
+
 
   // Relations
   taughtCourses     Course[]     @relation("SubjectTeacher")

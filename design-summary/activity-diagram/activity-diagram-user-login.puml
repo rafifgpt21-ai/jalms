@@ -1,0 +1,19 @@
+@startuml
+title Login Activity Diagram
+
+|User|
+start
+:Enter Email and Password;
+:Click Login Button;
+
+|System|
+:Validate Credentials;
+if (Credentials Valid?) then (Yes)
+    :Generate Session/Token;
+    :Redirect to Dashboard;
+else (No)
+    :Show Error Message;
+endif
+
+stop
+@enduml

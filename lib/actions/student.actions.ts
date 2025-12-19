@@ -3,7 +3,7 @@
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
 import { revalidatePath } from "next/cache"
-import { UTApi } from "uploadthing/server"
+
 import { unlink } from "fs/promises"
 import path from "path"
 
@@ -463,10 +463,7 @@ export async function submitAssignment(assignmentId: string, content: string, at
     }
 }
 
-// utapi is instantiated at module level if needed, but since we are refactoring, let's keep it clean
-// We need to instantiate it once. Let's do it at top or keep it here but remove the import.
-// Actually, let's just make sure we only have one simple instantiation.
-const utapi = new UTApi()
+
 
 export async function deleteSubmissionFile(assignmentId: string, fileUrl: string) {
     try {
@@ -507,13 +504,8 @@ export async function deleteSubmissionFile(assignmentId: string, fileUrl: string
                 console.error("Error deleting local file:", fsError)
                 // Continue execution to update DB even if file delete fails (e.g. file already gone)
             }
-        } else {
-            // UploadThing deletion
-            const fileKey = fileUrl.split("/").pop()
-            if (fileKey) {
-                await utapi.deleteFiles(fileKey)
-            }
         }
+
 
         return { success: true }
     } catch (error) {

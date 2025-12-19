@@ -1,0 +1,22 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context Diagram for JALMS
+
+Person(student, "Student", "A student enrolled in the school.")
+Person(teacher, "Teacher", "A teacher who manages courses, assignments, and grades.")
+Person(admin, "Admin", "Administrator who manages users, academic years, and system settings.")
+Person(home_teacher, "Homeroom Teacher", "Teacher responsible for a specific class and report cards.")
+System(jalms, "JALMS", "Learning Management System provided for the school.")
+
+System_Ext(email, "Email System", "Sends notifications (password reset, announcements) to users.")
+System_Ext(fs, "Local File System", "Stores uploaded files locally (Materials, Avatars, Submissions).")
+
+Rel(student, jalms, "Uses to view schedule, materials, grades, submit assignments")
+Rel(teacher, jalms, "Uses to manage courses, attendance, grades, materials")
+Rel(admin, jalms, "Uses to manage users, classes, subjects, semesters")
+Rel(home_teacher, jalms, "Uses to view class grades and print report cards")
+
+Rel(jalms, email, "Sends emails using")
+Rel(jalms, fs, "Stores and retrieves files using (File I/O)")
+@enduml

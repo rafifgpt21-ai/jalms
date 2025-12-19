@@ -1,0 +1,21 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container Diagram for JALMS
+
+Person(user, "User", "Student, Teacher, Admin, etc.")
+
+System_Boundary(c1, "JALMS") {
+    Container(webapp, "Web Application", "Next.js, React, TailwindCSS", "Delivers the static content and single page application. Handles logic via Server Actions.")
+    ContainerDb(db, "Database", "MongoDB", "Stores user data, courses, enrollments, grades, attendance, etc.")
+    Container(storage, "Local File System", "Disk", "Stores files locally in 'uploads' directory.")
+}
+
+System_Ext(email, "Email System", "SMTP / API", "Sends email notifications.")
+
+Rel(user, webapp, "Visits / Uses", "HTTPS")
+Rel(webapp, db, "Reads/Writes User, Course, Grade Data", "Prisma/TCP")
+Rel(webapp, storage, "Reads/Writes Files", "File I/O")
+Rel(webapp, email, "Sends Emails", "SMTP/API")
+
+@enduml
