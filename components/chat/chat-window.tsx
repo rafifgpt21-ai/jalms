@@ -181,7 +181,7 @@ export function ChatWindow({
     };
 
     return (
-        <div className="flex flex-col flex-1 h-full min-h-0 relative bg-transparent ">
+        <div className="flex flex-col flex-1 h-full min-h-0 relative">
             {/* Glass Header */}
             <div className="hidden md:flex items-center gap-3 p-4 border-b border-white/20 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40 sticky top-0 z-10 shadow-sm">
                 <Avatar className="h-10 w-10 ring-2 ring-white/50 dark:ring-slate-800 shadow-md">
@@ -250,17 +250,17 @@ export function ChatWindow({
 
             {/* Floating Input Area */}
             <div
-                className="fixed bottom-16 left-0 right-0 z-20 p-4 bg-white/10 dark:bg-slate-900/70 border-t border-white/30 dark:border-slate-800 md:absolute md:bottom-0 md:left-0 md:right-0"
+                className="fixed bottom-16 left-0 right-0 z-20 p-4 md:absolute md:bottom-0 md:left-0 md:right-0 flex justify-center pointer-events-none"
             >
                 <form
                     onSubmit={handleSend}
-                    className="flex gap-2 items-center max-w-4xl mx-auto rounded-full bg-transparent border-0"
+                    className="flex gap-2 items-center w-full max-w-4xl mx-auto rounded-full bg-white/40 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg p-1.5 pointer-events-auto transition-all duration-300 hover:bg-white/50 dark:hover:bg-slate-900/60"
                 >
                     <Input
                         placeholder="Type a message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="bg-white/40 flex-1 border-0 focus-visible:ring-0 rounded-full focus-visible:ring-offset-0 px-4 py-3 h-auto placeholder:text-slate-400"
+                        className="bg-transparent border-0 focus-visible:ring-0 rounded-full focus-visible:ring-offset-0 px-4 py-3 h-auto placeholder:text-slate-500 dark:placeholder:text-slate-400 text-slate-800 dark:text-slate-100 shadow-none"
                         disabled={isSending}
                         autoComplete="off"
                     />

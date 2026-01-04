@@ -16,7 +16,7 @@ export function SocialsMainView({ initialConversations, userId }: SocialsMainVie
     return (
         <div className="h-full w-full">
             {/* Mobile View: Chat List */}
-            <div className="md:hidden h-full border-r bg-sidebar">
+            <div className="md:hidden h-full border-r bg-linear-to-br from-indigo-50/40 via-white to-cyan-50/40 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/20">
                 <ChatSidebar
                     initialConversations={activeConversations}
                     userId={userId}

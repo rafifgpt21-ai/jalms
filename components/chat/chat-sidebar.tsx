@@ -208,7 +208,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                                 <Input
                                                     placeholder="Search chats..."
-                                                    className="pl-9 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
+                                                    className="pl-9 bg-white/40 dark:bg-slate-800/40 border-white/20 dark:border-slate-700/30 backdrop-blur-md focus-visible:ring-indigo-500/20 rounded-xl"
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
                                                     autoFocus
@@ -302,10 +302,10 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                     key={conv.id}
                                     href={`/socials/${conv.id}`}
                                     className={cn(
-                                        "group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border border-transparent",
+                                        "group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 border",
                                         isActive
                                             ? "bg-indigo-500/10 dark:bg-indigo-500/20 shadow-sm border-indigo-500/20"
-                                            : "hover:bg-white/40 dark:hover:bg-slate-800/40 hover:border-white/20 dark:hover:border-slate-800"
+                                            : "bg-white/40 dark:bg-slate-800/30 border-white/40 dark:border-white/5 hover:bg-white/60 dark:hover:bg-slate-800/50 hover:shadow-sm hover:-translate-y-0.5"
                                     )}
                                 >
                                     <div className="relative">
