@@ -20,11 +20,10 @@ export default async function CourseTasksPage({ params }: { params: { courseId: 
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Tasks</h1>
-                    <p className="text-muted-foreground">Manage all assignments and quizzes for this course.</p>
+                    <h1 className="text-2xl font-bold tracking-tight hidden sm:block text-slate-900 dark:text-slate-100">Tasks</h1>
                 </div>
                 <Link href={`/teacher/courses/${courseId}/tasks/new`}>
                     <Button>

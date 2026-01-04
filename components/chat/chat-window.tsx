@@ -183,7 +183,7 @@ export function ChatWindow({
     return (
         <div className="flex flex-col flex-1 h-full min-h-0 relative bg-transparent ">
             {/* Glass Header */}
-            <div className="hidden md:flex items-center gap-3 p-4 border-b border-white/20 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+            <div className="hidden md:flex items-center gap-3 p-4 border-b border-white/20 dark:border-slate-800/50 bg-white/40 dark:bg-slate-900/40 sticky top-0 z-10 shadow-sm">
                 <Avatar className="h-10 w-10 ring-2 ring-white/50 dark:ring-slate-800 shadow-md">
                     <AvatarImage src={otherParticipant?.image || undefined} />
                     <AvatarFallback className="bg-linear-to-br from-indigo-500 to-purple-500 text-white">
@@ -249,8 +249,8 @@ export function ChatWindow({
             </ScrollArea>
 
             {/* Floating Input Area */}
-            <div style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
-                className="fixed bottom-16 left-0 right-0 z-20 p-4 bg-white/10 dark:bg-slate-900/70 backdrop-blur-xl border-t border-white/30 dark:border-slate-800 md:absolute md:bottom-0 md:left-0 md:right-0"
+            <div
+                className="fixed bottom-16 left-0 right-0 z-20 p-4 bg-white/10 dark:bg-slate-900/70 border-t border-white/30 dark:border-slate-800 md:absolute md:bottom-0 md:left-0 md:right-0"
             >
                 <form
                     onSubmit={handleSend}
@@ -269,7 +269,7 @@ export function ChatWindow({
                         type="submit"
                         size="icon"
                         className={cn(
-                            "rounded-full h-10 w-10 shrink-0 transition-all duration-300 backdrop-blur-sm",
+                            "rounded-full h-10 w-10 shrink-0 transition-all duration-300",
                             newMessage.trim()
                                 ? "bg-indigo-600/90 text-white hover:bg-indigo-700/90 shadow-lg shadow-indigo-500/30 border border-indigo-500/20"
                                 : "bg-slate-100/50 text-slate-400 hover:bg-slate-200/50 dark:bg-slate-800/50 border border-white/10"

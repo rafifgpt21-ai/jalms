@@ -1,0 +1,48 @@
+@startuml
+title Login Sequence Diagram
+autonumber
+
+actor "User" as User
+participant "Web Client" as UI
+participant "NextAuth Handler" as Auth
+participant "Prisma ORM" as Prisma
+database "Database" as DB
+
+User -> UI: Enter Email & Password
+activate UI
+
+UI -> Auth: POST /api/auth/signin
+activate Auth
+
+Auth -> Prisma: findUnique({ where: { email } })
+activate Prisma
+
+Prisma -> DB: SELECT * FROM User WHERE email = ?
+activate DB
+
+DB --> Prisma: User Record
+deactivate DB
+
+Prisma --> Auth: User Data
+deactivate Prisma
+
+Auth -> Auth: Verify Password (Hash Comparison)
+activate Auth
+deactivate Auth
+
+alt Credentials Valid
+    Auth -> Auth: Create Session / Sign JWT
+    activate Auth
+    deactivate Auth
+    
+    Auth --> UI: 200 OK (Session/Token)
+    UI --> User: Redirect to Dashboard
+else Credentials Invalid
+    Auth --> UI: 401 Unauthorized
+    UI --> User: Show "Invalid Email or Password" Error
+end
+
+deactivate Auth
+deactivate UI
+
+@enduml

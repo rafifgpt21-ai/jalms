@@ -2,7 +2,8 @@
 title Access Materials Activity Diagram
 |Student|
 start
-:View Course/Class;
+:View Course;
+:Click "Study Materials;
 |System|
 :List Available Materials;
 |Student|

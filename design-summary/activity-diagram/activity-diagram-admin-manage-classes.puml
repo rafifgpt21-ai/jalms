@@ -24,16 +24,18 @@ if (Action?) then (Create Class)
     endif
 else (Assign Students)
     :Select Class;
-    :Click "Assign Students";
-    |System|
-    :Display Student Search/List;
-    |Admin|
-    :Select Students to Assign;
-    :Confirm Assignment;
-    |System|
-    :Update Class Membership;
-    :Show Success Message;
 endif
+
+|Admin|
+:Click "Assign Students";
+|System|
+:Display Student Search/List;
+|Admin|
+:Select Students to Assign;
+:Confirm Assignment;
+|System|
+:Update Class Membership;
+:Show Success Message;
 
 stop
 @enduml

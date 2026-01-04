@@ -23,16 +23,18 @@ if (Action?) then (Create Course)
     endif
 else (Enroll Students)
     :Select Course;
-    :Click "Enroll Students";
-    |System|
-    :Display Enrollment Interface;
-    |Admin|
-    :Select Student(s) or Class;
-    :Confirm Enrollment;
-    |System|
-    :Create Enrollment Records;
-    :Show Success Message;
 endif
+
+|Admin|
+:Click "Enroll Students";
+|System|
+:Display Enrollment Interface;
+|Admin|
+:Select Student(s) or Class;
+:Confirm Enrollment;
+|System|
+:Create Enrollment Records;
+:Show Success Message;
 
 stop
 @enduml

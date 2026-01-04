@@ -2,24 +2,42 @@
 title Manage Schedule Activity Diagram
 |Admin|
 start
-:View Schedule Grid;
+:View Master Schedule Manager;
+note right
+  Displays grid of Teachers vs Periods/Days
+end note
+
+:Click Schedule Cell;
+note right
+  Specific Teacher and Time Slot
+end note
+
 |System|
-:Display Schedule Grid;
+:Display "Edit Schedule" Dialog;
+:List Available Courses for Teacher;
+
 |Admin|
-:Click Empty Cell / "Add Entry";
+if (Action Type?) then (Assign Course)
+    :Search/Select Course from List;
+else (Remove Assignment)
+    :Select "Clear Slot";
+endif
+
 |System|
-:Display Add Form;
-|Admin|
-:Select Subject, Class, Teacher;
-:Set Time Slot;
-:Submit Form;
-|System|
-if (Validation?) then (Valid)
-    :Create Schedule Entry;
-    :Show Success Message;
-else (Invalid)
-    :Show Error Message;
-    stop
+:Attempt Schedule Update;
+
+if (Conflict Detected?) then (Yes)
+    :Display Conflict Alert Dialog;
+    note right
+        Shows details of overlapping schedules
+    end note
+else (No)
+    if (Update Successful?) then (Yes)
+        :Update Grid UI;
+        :Show Success Toast;
+    else (Error)
+        :Show Error Toast;
+    endif
 endif
 
 stop
