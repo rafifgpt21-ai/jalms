@@ -112,16 +112,12 @@ model Class {
 }
 
 
-enum IntelligenceType {
-  LINGUISTIC
-  LOGICAL_MATHEMATICAL
-  SPATIAL
-  BODILY_KINESTHETIC
-  MUSICAL
-  INTERPERSONAL
-  INTRAPERSONAL
-  NATURALIST
-  EXISTENTIAL
+enum AcademicDomain {
+  SCIENCE_TECHNOLOGY
+  SOCIAL_HUMANITIES
+  LANGUAGE_COMMUNICATION
+  ARTS_CREATIVITY
+  PHYSICAL_EDUCATION
 }
 
 model Subject {
@@ -130,7 +126,7 @@ model Subject {
   code        String // "BIO"
   description String?
   
-  intelligenceTypes IntelligenceType[]
+  academicDomains AcademicDomain[]
 
   courses Course[]
 
@@ -244,7 +240,7 @@ model Assignment {
   isExtraCredit Boolean        @default(false)
   latePenalty   Int            @default(0) // Percentage 0-100
   
-  intelligenceTypes IntelligenceType[]
+  academicDomains AcademicDomain[]
 
   courseId String @db.ObjectId
   course   Course @relation(fields: [courseId], references: [id])

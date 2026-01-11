@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Subject, IntelligenceType } from "@prisma/client"
+import { Subject, AcademicDomain } from "@prisma/client"
 import {
     Table,
     TableBody,
@@ -32,16 +32,12 @@ interface SubjectListProps {
     subjects: Subject[]
 }
 
-const INTELLIGENCE_LABELS: Record<string, string> = {
-    LINGUISTIC: "Linguistic",
-    LOGICAL_MATHEMATICAL: "Logic/Math",
-    SPATIAL: "Spatial",
-    BODILY_KINESTHETIC: "Kinesthetic",
-    MUSICAL: "Musical",
-    INTERPERSONAL: "Interpersonal",
-    INTRAPERSONAL: "Intrapersonal",
-    NATURALIST: "Naturalist",
-    EXISTENTIAL: "Existential",
+const DOMAIN_LABELS: Record<string, string> = {
+    SCIENCE_TECHNOLOGY: "Science and Technology",
+    SOCIAL_HUMANITIES: "Social Sciences and Humanities",
+    LANGUAGE_COMMUNICATION: "Language and Communication",
+    ARTS_CREATIVITY: "Arts and Creativity",
+    PHYSICAL_EDUCATION: "Physical Education",
 }
 
 export function SubjectList({ subjects }: SubjectListProps) {
@@ -100,7 +96,7 @@ export function SubjectList({ subjects }: SubjectListProps) {
                         <TableRow className="hover:bg-transparent border-white/10">
                             <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Code</TableHead>
                             <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Name</TableHead>
-                            <TableHead className="hidden md:table-cell text-slate-700 dark:text-slate-200 font-medium">Intelligences</TableHead>
+                            <TableHead className="hidden md:table-cell text-slate-700 dark:text-slate-200 font-medium">Domains</TableHead>
                             <TableHead className="text-right text-slate-700 dark:text-slate-200 font-medium">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -118,14 +114,14 @@ export function SubjectList({ subjects }: SubjectListProps) {
                                     <TableCell className="font-medium text-slate-700 dark:text-slate-200">
                                         <div>{subject.name}</div>
                                         <div className="text-xs text-slate-400 dark:text-slate-500 md:hidden mt-1">
-                                            {subject.intelligenceTypes.length} tags
+                                            {subject.academicDomains.length} tags
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">
                                         <div className="flex flex-wrap gap-1">
-                                            {subject.intelligenceTypes.map((type) => (
-                                                <Badge key={type} variant="secondary" className="text-[10px] bg-indigo-100/50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200/50 dark:border-indigo-800/50 border">
-                                                    {INTELLIGENCE_LABELS[type] || type}
+                                            {subject.academicDomains.map((domain) => (
+                                                <Badge key={domain} variant="secondary" className="text-[10px] bg-indigo-100/50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200/50 dark:border-indigo-800/50 border">
+                                                    {DOMAIN_LABELS[domain] || domain}
                                                 </Badge>
                                             ))}
                                         </div>

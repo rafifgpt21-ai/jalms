@@ -2,7 +2,7 @@
 
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
-import { AssignmentType, IntelligenceType, Submission } from "@prisma/client"
+import { AssignmentType, AcademicDomain, Submission } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 export async function getTeachersWithCourses(search: string = "") {
@@ -95,7 +95,7 @@ export async function createAssignment(data: {
     maxPoints: number
     isExtraCredit: boolean
     latePenalty: number
-    intelligenceTypes?: IntelligenceType[]
+    academicDomains?: AcademicDomain[]
     showGradeAfterSubmission?: boolean
 }) {
     try {
@@ -109,7 +109,7 @@ export async function createAssignment(data: {
                 maxPoints: data.maxPoints,
                 isExtraCredit: data.isExtraCredit,
                 latePenalty: data.latePenalty,
-                intelligenceTypes: data.intelligenceTypes || [],
+                academicDomains: data.academicDomains || [],
                 quizId: data.quizId,
                 showGradeAfterSubmission: data.showGradeAfterSubmission ?? true,
             }
@@ -276,7 +276,7 @@ export async function updateAssignment(data: {
     maxPoints: number
     isExtraCredit: boolean
     latePenalty: number
-    intelligenceTypes?: IntelligenceType[]
+    academicDomains?: AcademicDomain[]
     showGradeAfterSubmission?: boolean
 }) {
     try {
@@ -290,7 +290,7 @@ export async function updateAssignment(data: {
                 maxPoints: data.maxPoints,
                 isExtraCredit: data.isExtraCredit,
                 latePenalty: data.latePenalty,
-                intelligenceTypes: data.intelligenceTypes || [],
+                academicDomains: data.academicDomains || [],
                 quizId: data.quizId,
                 showGradeAfterSubmission: data.showGradeAfterSubmission ?? true,
             },

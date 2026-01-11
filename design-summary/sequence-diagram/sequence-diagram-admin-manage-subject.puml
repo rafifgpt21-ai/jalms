@@ -3,130 +3,130 @@ title Manage Subject Sequence Diagram
 autonumber
 
 actor "Admin" as Admin
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Admin" as AdminClass
+participant "Subject" as Subject
+database "Database" as Database
 
 ' View Subjects Flow
-Admin -> UI: View Subjects List
-activate UI
-UI -> Action: getSubjects()
-activate Action
-Action -> Prisma: findMany()
-activate Prisma
-Prisma -> DB: SELECT * FROM Subject...
-activate DB
-DB --> Prisma: Subject[]
-deactivate DB
-Prisma --> Action: Subject[]
-deactivate Prisma
-Action --> UI: Subject[]
-deactivate Action
-UI --> Admin: Display List of Subjects
-deactivate UI
+Admin -> Client: View Subjects List
+activate Client
+Client -> AdminClass: getSubjects()
+activate AdminClass
+AdminClass -> Subject: findMany()
+activate Subject
+Subject -> Database: SELECT * FROM Subject...
+activate Database
+Database --> Subject: Subject[]
+deactivate Database
+Subject --> AdminClass: Subject[]
+deactivate Subject
+AdminClass --> Client: Subject[]
+deactivate AdminClass
+Client --> Admin: Display List of Subjects
+deactivate Client
 
 ' User Action Choices
 alt Create Subject
-    Admin -> UI: Click "Add Subject"
-    activate UI
-    UI --> Admin: Display Create Form
-    deactivate UI
+    Admin -> Client: Click "Add Subject"
+    activate Client
+    Client --> Admin: Display Create Form
+    deactivate Client
 
-    Admin -> UI: Fill Details & Submit
-    activate UI
+    Admin -> Client: Fill Details & Submit
+    activate Client
     note right of Admin: Name, Code, Description
 
-    UI -> Action: createSubject(data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Client -> AdminClass: createSubject(data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: create({ data })
-        activate Prisma
-        Prisma -> DB: INSERT INTO Subject...
-        activate DB
-        DB --> Prisma: Created Subject
-        deactivate DB
-        Prisma --> Action: Subject Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> Subject: create({ data })
+        activate Subject
+        Subject -> Database: INSERT INTO Subject...
+        activate Database
+        Database --> Subject: Created Subject
+        deactivate Database
+        Subject --> AdminClass: Subject Object
+        deactivate Subject
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Edit Subject
-    Admin -> UI: Click "Edit" on Subject
-    activate UI
-    UI -> Action: getSubject(id)
-    activate Action
-    Action -> Prisma: findUnique({ where: { id } })
-    activate Prisma
-    Prisma -> DB: SELECT * FROM Subject...
-    activate DB
-    DB --> Prisma: Subject Data
-    deactivate DB
-    Prisma --> Action: Subject Data
-    deactivate Prisma
-    Action --> UI: Subject Data
-    deactivate Action
-    UI --> Admin: Display Edit Form with Data
-    deactivate UI
+    Admin -> Client: Click "Edit" on Subject
+    activate Client
+    Client -> AdminClass: getSubject(id)
+    activate AdminClass
+    AdminClass -> Subject: findUnique({ where: { id } })
+    activate Subject
+    Subject -> Database: SELECT * FROM Subject...
+    activate Database
+    Database --> Subject: Subject Data
+    deactivate Database
+    Subject --> AdminClass: Subject Data
+    deactivate Subject
+    AdminClass --> Client: Subject Data
+    deactivate AdminClass
+    Client --> Admin: Display Edit Form with Data
+    deactivate Client
 
-    Admin -> UI: Update Details & Submit
-    activate UI
-    UI -> Action: updateSubject(id, data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Admin -> Client: Update Details & Submit
+    activate Client
+    Client -> AdminClass: updateSubject(id, data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: update({ where: { id }, data })
-        activate Prisma
-        Prisma -> DB: UPDATE Subject...
-        activate DB
-        DB --> Prisma: Updated Subject
-        deactivate DB
-        Prisma --> Action: Subject Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> Subject: update({ where: { id }, data })
+        activate Subject
+        Subject -> Database: UPDATE Subject...
+        activate Database
+        Database --> Subject: Updated Subject
+        deactivate Database
+        Subject --> AdminClass: Subject Object
+        deactivate Subject
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Delete Subject
-    Admin -> UI: Click "Delete" on Subject
-    activate UI
-    UI --> Admin: Confirm Deletion?
-    deactivate UI
+    Admin -> Client: Click "Delete" on Subject
+    activate Client
+    Client --> Admin: Confirm Deletion?
+    deactivate Client
     
-    Admin -> UI: Confirm Yes
-    activate UI
-    UI -> Action: deleteSubject(id)
-    activate Action
-    Action -> Prisma: delete({ where: { id } })
-    activate Prisma
-    Prisma -> DB: DELETE FROM Subject...
-    activate DB
-    DB --> Prisma: Success
-    deactivate DB
-    Prisma --> Action: Success
-    deactivate Prisma
-    Action --> UI: Success Response
-    deactivate Action
-    UI --> Admin: Show Success & Refresh List
-    deactivate UI
+    Admin -> Client: Confirm Yes
+    activate Client
+    Client -> AdminClass: deleteSubject(id)
+    activate AdminClass
+    AdminClass -> Subject: delete({ where: { id } })
+    activate Subject
+    Subject -> Database: DELETE FROM Subject...
+    activate Database
+    Database --> Subject: Success
+    deactivate Database
+    Subject --> AdminClass: Success
+    deactivate Subject
+    AdminClass --> Client: Success Response
+    deactivate AdminClass
+    Client --> Admin: Show Success & Refresh List
+    deactivate Client
 end
 
 @enduml

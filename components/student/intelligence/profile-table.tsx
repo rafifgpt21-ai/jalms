@@ -11,38 +11,30 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { IntelligenceProfile } from "@/lib/actions/intelligence.actions"
-import { IntelligenceType } from "@prisma/client"
+import { LearningProfile } from "@/lib/actions/intelligence.actions"
+import { AcademicDomain } from "@prisma/client"
 
-interface IntelligenceProfileTableProps {
-    data: IntelligenceProfile[]
+interface LearningProfileTableProps {
+    data: LearningProfile[]
 }
 
-const INTELLIGENCE_LABELS: Record<IntelligenceType, string> = {
-    LINGUISTIC: "Linguistic-Verbal",
-    LOGICAL_MATHEMATICAL: "Logical-Mathematical",
-    SPATIAL: "Visual-Spatial",
-    BODILY_KINESTHETIC: "Bodily-Kinesthetic",
-    MUSICAL: "Musical-Rhythmic",
-    INTERPERSONAL: "Interpersonal",
-    INTRAPERSONAL: "Intrapersonal",
-    NATURALIST: "Naturalist",
-    EXISTENTIAL: "Existential",
+const DOMAIN_LABELS: Record<AcademicDomain, string> = {
+    SCIENCE_TECHNOLOGY: "Science and Technology",
+    SOCIAL_HUMANITIES: "Social Sciences and Humanities",
+    LANGUAGE_COMMUNICATION: "Language and Communication",
+    ARTS_CREATIVITY: "Arts and Creativity",
+    PHYSICAL_EDUCATION: "Physical Education",
 }
 
-const INTELLIGENCE_DESCRIPTIONS: Record<IntelligenceType, string> = {
-    LINGUISTIC: "Sensitivity to spoken and written language, ability to learn languages, and capacity to use language to accomplish certain goals.",
-    LOGICAL_MATHEMATICAL: "Capacity to analyze problems logically, carry out mathematical operations, and investigate issues scientifically.",
-    SPATIAL: "Potential to recognize and use the patterns of wide space and more confined areas.",
-    BODILY_KINESTHETIC: "Potential of using one's whole body or parts of the body to solve problems.",
-    MUSICAL: "Skill in the performance, composition, and appreciation of musical patterns.",
-    INTERPERSONAL: "Capacity to understand the intentions, motivations and desires of other people.",
-    INTRAPERSONAL: "Capacity to understand oneself, to appreciate one's feelings, fears and motivations.",
-    NATURALIST: "Ability to recognize, categorize and draw upon certain features of the environment.",
-    EXISTENTIAL: "Sensitivity and capacity to tackle deep questions about human existence.",
+const DOMAIN_DESCRIPTIONS: Record<AcademicDomain, string> = {
+    SCIENCE_TECHNOLOGY: "Fokus: Logika, analisis data, dan pemecahan masalah teknis.",
+    SOCIAL_HUMANITIES: "Fokus: Pemahaman struktur sosial, memori naratif, dan empati.",
+    LANGUAGE_COMMUNICATION: "Fokus: Kemampuan artikulasi, literasi, dan ekspresi ide.",
+    ARTS_CREATIVITY: "Fokus: Imajinasi, kreativitas, dan motorik halus.",
+    PHYSICAL_EDUCATION: "Fokus: Koordinasi fisik, ketahanan, dan sportivitas.",
 }
 
-export function IntelligenceProfileTable({ data }: IntelligenceProfileTableProps) {
+export function LearningProfileTable({ data }: LearningProfileTableProps) {
     // Sort by score desc
     const sortedData = [...data].sort((a, b) => b.score - a.score)
 
@@ -51,14 +43,14 @@ export function IntelligenceProfileTable({ data }: IntelligenceProfileTableProps
             <CardHeader>
                 <CardTitle>Detailed Breakdown</CardTitle>
                 <CardDescription>
-                    Your average scores and activity count for each intelligence type.
+                    Your average scores and activity count for each domain.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Intelligence Type</TableHead>
+                            <TableHead>Academic Domain</TableHead>
                             <TableHead className="w-[150px]">Average Score</TableHead>
                             <TableHead className="w-[100px] text-right">Activities</TableHead>
                             <TableHead className="hidden md:table-cell">Description</TableHead>
@@ -73,13 +65,13 @@ export function IntelligenceProfileTable({ data }: IntelligenceProfileTableProps
                             </TableRow>
                         ) : (
                             sortedData.map((item) => (
-                                <TableRow key={item.type}>
+                                <TableRow key={item.domain}>
                                     <TableCell className="font-medium">
                                         <div className="flex flex-col">
-                                            <span>{INTELLIGENCE_LABELS[item.type]}</span>
+                                            <span>{DOMAIN_LABELS[item.domain]}</span>
                                             {/* Mobile description */}
                                             <span className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                                {INTELLIGENCE_DESCRIPTIONS[item.type]}
+                                                {DOMAIN_DESCRIPTIONS[item.domain]}
                                             </span>
                                         </div>
                                     </TableCell>
@@ -93,7 +85,7 @@ export function IntelligenceProfileTable({ data }: IntelligenceProfileTableProps
                                         <Badge variant="secondary">{item.count}</Badge>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                                        {INTELLIGENCE_DESCRIPTIONS[item.type]}
+                                        {DOMAIN_DESCRIPTIONS[item.domain]}
                                     </TableCell>
                                 </TableRow>
                             ))

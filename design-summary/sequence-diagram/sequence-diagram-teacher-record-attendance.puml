@@ -3,39 +3,39 @@ title Record Attendance Sequence Diagram
 autonumber
 
 actor "Teacher" as Teacher
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Teacher" as TeacherClass
+participant "Attendance" as Attendance
+database "Database" as Database
 
-Teacher -> UI: View Class Attendance
-activate UI
-UI -> Action: getAttendance(classId, date)
-activate Action
-Action -> Prisma: findMany()
-activate Prisma
-Prisma --> Action: Attendance List
-deactivate Prisma
-Action --> UI: List
-deactivate Action
-UI --> Teacher: Display List
-deactivate UI
+Teacher -> Client: View Class Attendance
+activate Client
+Client -> TeacherClass: getAttendance(classId, date)
+activate TeacherClass
+TeacherClass -> Attendance: findMany()
+activate Attendance
+Attendance --> TeacherClass: Attendance List
+deactivate Attendance
+TeacherClass --> Client: List
+deactivate TeacherClass
+Client --> Teacher: Display List
+deactivate Client
 
-Teacher -> UI: Mark/Update Attendance
-activate UI
-UI -> Action: updateAttendance(studentIds, status)
-activate Action
-Action -> Prisma: updateMany()
-activate Prisma
-Prisma -> DB: UPDATE Attendance...
-activate DB
-DB --> Prisma: Success
-deactivate DB
-Prisma --> Action: Success
-deactivate Prisma
-Action --> UI: Success
-UI --> Teacher: Attendance Recorded
-deactivate Action
-deactivate UI
+Teacher -> Client: Mark/Update Attendance
+activate Client
+Client -> TeacherClass: updateAttendance(studentIds, status)
+activate TeacherClass
+TeacherClass -> Attendance: updateMany()
+activate Attendance
+Attendance -> Database: UPDATE Attendance...
+activate Database
+Database --> Attendance: Success
+deactivate Database
+Attendance --> TeacherClass: Success
+deactivate Attendance
+TeacherClass --> Client: Success
+Client --> Teacher: Attendance Recorded
+deactivate TeacherClass
+deactivate Client
 
 @enduml

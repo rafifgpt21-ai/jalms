@@ -3,31 +3,31 @@ title Access Learning Materials Sequence Diagram
 autonumber
 
 actor "Student" as Student
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Student" as StudentClass
+participant "Material" as Material
+database "Database" as Database
 
-Student -> UI: View Class Materials
-activate UI
-UI -> Action: getMaterials(classId)
-activate Action
-Action -> Prisma: findMany()
-activate Prisma
-Prisma -> DB: SELECT * FROM Material...
-activate DB
-DB --> Prisma: Materials[]
-deactivate DB
-Prisma --> Action: Materials[]
-deactivate Prisma
-Action --> UI: Materials[]
-deactivate Action
-UI --> Student: Display Materials List
-deactivate UI
+Student -> Client: View Class Materials
+activate Client
+Client -> StudentClass: getMaterials(classId)
+activate StudentClass
+StudentClass -> Material: findMany()
+activate Material
+Material -> Database: SELECT * FROM Material...
+activate Database
+Database --> Material: Materials[]
+deactivate Database
+Material --> StudentClass: Materials[]
+deactivate Material
+StudentClass --> Client: Materials[]
+deactivate StudentClass
+Client --> Student: Display Materials List
+deactivate Client
 
-Student -> UI: Click Material
-activate UI
-UI --> Student: Download/View File
-deactivate UI
+Student -> Client: Click Material
+activate Client
+Client --> Student: Download/View File
+deactivate Client
 
 @enduml

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -7,8 +8,14 @@ interface GradeHistoryChartProps {
     history: any[]
 }
 
-export function GradeHistoryChart({ history }: GradeHistoryChartProps) {
-    if (!history || history.length === 0) return null
+export default function GradeHistoryChart({ history }: GradeHistoryChartProps) {
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted || !history || history.length === 0) return null
 
     return (
         <Card className="col-span-4">
@@ -38,7 +45,7 @@ export function GradeHistoryChart({ history }: GradeHistoryChartProps) {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                                formatter={(value: number) => [`${value}%`, 'Average Grade']}
+                                formatter={(value: any) => [`${value}%`, 'Average Grade']}
                             />
                             <Line
                                 type="monotone"

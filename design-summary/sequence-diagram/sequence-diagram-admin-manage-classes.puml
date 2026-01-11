@@ -3,130 +3,130 @@ title Manage Classes Sequence Diagram
 autonumber
 
 actor "Admin" as Admin
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Admin" as AdminClass
+participant "Class" as Class
+database "Database" as Database
 
 ' View Classes Flow
-Admin -> UI: View Classes List
-activate UI
-UI -> Action: getClasses()
-activate Action
-Action -> Prisma: findMany()
-activate Prisma
-Prisma -> DB: SELECT * FROM Class...
-activate DB
-DB --> Prisma: Class[]
-deactivate DB
-Prisma --> Action: Class[]
-deactivate Prisma
-Action --> UI: Class[]
-deactivate Action
-UI --> Admin: Display List of Classes
-deactivate UI
+Admin -> Client: View Classes List
+activate Client
+Client -> AdminClass: getClasses()
+activate AdminClass
+AdminClass -> Class: findMany()
+activate Class
+Class -> Database: SELECT * FROM Class...
+activate Database
+Database --> Class: Class[]
+deactivate Database
+Class --> AdminClass: Class[]
+deactivate Class
+AdminClass --> Client: Class[]
+deactivate AdminClass
+Client --> Admin: Display List of Classes
+deactivate Client
 
 ' User Action Choices
 alt Create Class
-    Admin -> UI: Click "Add Class"
-    activate UI
-    UI --> Admin: Display Create Form
-    deactivate UI
+    Admin -> Client: Click "Add Class"
+    activate Client
+    Client --> Admin: Display Create Form
+    deactivate Client
 
-    Admin -> UI: Fill Details & Submit
-    activate UI
+    Admin -> Client: Fill Details & Submit
+    activate Client
     note right of Admin: Name, Grade, Homeroom Teacher
 
-    UI -> Action: createClass(data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Client -> AdminClass: createClass(data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: create({ data })
-        activate Prisma
-        Prisma -> DB: INSERT INTO Class...
-        activate DB
-        DB --> Prisma: Created Class
-        deactivate DB
-        Prisma --> Action: Class Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> Class: create({ data })
+        activate Class
+        Class -> Database: INSERT INTO Class...
+        activate Database
+        Database --> Class: Created Class
+        deactivate Database
+        Class --> AdminClass: Class Object
+        deactivate Class
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Edit Class
-    Admin -> UI: Click "Edit" on Class
-    activate UI
-    UI -> Action: getClass(id)
-    activate Action
-    Action -> Prisma: findUnique({ where: { id } })
-    activate Prisma
-    Prisma -> DB: SELECT * FROM Class...
-    activate DB
-    DB --> Prisma: Class Data
-    deactivate DB
-    Prisma --> Action: Class Data
-    deactivate Prisma
-    Action --> UI: Class Data
-    deactivate Action
-    UI --> Admin: Display Edit Form with Data
-    deactivate UI
+    Admin -> Client: Click "Edit" on Class
+    activate Client
+    Client -> AdminClass: getClass(id)
+    activate AdminClass
+    AdminClass -> Class: findUnique({ where: { id } })
+    activate Class
+    Class -> Database: SELECT * FROM Class...
+    activate Database
+    Database --> Class: Class Data
+    deactivate Database
+    Class --> AdminClass: Class Data
+    deactivate Class
+    AdminClass --> Client: Class Data
+    deactivate AdminClass
+    Client --> Admin: Display Edit Form with Data
+    deactivate Client
 
-    Admin -> UI: Update Details & Submit
-    activate UI
-    UI -> Action: updateClass(id, data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Admin -> Client: Update Details & Submit
+    activate Client
+    Client -> AdminClass: updateClass(id, data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: update({ where: { id }, data })
-        activate Prisma
-        Prisma -> DB: UPDATE Class...
-        activate DB
-        DB --> Prisma: Updated Class
-        deactivate DB
-        Prisma --> Action: Class Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> Class: update({ where: { id }, data })
+        activate Class
+        Class -> Database: UPDATE Class...
+        activate Database
+        Database --> Class: Updated Class
+        deactivate Database
+        Class --> AdminClass: Class Object
+        deactivate Class
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Delete Class
-    Admin -> UI: Click "Delete" on Class
-    activate UI
-    UI --> Admin: Confirm Deletion?
-    deactivate UI
+    Admin -> Client: Click "Delete" on Class
+    activate Client
+    Client --> Admin: Confirm Deletion?
+    deactivate Client
     
-    Admin -> UI: Confirm Yes
-    activate UI
-    UI -> Action: deleteClass(id)
-    activate Action
-    Action -> Prisma: delete({ where: { id } })
-    activate Prisma
-    Prisma -> DB: DELETE FROM Class...
-    activate DB
-    DB --> Prisma: Success
-    deactivate DB
-    Prisma --> Action: Success
-    deactivate Prisma
-    Action --> UI: Success Response
-    deactivate Action
-    UI --> Admin: Show Success & Refresh List
-    deactivate UI
+    Admin -> Client: Confirm Yes
+    activate Client
+    Client -> AdminClass: deleteClass(id)
+    activate AdminClass
+    AdminClass -> Class: delete({ where: { id } })
+    activate Class
+    Class -> Database: DELETE FROM Class...
+    activate Database
+    Database --> Class: Success
+    deactivate Database
+    Class --> AdminClass: Success
+    deactivate Class
+    AdminClass --> Client: Success Response
+    deactivate AdminClass
+    Client --> Admin: Show Success & Refresh List
+    deactivate Client
 end
 
 @enduml

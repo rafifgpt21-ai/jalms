@@ -3,130 +3,130 @@ title Manage Schedule Sequence Diagram
 autonumber
 
 actor "Admin" as Admin
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Admin" as AdminClass
+participant "Schedule" as Schedule
+database "Database" as Database
 
 ' View Schedule Flow
-Admin -> UI: View Schedule Grid
-activate UI
-UI -> Action: getSchedule()
-activate Action
-Action -> Prisma: findMany()
-activate Prisma
-Prisma -> DB: SELECT * FROM Schedule...
-activate DB
-DB --> Prisma: Schedule[]
-deactivate DB
-Prisma --> Action: Schedule[]
-deactivate Prisma
-Action --> UI: Schedule[]
-deactivate Action
-UI --> Admin: Display Schedule Grid
-deactivate UI
+Admin -> Client: View Schedule Grid
+activate Client
+Client -> AdminClass: getSchedule()
+activate AdminClass
+AdminClass -> Schedule: findMany()
+activate Schedule
+Schedule -> Database: SELECT * FROM Schedule...
+activate Database
+Database --> Schedule: Schedule[]
+deactivate Database
+Schedule --> AdminClass: Schedule[]
+deactivate Schedule
+AdminClass --> Client: Schedule[]
+deactivate AdminClass
+Client --> Admin: Display Schedule Grid
+deactivate Client
 
 ' User Action Choices
 alt Add Schedule Entry
-    Admin -> UI: Click "Add Entry" (Cell)
-    activate UI
-    UI --> Admin: Display Add Form
-    deactivate UI
+    Admin -> Client: Click "Add Entry" (Cell)
+    activate Client
+    Client --> Admin: Display Add Form
+    deactivate Client
 
-    Admin -> UI: Fill Details & Submit
-    activate UI
+    Admin -> Client: Fill Details & Submit
+    activate Client
     note right of Admin: Subject, Time, Class, Teacher
 
-    UI -> Action: createScheduleEntry(data)
-    activate Action
-    Action -> Action: Validate Data & Conflicts
-    activate Action
-    deactivate Action
+    Client -> AdminClass: createScheduleEntry(data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data & Conflicts
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: create({ data })
-        activate Prisma
-        Prisma -> DB: INSERT INTO Schedule...
-        activate DB
-        DB --> Prisma: Created Entry
-        deactivate DB
-        Prisma --> Action: Entry Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh Grid
+        AdminClass -> Schedule: create({ data })
+        activate Schedule
+        Schedule -> Database: INSERT INTO Schedule...
+        activate Database
+        Database --> Schedule: Created Entry
+        deactivate Database
+        Schedule --> AdminClass: Entry Object
+        deactivate Schedule
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh Grid
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Edit Schedule Entry
-    Admin -> UI: Click "Edit" on Entry
-    activate UI
-    UI -> Action: getScheduleEntry(id)
-    activate Action
-    Action -> Prisma: findUnique({ where: { id } })
-    activate Prisma
-    Prisma -> DB: SELECT * FROM Schedule...
-    activate DB
-    DB --> Prisma: Entry Data
-    deactivate DB
-    Prisma --> Action: Entry Data
-    deactivate Prisma
-    Action --> UI: Entry Data
-    deactivate Action
-    UI --> Admin: Display Edit Form with Data
-    deactivate UI
+    Admin -> Client: Click "Edit" on Entry
+    activate Client
+    Client -> AdminClass: getScheduleEntry(id)
+    activate AdminClass
+    AdminClass -> Schedule: findUnique({ where: { id } })
+    activate Schedule
+    Schedule -> Database: SELECT * FROM Schedule...
+    activate Database
+    Database --> Schedule: Entry Data
+    deactivate Database
+    Schedule --> AdminClass: Entry Data
+    deactivate Schedule
+    AdminClass --> Client: Entry Data
+    deactivate AdminClass
+    Client --> Admin: Display Edit Form with Data
+    deactivate Client
 
-    Admin -> UI: Update Details & Submit
-    activate UI
-    UI -> Action: updateScheduleEntry(id, data)
-    activate Action
-    Action -> Action: Validate Data & Conflicts
-    activate Action
-    deactivate Action
+    Admin -> Client: Update Details & Submit
+    activate Client
+    Client -> AdminClass: updateScheduleEntry(id, data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data & Conflicts
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: update({ where: { id }, data })
-        activate Prisma
-        Prisma -> DB: UPDATE Schedule...
-        activate DB
-        DB --> Prisma: Updated Entry
-        deactivate DB
-        Prisma --> Action: Entry Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh Grid
+        AdminClass -> Schedule: update({ where: { id }, data })
+        activate Schedule
+        Schedule -> Database: UPDATE Schedule...
+        activate Database
+        Database --> Schedule: Updated Entry
+        deactivate Database
+        Schedule --> AdminClass: Entry Object
+        deactivate Schedule
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh Grid
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Delete Schedule Entry
-    Admin -> UI: Click "Delete" on Entry
-    activate UI
-    UI --> Admin: Confirm Deletion?
-    deactivate UI
+    Admin -> Client: Click "Delete" on Entry
+    activate Client
+    Client --> Admin: Confirm Deletion?
+    deactivate Client
     
-    Admin -> UI: Confirm Yes
-    activate UI
-    UI -> Action: deleteScheduleEntry(id)
-    activate Action
-    Action -> Prisma: delete({ where: { id } })
-    activate Prisma
-    Prisma -> DB: DELETE FROM Schedule...
-    activate DB
-    DB --> Prisma: Success
-    deactivate DB
-    Prisma --> Action: Success
-    deactivate Prisma
-    Action --> UI: Success Response
-    deactivate Action
-    UI --> Admin: Show Success & Refresh Grid
-    deactivate UI
+    Admin -> Client: Confirm Yes
+    activate Client
+    Client -> AdminClass: deleteScheduleEntry(id)
+    activate AdminClass
+    AdminClass -> Schedule: delete({ where: { id } })
+    activate Schedule
+    Schedule -> Database: DELETE FROM Schedule...
+    activate Database
+    Database --> Schedule: Success
+    deactivate Database
+    Schedule --> AdminClass: Success
+    deactivate Schedule
+    AdminClass --> Client: Success Response
+    deactivate AdminClass
+    Client --> Admin: Show Success & Refresh Grid
+    deactivate Client
 end
 
 @enduml

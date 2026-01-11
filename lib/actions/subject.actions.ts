@@ -2,7 +2,7 @@
 
 import { db as prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import { IntelligenceType } from "@prisma/client"
+import { AcademicDomain } from "@prisma/client"
 
 export async function getSubjects() {
     try {
@@ -26,11 +26,16 @@ export async function createSubject(data: {
     name: string;
     code: string;
     description?: string;
-    intelligenceTypes: IntelligenceType[]
+    academicDomains: AcademicDomain[]
 }) {
     try {
         const subject = await prisma.subject.create({
-            data
+            data: {
+                name: data.name,
+                code: data.code,
+                description: data.description,
+                academicDomains: data.academicDomains
+            }
         })
         revalidatePath("/admin/subjects")
         revalidatePath("/admin/courses")
@@ -47,13 +52,18 @@ export async function updateSubject(
         name: string;
         code: string;
         description?: string;
-        intelligenceTypes: IntelligenceType[]
+        academicDomains: AcademicDomain[]
     }
 ) {
     try {
         const subject = await prisma.subject.update({
             where: { id },
-            data
+            data: {
+                name: data.name,
+                code: data.code,
+                description: data.description,
+                academicDomains: data.academicDomains
+            }
         })
         revalidatePath("/admin/subjects")
         return { success: true, subject }

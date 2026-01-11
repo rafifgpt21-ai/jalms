@@ -1,12 +1,17 @@
 import { getStudentGradesForTeacher, getStudentSemestersForTeacher, getStudentGradeHistoryForTeacher, getStudentBasicInfo } from "@/lib/actions/homeroom.actions"
 import { SemesterSelector } from "@/components/student/grades/semester-selector"
 import { GradeStatistics } from "@/components/student/grades/grade-statistics"
-import { GradeHistoryChart } from "@/components/student/grades/grade-history-chart"
 import { GradesTable } from "@/components/student/grades/grades-table"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import dynamicLoader from "next/dynamic"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const GradeHistoryChart = dynamicLoader(
+    () => import("@/components/student/grades/grade-history-chart")
+)
 
 export const dynamic = 'force-dynamic'
 

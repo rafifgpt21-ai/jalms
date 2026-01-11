@@ -3,31 +3,31 @@ title Generate Report Cards Sequence Diagram
 autonumber
 
 actor "Homeroom Teacher" as Teacher
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "HomeroomTeacher" as TeacherClass
+participant "Class" as Class
+database "Database" as Database
 
-Teacher -> UI: Request Report Cards (Class)
-activate UI
-UI -> Action: generateReports(classId)
-activate Action
-Action -> Prisma: findMany({ include: { grades: true } })
-activate Prisma
-Prisma -> DB: SELECT Students & Grades...
-activate DB
-DB --> Prisma: Data
-deactivate DB
-Prisma --> Action: Data
-deactivate Prisma
+Teacher -> Client: Request Report Cards (Class)
+activate Client
+Client -> TeacherClass: generateReports(classId)
+activate TeacherClass
+TeacherClass -> Class: findMany({ include: { grades: true } })
+activate Class
+Class -> Database: SELECT Students & Grades...
+activate Database
+Database --> Class: Data
+deactivate Database
+Class --> TeacherClass: Data
+deactivate Class
 
-Action -> Action: Calculate GPA/Standings
-activate Action
-deactivate Action
+TeacherClass -> TeacherClass: Calculate GPA/Standings
+activate TeacherClass
+deactivate TeacherClass
 
-Action --> UI: Report Data / PDF
-deactivate Action
-UI --> Teacher: Display/Download Reports
-deactivate UI
+TeacherClass --> Client: Report Data / PDF
+deactivate TeacherClass
+Client --> Teacher: Display/Download Reports
+deactivate Client
 
 @enduml

@@ -4,9 +4,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress"
 import { SemesterSelector } from "@/components/student/grades/semester-selector"
 import { GradeStatistics } from "@/components/student/grades/grade-statistics"
-import { GradeHistoryChart } from "@/components/student/grades/grade-history-chart"
 import { GradesTable } from "@/components/student/grades/grades-table"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import dynamic from "next/dynamic"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const GradeHistoryChart = dynamic(
+    () => import("@/components/student/grades/grade-history-chart")
+)
 
 export default async function StudentGradesPage({
     searchParams,

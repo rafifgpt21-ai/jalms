@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
 import { Loader2, Trash2, ArrowLeft } from "lucide-react"
-import { AssignmentType, IntelligenceType } from "@prisma/client"
+import { AssignmentType, AcademicDomain } from "@prisma/client"
 import { format } from "date-fns"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -48,16 +48,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { createAssignment, updateAssignment, deleteAssignment } from "@/lib/actions/teacher.actions"
 
-const INTELLIGENCE_LABELS: Record<IntelligenceType, string> = {
-    LINGUISTIC: "Linguistic-Verbal",
-    LOGICAL_MATHEMATICAL: "Logical-Mathematical",
-    SPATIAL: "Visual-Spatial",
-    BODILY_KINESTHETIC: "Bodily-Kinesthetic",
-    MUSICAL: "Musical-Rhythmic",
-    INTERPERSONAL: "Interpersonal",
-    INTRAPERSONAL: "Intrapersonal",
-    NATURALIST: "Naturalist",
-    EXISTENTIAL: "Existential",
+const DOMAIN_LABELS: Record<AcademicDomain, string> = {
+    SCIENCE_TECHNOLOGY: "Science and Technology",
+    SOCIAL_HUMANITIES: "Social Sciences and Humanities",
+    LANGUAGE_COMMUNICATION: "Language and Communication",
+    ARTS_CREATIVITY: "Arts and Creativity",
+    PHYSICAL_EDUCATION: "Physical Education",
 }
 
 const formSchema = z.object({
@@ -68,7 +64,7 @@ const formSchema = z.object({
     maxPoints: z.coerce.number().min(0),
     isExtraCredit: z.boolean().default(false),
     latePenalty: z.coerce.number().min(0).max(100).default(0),
-    intelligenceTypes: z.array(z.nativeEnum(IntelligenceType)).optional(),
+    academicDomains: z.array(z.nativeEnum(AcademicDomain)).optional(),
     quizId: z.string().optional(),
     showGradeAfterSubmission: z.boolean().default(true)
 })
@@ -90,11 +86,11 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
     const router = useRouter()
     const isEditMode = !!data
 
-    // State for customizing intelligence types
-    const [customizeIntelligence, setCustomizeIntelligence] = useState(false)
+    // State for customizing domains
+    const [customizeDomains, setCustomizeDomains] = useState(false)
 
     // Determine default tags from course subject
-    const subjectTags: IntelligenceType[] = course?.subject?.intelligenceTypes || []
+    const subjectDomains: AcademicDomain[] = course?.subject?.academicDomains || []
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema) as any,
@@ -106,7 +102,7 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
             isExtraCredit: data?.isExtraCredit || false,
             latePenalty: data?.latePenalty || 0,
             dueDate: data?.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd'T'HH:mm") : "",
-            intelligenceTypes: data?.intelligenceTypes || [], // Initialize with saved tags
+            academicDomains: data?.academicDomains || [], // Initialize with saved tags
             quizId: data?.quizId || undefined,
             showGradeAfterSubmission: data?.showGradeAfterSubmission ?? true,
         },
@@ -115,12 +111,12 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
     // If editing and we have tags that differ from subject tags (or if we have tags and no subject), we might want to default "customize" to true
     // Logic: If assignment has tags, assume customized. If empty, rely on logic -> BUT empty array means "no override" usually?
     // Wait, requirement: "Assignment tags are optional overrides. If has no tags, inherits."
-    // So if data.intelligenceTypes is valid and length > 0, we turn on customize.
+    // So if data.academicDomains is valid and length > 0, we turn on customize.
     // If length is 0, we can assume it's inheriting (unless user explicitly cleared them, but for now 0 means inherit).
 
     useEffect(() => {
-        if (data?.intelligenceTypes && data.intelligenceTypes.length > 0) {
-            setCustomizeIntelligence(true)
+        if (data?.academicDomains && data.academicDomains.length > 0) {
+            setCustomizeDomains(true)
         }
     }, [data])
 
@@ -130,12 +126,12 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
         // If customization is OFF, send empty array (or undefined handled by backend?)
         // Backend logic: "stores tags". Profile calculation logic will check Assignment tags first.
         // If customization is turned OFF by user, we should clear the tags in the submission.
-        // So if !customizeIntelligence, we set intelligenceTypes = []. 
-        // Wait, if I send [], does backend treat it as "no override" or "no intelligences"?
+        // So if !customizeDomains, we set academicDomains = []. 
+        // Wait, if I send [], does backend treat it as "no override" or "no domains"?
         // Requirement: "If an assignment has no tags, it inherits from its subject."
         // So saving [] means "Inherit". That works.
 
-        const intelligenceTypesPayload = customizeIntelligence ? values.intelligenceTypes : []
+        const academicDomainsPayload = customizeDomains ? values.academicDomains : []
 
         startTransition(async () => {
             try {
@@ -151,7 +147,7 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                         maxPoints: values.maxPoints,
                         isExtraCredit: values.isExtraCredit,
                         latePenalty: values.latePenalty,
-                        intelligenceTypes: intelligenceTypesPayload,
+                        academicDomains: academicDomainsPayload,
                         quizId: values.quizId,
                         showGradeAfterSubmission: values.showGradeAfterSubmission,
                     })
@@ -169,7 +165,7 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                         maxPoints: values.maxPoints,
                         isExtraCredit: values.isExtraCredit,
                         latePenalty: values.latePenalty,
-                        intelligenceTypes: intelligenceTypesPayload,
+                        academicDomains: academicDomainsPayload,
                         quizId: values.quizId,
                         showGradeAfterSubmission: values.showGradeAfterSubmission,
                     })
@@ -395,32 +391,32 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                                 )}
                             />
 
-                            {/* Intelligence Profiling Section */}
+                            {/* Learning Profile Section */}
                             <div className="space-y-4 rounded-md border p-4">
                                 <div className="flex flex-row items-center justify-between">
                                     <div className="space-y-0.5">
-                                        <FormLabel className="text-base">Intelligence Profile</FormLabel>
+                                        <FormLabel className="text-base">Learning Profile</FormLabel>
                                         <FormDescription>
-                                            Tag this assignment with Multiple Intelligences for student learning profiles.
+                                            Tag this assignment with Academic Domains for student learning profiles.
                                         </FormDescription>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <Switch
-                                            checked={customizeIntelligence}
-                                            onCheckedChange={setCustomizeIntelligence}
+                                            checked={customizeDomains}
+                                            onCheckedChange={setCustomizeDomains}
                                         />
                                         <span className="text-sm font-medium">Customize</span>
                                     </div>
                                 </div>
 
-                                {!customizeIntelligence ? (
+                                {!customizeDomains ? (
                                     <div className="mt-2 text-sm text-muted-foreground">
                                         Using Subject Defaults:{" "}
-                                        {subjectTags.length > 0 ? (
+                                        {subjectDomains.length > 0 ? (
                                             <div className="flex flex-wrap gap-1 mt-1">
-                                                {subjectTags.map(tag => (
+                                                {subjectDomains.map(tag => (
                                                     <Badge key={tag} variant="secondary">
-                                                        {INTELLIGENCE_LABELS[tag] || tag}
+                                                        {DOMAIN_LABELS[tag] || tag}
                                                     </Badge>
                                                 ))}
                                             </div>
@@ -432,16 +428,16 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                                     <div className="mt-4">
                                         <FormField
                                             control={form.control}
-                                            name="intelligenceTypes"
+                                            name="academicDomains"
                                             render={() => (
                                                 <FormItem>
                                                     <ScrollArea className="h-[200px] border rounded-md p-4">
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                            {Object.entries(INTELLIGENCE_LABELS).map(([key, label]) => (
+                                                            {Object.entries(DOMAIN_LABELS).map(([key, label]) => (
                                                                 <FormField
                                                                     key={key}
                                                                     control={form.control}
-                                                                    name="intelligenceTypes"
+                                                                    name="academicDomains"
                                                                     render={({ field }) => {
                                                                         return (
                                                                             <FormItem
@@ -450,7 +446,7 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                                                                             >
                                                                                 <FormControl>
                                                                                     <Checkbox
-                                                                                        checked={field.value?.includes(key as IntelligenceType)}
+                                                                                        checked={field.value?.includes(key as AcademicDomain)}
                                                                                         onCheckedChange={(checked) => {
                                                                                             const current = field.value || []
                                                                                             return checked

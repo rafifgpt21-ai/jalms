@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
     Radar,
     RadarChart,
@@ -10,26 +11,30 @@ import {
     Tooltip,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { IntelligenceProfile } from "@/lib/actions/intelligence.actions"
-import { IntelligenceType } from "@prisma/client"
+import { LearningProfile } from "@/lib/actions/intelligence.actions"
+import { AcademicDomain } from "@prisma/client"
 
-interface IntelligenceRadarChartProps {
-    data: IntelligenceProfile[]
+interface LearningProfileRadarChartProps {
+    data: LearningProfile[]
 }
 
-const INTELLIGENCE_LABELS: Record<IntelligenceType, string> = {
-    LINGUISTIC: "Linguistic",
-    LOGICAL_MATHEMATICAL: "Logic/Math",
-    SPATIAL: "Spatial",
-    BODILY_KINESTHETIC: "Kinesthetic",
-    MUSICAL: "Musical",
-    INTERPERSONAL: "Interpersonal",
-    INTRAPERSONAL: "Intrapersonal",
-    NATURALIST: "Naturalist",
-    EXISTENTIAL: "Existential",
+const DOMAIN_LABELS: Record<AcademicDomain, string> = {
+    SCIENCE_TECHNOLOGY: "Science and Technology",
+    SOCIAL_HUMANITIES: "Social Sciences and Humanities",
+    LANGUAGE_COMMUNICATION: "Language and Communication",
+    ARTS_CREATIVITY: "Arts and Creativity",
+    PHYSICAL_EDUCATION: "Physical Education",
 }
 
-export function IntelligenceRadarChart({ data }: IntelligenceRadarChartProps) {
+export default function LearningRadarChart({ data }: LearningProfileRadarChartProps) {
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted) return null
+
     if (!data || data.length === 0) {
         return (
             <Card className="h-full">
@@ -78,12 +83,12 @@ export function IntelligenceRadarChart({ data }: IntelligenceRadarChartProps) {
         return ""
     }
 
-    const allTypes = Object.keys(INTELLIGENCE_LABELS) as IntelligenceType[]
+    const allTypes = Object.keys(DOMAIN_LABELS) as AcademicDomain[]
     const chartData = allTypes.map(type => {
-        const found = data.find(d => d.type === type)
+        const found = data.find(d => d.domain === type)
         const score = found ? found.score : 0
         return {
-            subject: INTELLIGENCE_LABELS[type],
+            subject: DOMAIN_LABELS[type],
             score: score,
             visualScore: transformScore(score),
             fullMark: 100
@@ -95,7 +100,7 @@ export function IntelligenceRadarChart({ data }: IntelligenceRadarChartProps) {
             <CardHeader>
                 <CardTitle>Learning Profile Radar</CardTitle>
                 <CardDescription>
-                    Visual representation of your performance across different intelligence types.
+                    Visual representation of your performance across different academic domains.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -119,7 +124,7 @@ export function IntelligenceRadarChart({ data }: IntelligenceRadarChartProps) {
                                 fillOpacity={0.6}
                             />
                             <Tooltip
-                                formatter={(value: number, name: string, props: any) => {
+                                formatter={(value: any, name: any, props: any) => {
                                     // Can access the original score from payload
                                     const originalScore = props.payload.score;
                                     return [originalScore, name];

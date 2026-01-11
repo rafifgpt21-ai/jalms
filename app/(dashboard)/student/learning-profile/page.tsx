@@ -1,9 +1,14 @@
-import { getStudentIntelligenceProfile } from "@/lib/actions/intelligence.actions"
+import { getStudentLearningProfile } from "@/lib/actions/intelligence.actions"
 import { getUser } from "@/lib/actions/user.actions"
 import { redirect } from "next/navigation"
-import { IntelligenceRadarChart } from "@/components/student/intelligence/radar-chart"
-import { IntelligenceProfileTable } from "@/components/student/intelligence/profile-table"
+import { LearningProfileTable } from "@/components/student/intelligence/profile-table"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import dynamicLoader from "next/dynamic"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const LearningRadarChart = dynamicLoader(
+    () => import("@/components/student/intelligence/radar-chart")
+)
 
 export const dynamic = "force-dynamic"
 
@@ -18,13 +23,13 @@ export default async function LearningProfilePage() {
         return <div className="p-8">This page is only available for students.</div>
     }
 
-    const { profile } = await getStudentIntelligenceProfile(user.id)
+    const { profile } = await getStudentLearningProfile(user.id)
 
     return (
         <div className="space-y-6">
             <MobileHeaderSetter title="Learning Profile" />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <IntelligenceRadarChart data={profile || []} />
+                <LearningRadarChart data={profile || []} />
                 {/* We can add another chart or summary here if needed, or just let the table take full width below */}
                 <div className="hidden lg:block">
                     {/* Placeholder for future insights or recommendations */}
@@ -38,7 +43,7 @@ export default async function LearningProfilePage() {
                 </div>
             </div>
 
-            <IntelligenceProfileTable data={profile || []} />
+            <LearningProfileTable data={profile || []} />
         </div>
     )
 }

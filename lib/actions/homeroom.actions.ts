@@ -208,34 +208,35 @@ export async function getStudentReportCard(studentId: string, classId: string) {
         if (!classData) return { error: "Class not found" }
 
         const student = await prisma.user.findUnique({
-            where: { id: studentId },
-            include: {
-                enrolledCourses: {
-                    where: {
-                        termId: classData.termId,
-                        deletedAt: { isSet: false }
-                    },
-                    include: {
-                        subject: true,
-                        teacher: true,
-                        assignments: {
-                            where: { deletedAt: { isSet: false } },
-                            include: {
-                                submissions: { where: { studentId, deletedAt: { isSet: false } } }
-                            }
-                        },
-                        attendances: {
-                            where: { studentId, deletedAt: { isSet: false } }
-                        }
-                    }
-                }
-            }
+            where: { id: studentId }
         })
 
         if (!student) return { error: "Student not found" }
 
         // Compile Grade Data
-        const courses = student.enrolledCourses.map(course => {
+        // Fetch courses where this student is enrolled for the class term
+        const rawCourses = await prisma.course.findMany({
+            where: {
+                studentIds: { has: studentId },
+                termId: classData.termId,
+                deletedAt: { isSet: false }
+            },
+            include: {
+                subject: true,
+                teacher: true,
+                assignments: {
+                    where: { deletedAt: { isSet: false } },
+                    include: {
+                        submissions: { where: { studentId, deletedAt: { isSet: false } } }
+                    }
+                },
+                attendances: {
+                    where: { studentId, deletedAt: { isSet: false } }
+                }
+            }
+        })
+
+        const courses = rawCourses.map(course => {
             const studentAttendance = course.attendances
             const totalSessions = studentAttendance.filter(a => a.status !== "SKIPPED").length
             const attendedCount = studentAttendance.filter(a =>

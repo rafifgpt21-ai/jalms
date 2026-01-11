@@ -3,130 +3,130 @@ title Manage Users Sequence Diagram
 autonumber
 
 actor "Admin" as Admin
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Admin" as AdminClass
+participant "User" as User
+database "Database" as Database
 
 ' View Users Flow
-Admin -> UI: View Users List
-activate UI
-UI -> Action: getUsers()
-activate Action
-Action -> Prisma: findMany()
-activate Prisma
-Prisma -> DB: SELECT * FROM User...
-activate DB
-DB --> Prisma: User[]
-deactivate DB
-Prisma --> Action: User[]
-deactivate Prisma
-Action --> UI: User[]
-deactivate Action
-UI --> Admin: Display List of Users
-deactivate UI
+Admin -> Client: View Users List
+activate Client
+Client -> AdminClass: getUsers()
+activate AdminClass
+AdminClass -> User: findMany()
+activate User
+User -> Database: SELECT * FROM User...
+activate Database
+Database --> User: User[]
+deactivate Database
+User --> AdminClass: User[]
+deactivate User
+AdminClass --> Client: User[]
+deactivate AdminClass
+Client --> Admin: Display List of Users
+deactivate Client
 
 ' User Action Choices
 alt Create User
-    Admin -> UI: Click "Add User"
-    activate UI
-    UI --> Admin: Display Create Form
-    deactivate UI
+    Admin -> Client: Click "Add User"
+    activate Client
+    Client --> Admin: Display Create Form
+    deactivate Client
 
-    Admin -> UI: Fill Details & Submit
-    activate UI
+    Admin -> Client: Fill Details & Submit
+    activate Client
     note right of Admin: Name, Email, Role, etc.
 
-    UI -> Action: createUser(data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Client -> AdminClass: createUser(data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: create({ data })
-        activate Prisma
-        Prisma -> DB: INSERT INTO User...
-        activate DB
-        DB --> Prisma: Created User
-        deactivate DB
-        Prisma --> Action: User Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> User: create({ data })
+        activate User
+        User -> Database: INSERT INTO User...
+        activate Database
+        Database --> User: Created User
+        deactivate Database
+        User --> AdminClass: User Object
+        deactivate User
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Edit User
-    Admin -> UI: Click "Edit" on User
-    activate UI
-    UI -> Action: getUser(id)
-    activate Action
-    Action -> Prisma: findUnique({ where: { id } })
-    activate Prisma
-    Prisma -> DB: SELECT * FROM User...
-    activate DB
-    DB --> Prisma: User Data
-    deactivate DB
-    Prisma --> Action: User Data
-    deactivate Prisma
-    Action --> UI: User Data
-    deactivate Action
-    UI --> Admin: Display Edit Form with Data
-    deactivate UI
+    Admin -> Client: Click "Edit" on User
+    activate Client
+    Client -> AdminClass: getUser(id)
+    activate AdminClass
+    AdminClass -> User: findUnique({ where: { id } })
+    activate User
+    User -> Database: SELECT * FROM User...
+    activate Database
+    Database --> User: User Data
+    deactivate Database
+    User --> AdminClass: User Data
+    deactivate User
+    AdminClass --> Client: User Data
+    deactivate AdminClass
+    Client --> Admin: Display Edit Form with Data
+    deactivate Client
 
-    Admin -> UI: Update Details & Submit
-    activate UI
-    UI -> Action: updateUser(id, data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Admin -> Client: Update Details & Submit
+    activate Client
+    Client -> AdminClass: updateUser(id, data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: update({ where: { id }, data })
-        activate Prisma
-        Prisma -> DB: UPDATE User...
-        activate DB
-        DB --> Prisma: Updated User
-        deactivate DB
-        Prisma --> Action: User Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> User: update({ where: { id }, data })
+        activate User
+        User -> Database: UPDATE User...
+        activate Database
+        Database --> User: Updated User
+        deactivate Database
+        User --> AdminClass: User Object
+        deactivate User
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Delete User
-    Admin -> UI: Click "Delete" on User
-    activate UI
-    UI --> Admin: Confirm Deletion?
-    deactivate UI
+    Admin -> Client: Click "Delete" on User
+    activate Client
+    Client --> Admin: Confirm Deletion?
+    deactivate Client
     
-    Admin -> UI: Confirm Yes
-    activate UI
-    UI -> Action: deleteUser(id)
-    activate Action
-    Action -> Prisma: delete({ where: { id } })
-    activate Prisma
-    Prisma -> DB: DELETE FROM User...
-    activate DB
-    DB --> Prisma: Success
-    deactivate DB
-    Prisma --> Action: Success
-    deactivate Prisma
-    Action --> UI: Success Response
-    deactivate Action
-    UI --> Admin: Show Success & Refresh List
-    deactivate UI
+    Admin -> Client: Confirm Yes
+    activate Client
+    Client -> AdminClass: deleteUser(id)
+    activate AdminClass
+    AdminClass -> User: delete({ where: { id } })
+    activate User
+    User -> Database: DELETE FROM User...
+    activate Database
+    Database --> User: Success
+    deactivate Database
+    User --> AdminClass: Success
+    deactivate User
+    AdminClass --> Client: Success Response
+    deactivate AdminClass
+    Client --> Admin: Show Success & Refresh List
+    deactivate Client
 end
 
 @enduml

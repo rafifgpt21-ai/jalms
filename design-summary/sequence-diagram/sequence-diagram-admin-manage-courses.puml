@@ -3,130 +3,130 @@ title Manage Courses Sequence Diagram
 autonumber
 
 actor "Admin" as Admin
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Admin" as AdminClass
+participant "Course" as Course
+database "Database" as Database
 
 ' View Courses Flow
-Admin -> UI: View Courses List
-activate UI
-UI -> Action: getCourses()
-activate Action
-Action -> Prisma: findMany()
-activate Prisma
-Prisma -> DB: SELECT * FROM Course...
-activate DB
-DB --> Prisma: Course[]
-deactivate DB
-Prisma --> Action: Course[]
-deactivate Prisma
-Action --> UI: Course[]
-deactivate Action
-UI --> Admin: Display List of Courses
-deactivate UI
+Admin -> Client: View Courses List
+activate Client
+Client -> AdminClass: getCourses()
+activate AdminClass
+AdminClass -> Course: findMany()
+activate Course
+Course -> Database: SELECT * FROM Course...
+activate Database
+Database --> Course: Course[]
+deactivate Database
+Course --> AdminClass: Course[]
+deactivate Course
+AdminClass --> Client: Course[]
+deactivate AdminClass
+Client --> Admin: Display List of Courses
+deactivate Client
 
 ' User Action Choices
 alt Create Course
-    Admin -> UI: Click "Add Course"
-    activate UI
-    UI --> Admin: Display Create Form
-    deactivate UI
+    Admin -> Client: Click "Add Course"
+    activate Client
+    Client --> Admin: Display Create Form
+    deactivate Client
 
-    Admin -> UI: Fill Details & Submit
-    activate UI
+    Admin -> Client: Fill Details & Submit
+    activate Client
     note right of Admin: Title, Department, etc.
 
-    UI -> Action: createCourse(data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Client -> AdminClass: createCourse(data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: create({ data })
-        activate Prisma
-        Prisma -> DB: INSERT INTO Course...
-        activate DB
-        DB --> Prisma: Created Course
-        deactivate DB
-        Prisma --> Action: Course Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> Course: create({ data })
+        activate Course
+        Course -> Database: INSERT INTO Course...
+        activate Database
+        Database --> Course: Created Course
+        deactivate Database
+        Course --> AdminClass: Course Object
+        deactivate Course
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Edit Course
-    Admin -> UI: Click "Edit" on Course
-    activate UI
-    UI -> Action: getCourse(id)
-    activate Action
-    Action -> Prisma: findUnique({ where: { id } })
-    activate Prisma
-    Prisma -> DB: SELECT * FROM Course...
-    activate DB
-    DB --> Prisma: Course Data
-    deactivate DB
-    Prisma --> Action: Course Data
-    deactivate Prisma
-    Action --> UI: Course Data
-    deactivate Action
-    UI --> Admin: Display Edit Form with Data
-    deactivate UI
+    Admin -> Client: Click "Edit" on Course
+    activate Client
+    Client -> AdminClass: getCourse(id)
+    activate AdminClass
+    AdminClass -> Course: findUnique({ where: { id } })
+    activate Course
+    Course -> Database: SELECT * FROM Course...
+    activate Database
+    Database --> Course: Course Data
+    deactivate Database
+    Course --> AdminClass: Course Data
+    deactivate Course
+    AdminClass --> Client: Course Data
+    deactivate AdminClass
+    Client --> Admin: Display Edit Form with Data
+    deactivate Client
 
-    Admin -> UI: Update Details & Submit
-    activate UI
-    UI -> Action: updateCourse(id, data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Admin -> Client: Update Details & Submit
+    activate Client
+    Client -> AdminClass: updateCourse(id, data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: update({ where: { id }, data })
-        activate Prisma
-        Prisma -> DB: UPDATE Course...
-        activate DB
-        DB --> Prisma: Updated Course
-        deactivate DB
-        Prisma --> Action: Course Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> Course: update({ where: { id }, data })
+        activate Course
+        Course -> Database: UPDATE Course...
+        activate Database
+        Database --> Course: Updated Course
+        deactivate Database
+        Course --> AdminClass: Course Object
+        deactivate Course
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Delete Course
-    Admin -> UI: Click "Delete" on Course
-    activate UI
-    UI --> Admin: Confirm Deletion?
-    deactivate UI
+    Admin -> Client: Click "Delete" on Course
+    activate Client
+    Client --> Admin: Confirm Deletion?
+    deactivate Client
     
-    Admin -> UI: Confirm Yes
-    activate UI
-    UI -> Action: deleteCourse(id)
-    activate Action
-    Action -> Prisma: delete({ where: { id } })
-    activate Prisma
-    Prisma -> DB: DELETE FROM Course...
-    activate DB
-    DB --> Prisma: Success
-    deactivate DB
-    Prisma --> Action: Success
-    deactivate Prisma
-    Action --> UI: Success Response
-    deactivate Action
-    UI --> Admin: Show Success & Refresh List
-    deactivate UI
+    Admin -> Client: Confirm Yes
+    activate Client
+    Client -> AdminClass: deleteCourse(id)
+    activate AdminClass
+    AdminClass -> Course: delete({ where: { id } })
+    activate Course
+    Course -> Database: DELETE FROM Course...
+    activate Database
+    Database --> Course: Success
+    deactivate Database
+    Course --> AdminClass: Success
+    deactivate Course
+    AdminClass --> Client: Success Response
+    deactivate AdminClass
+    Client --> Admin: Show Success & Refresh List
+    deactivate Client
 end
 
 @enduml

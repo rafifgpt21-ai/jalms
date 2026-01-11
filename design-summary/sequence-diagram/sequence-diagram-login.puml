@@ -3,46 +3,46 @@ title Login Sequence Diagram
 autonumber
 
 actor "User" as User
-participant "Web Client" as UI
-participant "NextAuth Handler" as Auth
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "User" as UserClass
+participant "User" as UserEntity
+database "Database" as Database
 
-User -> UI: Enter Email & Password
-activate UI
+User -> Client: Enter Email & Password
+activate Client
 
-UI -> Auth: POST /api/auth/signin
-activate Auth
+Client -> UserClass: POST /api/auth/signin
+activate UserClass
 
-Auth -> Prisma: findUnique({ where: { email } })
-activate Prisma
+UserClass -> UserEntity: findUnique({ where: { email } })
+activate UserEntity
 
-Prisma -> DB: SELECT * FROM User WHERE email = ?
-activate DB
+UserEntity -> Database: SELECT * FROM User WHERE email = ?
+activate Database
 
-DB --> Prisma: User Record
-deactivate DB
+Database --> UserEntity: User Record
+deactivate Database
 
-Prisma --> Auth: User Data
-deactivate Prisma
+UserEntity --> UserClass: User Data
+deactivate UserEntity
 
-Auth -> Auth: Verify Password (Hash Comparison)
-activate Auth
-deactivate Auth
+UserClass -> UserClass: Verify Password (Hash Comparison)
+activate UserClass
+deactivate UserClass
 
 alt Credentials Valid
-    Auth -> Auth: Create Session / Sign JWT
-    activate Auth
-    deactivate Auth
+    UserClass -> UserClass: Create Session / Sign JWT
+    activate UserClass
+    deactivate UserClass
     
-    Auth --> UI: 200 OK (Session/Token)
-    UI --> User: Redirect to Dashboard
+    UserClass --> Client: 200 OK (Session/Token)
+    Client --> User: Redirect to Dashboard
 else Credentials Invalid
-    Auth --> UI: 401 Unauthorized
-    UI --> User: Show "Invalid Email or Password" Error
+    UserClass --> Client: 401 Unauthorized
+    Client --> User: Show "Invalid Email or Password" Error
 end
 
-deactivate Auth
-deactivate UI
+deactivate UserClass
+deactivate Client
 
 @enduml

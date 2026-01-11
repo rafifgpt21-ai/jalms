@@ -3,32 +3,32 @@ title Submit Assignment Sequence Diagram
 autonumber
 
 actor "Student" as Student
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Student" as StudentClass
+participant "Submission" as Submission
+database "Database" as Database
 
-Student -> UI: View Assignment Details
-activate UI
-Student -> UI: Upload Submission
-activate UI
-UI -> Action: submitAssignment(assignmentId, file)
-activate Action
-Action -> Action: Upload File
-activate Action
-deactivate Action
-Action -> Prisma: create({ data: { submission } })
-activate Prisma
-Prisma -> DB: INSERT INTO Submission...
-activate DB
-DB --> Prisma: Success
-deactivate DB
-Prisma --> Action: Success
-deactivate Prisma
-Action --> UI: Success
-UI --> Student: Submitted Successfully
-deactivate Action
-deactivate UI
-deactivate UI
+Student -> Client: View Assignment Details
+activate Client
+Student -> Client: Upload Submission
+activate Client
+Client -> StudentClass: submitAssignment(assignmentId, file)
+activate StudentClass
+StudentClass -> StudentClass: Upload File
+activate StudentClass
+deactivate StudentClass
+StudentClass -> Submission: create({ data: { submission } })
+activate Submission
+Submission -> Database: INSERT INTO Submission...
+activate Database
+Database --> Submission: Success
+deactivate Database
+Submission --> StudentClass: Success
+deactivate Submission
+StudentClass --> Client: Success
+Client --> Student: Submitted Successfully
+deactivate StudentClass
+deactivate Client
+deactivate Client
 
 @enduml

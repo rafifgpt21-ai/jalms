@@ -3,130 +3,130 @@ title Manage Semester Sequence Diagram
 autonumber
 
 actor "Admin" as Admin
-participant "Web Client" as UI
-participant "Server Action" as Action
-participant "Prisma ORM" as Prisma
-database "Database" as DB
+participant "Web Client" as Client
+participant "Admin" as AdminClass
+participant "Term" as Term
+database "Database" as Database
 
 ' View Semesters Flow
-Admin -> UI: View Academic Year Details
-activate UI
-UI -> Action: fetchSemesters(academicYearId)
-activate Action
-Action -> Prisma: findMany({ where: { academicYearId } })
-activate Prisma
-Prisma -> DB: SELECT * FROM Semester...
-activate DB
-DB --> Prisma: Semester[]
-deactivate DB
-Prisma --> Action: Semester[]
-deactivate Prisma
-Action --> UI: Semester[]
-deactivate Action
-UI --> Admin: Display List of Semesters
-deactivate UI
+Admin -> Client: View Academic Year Details
+activate Client
+Client -> AdminClass: fetchSemesters(academicYearId)
+activate AdminClass
+AdminClass -> Term: findMany({ where: { academicYearId } })
+activate Term
+Term -> Database: SELECT * FROM Semester...
+activate Database
+Database --> Term: Semester[]
+deactivate Database
+Term --> AdminClass: Semester[]
+deactivate Term
+AdminClass --> Client: Semester[]
+deactivate AdminClass
+Client --> Admin: Display List of Semesters
+deactivate Client
 
 ' User Action Choices
 alt Create Semester
-    Admin -> UI: Click "Add Semester"
-    activate UI
-    UI --> Admin: Display Create Form
-    deactivate UI
+    Admin -> Client: Click "Add Semester"
+    activate Client
+    Client --> Admin: Display Create Form
+    deactivate Client
 
-    Admin -> UI: Fill Details & Submit
-    activate UI
+    Admin -> Client: Fill Details & Submit
+    activate Client
     note right of Admin: Type, Start Date, End Date
 
-    UI -> Action: createSemester(data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Client -> AdminClass: createSemester(data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: create({ data })
-        activate Prisma
-        Prisma -> DB: INSERT INTO Semester...
-        activate DB
-        DB --> Prisma: Created Semester
-        deactivate DB
-        Prisma --> Action: Semester Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> Term: create({ data })
+        activate Term
+        Term -> Database: INSERT INTO Semester...
+        activate Database
+        Database --> Term: Created Semester
+        deactivate Database
+        Term --> AdminClass: Semester Object
+        deactivate Term
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Edit Semester
-    Admin -> UI: Click "Edit" on Semester
-    activate UI
-    UI -> Action: getSemester(id)
-    activate Action
-    Action -> Prisma: findUnique({ where: { id } })
-    activate Prisma
-    Prisma -> DB: SELECT * FROM Semester...
-    activate DB
-    DB --> Prisma: Semester Data
-    deactivate DB
-    Prisma --> Action: Semester Data
-    deactivate Prisma
-    Action --> UI: Semester Data
-    deactivate Action
-    UI --> Admin: Display Edit Form with Data
-    deactivate UI
+    Admin -> Client: Click "Edit" on Semester
+    activate Client
+    Client -> AdminClass: getSemester(id)
+    activate AdminClass
+    AdminClass -> Term: findUnique({ where: { id } })
+    activate Term
+    Term -> Database: SELECT * FROM Semester...
+    activate Database
+    Database --> Term: Semester Data
+    deactivate Database
+    Term --> AdminClass: Semester Data
+    deactivate Term
+    AdminClass --> Client: Semester Data
+    deactivate AdminClass
+    Client --> Admin: Display Edit Form with Data
+    deactivate Client
 
-    Admin -> UI: Update Details & Submit
-    activate UI
-    UI -> Action: updateSemester(id, data)
-    activate Action
-    Action -> Action: Validate Data
-    activate Action
-    deactivate Action
+    Admin -> Client: Update Details & Submit
+    activate Client
+    Client -> AdminClass: updateSemester(id, data)
+    activate AdminClass
+    AdminClass -> AdminClass: Validate Data
+    activate AdminClass
+    deactivate AdminClass
 
     opt Validation Pass
-        Action -> Prisma: update({ where: { id }, data })
-        activate Prisma
-        Prisma -> DB: UPDATE Semester...
-        activate DB
-        DB --> Prisma: Updated Semester
-        deactivate DB
-        Prisma --> Action: Semester Object
-        deactivate Prisma
-        Action --> UI: Success Response
-        UI --> Admin: Show Success & Refresh List
+        AdminClass -> Term: update({ where: { id }, data })
+        activate Term
+        Term -> Database: UPDATE Semester...
+        activate Database
+        Database --> Term: Updated Semester
+        deactivate Database
+        Term --> AdminClass: Semester Object
+        deactivate Term
+        AdminClass --> Client: Success Response
+        Client --> Admin: Show Success & Refresh List
     else Validation Fail
-        Action --> UI: Error Response
-        UI --> Admin: Show Error Message
+        AdminClass --> Client: Error Response
+        Client --> Admin: Show Error Message
     end
-    deactivate Action
-    deactivate UI
+    deactivate AdminClass
+    deactivate Client
 
 else Delete Semester
-    Admin -> UI: Click "Delete" on Semester
-    activate UI
-    UI --> Admin: Confirm Deletion?
-    deactivate UI
+    Admin -> Client: Click "Delete" on Semester
+    activate Client
+    Client --> Admin: Confirm Deletion?
+    deactivate Client
     
-    Admin -> UI: Confirm Yes
-    activate UI
-    UI -> Action: deleteSemester(id)
-    activate Action
-    Action -> Prisma: delete({ where: { id } })
-    activate Prisma
-    Prisma -> DB: DELETE FROM Semester...
-    activate DB
-    DB --> Prisma: Success
-    deactivate DB
-    Prisma --> Action: Success
-    deactivate Prisma
-    Action --> UI: Success Response
-    deactivate Action
-    UI --> Admin: Show Success & Refresh List
-    deactivate UI
+    Admin -> Client: Confirm Yes
+    activate Client
+    Client -> AdminClass: deleteSemester(id)
+    activate AdminClass
+    AdminClass -> Term: delete({ where: { id } })
+    activate Term
+    Term -> Database: DELETE FROM Semester...
+    activate Database
+    Database --> Term: Success
+    deactivate Database
+    Term --> AdminClass: Success
+    deactivate Term
+    AdminClass --> Client: Success Response
+    deactivate AdminClass
+    Client --> Admin: Show Success & Refresh List
+    deactivate Client
 end
 
 @enduml

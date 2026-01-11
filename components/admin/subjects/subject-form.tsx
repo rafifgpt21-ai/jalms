@@ -1,20 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { IntelligenceType } from "@prisma/client"
+import { toast } from "sonner"
+import { Subject, AcademicDomain } from "@prisma/client"
+import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
 import {
     Form,
     FormControl,
@@ -26,119 +20,99 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { toast } from "sonner"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { createSubject, updateSubject } from "@/lib/actions/subject.actions"
-import { Loader2 } from "lucide-react"
+
+const DOMAIN_LABELS: Record<AcademicDomain, string> = {
+    SCIENCE_TECHNOLOGY: "Science and Technology",
+    SOCIAL_HUMANITIES: "Social Sciences and Humanities",
+    LANGUAGE_COMMUNICATION: "Language and Communication",
+    ARTS_CREATIVITY: "Arts and Creativity",
+    PHYSICAL_EDUCATION: "Physical Education",
+}
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
     code: z.string().min(1, "Code is required"),
     description: z.string().optional(),
-    intelligenceTypes: z.array(z.nativeEnum(IntelligenceType)),
+    academicDomains: z.array(z.nativeEnum(AcademicDomain)).default([]),
 })
 
 interface SubjectFormProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    initialData?: any // Subject
-}
-
-const INTELLIGENCE_LABELS: Record<IntelligenceType, string> = {
-    LINGUISTIC: "Linguistic-Verbal",
-    LOGICAL_MATHEMATICAL: "Logical-Mathematical",
-    SPATIAL: "Visual-Spatial",
-    BODILY_KINESTHETIC: "Bodily-Kinesthetic",
-    MUSICAL: "Musical-Rhythmic",
-    INTERPERSONAL: "Interpersonal",
-    INTRAPERSONAL: "Intrapersonal",
-    NATURALIST: "Naturalist",
-    EXISTENTIAL: "Existential",
+    initialData?: Subject | null // If null, create mode
 }
 
 export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProps) {
-    const [isPending, setIsPending] = useState(false)
+    const [isPending, startTransition] = useTransition()
+    const isEditMode = !!initialData
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema) as any,
         defaultValues: {
-            name: "",
-            code: "",
-            description: "",
-            intelligenceTypes: [],
+            name: initialData?.name || "",
+            code: initialData?.code || "",
+            description: initialData?.description || "",
+            academicDomains: initialData?.academicDomains || [],
         },
     })
 
-    useEffect(() => {
-        if (initialData) {
-            form.reset({
-                name: initialData.name,
-                code: initialData.code,
-                description: initialData.description || "",
-                intelligenceTypes: initialData.intelligenceTypes || [],
-            })
-        } else {
-            form.reset({
-                name: "",
-                code: "",
-                description: "",
-                intelligenceTypes: [],
-            })
-        }
-    }, [initialData, form])
-
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        setIsPending(true)
-        try {
-            let result
-            if (initialData) {
-                result = await updateSubject(initialData.id, values)
-            } else {
-                result = await createSubject(values)
+    function onSubmit(values: z.infer<typeof formSchema>) {
+        startTransition(async () => {
+            try {
+                if (isEditMode && initialData) {
+                    const result = await updateSubject(initialData.id, {
+                        ...values,
+                        description: values.description || undefined
+                    })
+                    if (result.error) {
+                        toast.error(result.error)
+                    } else {
+                        toast.success("Subject updated successfully")
+                        onOpenChange(false)
+                        form.reset()
+                    }
+                } else {
+                    const result = await createSubject({
+                        ...values,
+                        description: values.description || undefined
+                    })
+                    if (result.error) {
+                        toast.error(result.error)
+                    } else {
+                        toast.success("Subject created successfully")
+                        onOpenChange(false)
+                        form.reset()
+                    }
+                }
+            } catch (error) {
+                toast.error("Something went wrong")
             }
-
-            if (result.error) {
-                toast.error(result.error)
-            } else {
-                toast.success(initialData ? "Subject updated" : "Subject created")
-                onOpenChange(false)
-                if (!initialData) form.reset()
-            }
-        } catch (error) {
-            toast.error("Something went wrong")
-        } finally {
-            setIsPending(false)
-        }
+        })
     }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] bg-white dark:bg-slate-900 border-white/20 dark:border-white/10">
                 <DialogHeader>
-                    <DialogTitle>{initialData ? "Edit Subject" : "Create Subject"}</DialogTitle>
+                    <DialogTitle>{isEditMode ? "Edit Subject" : "Create Subject"}</DialogTitle>
                     <DialogDescription>
-                        Manage subject details and associated intelligence types.
+                        {isEditMode ? "Update subject details." : "Add a new subject to the system."}
                     </DialogDescription>
                 </DialogHeader>
-
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Mathematics" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
                             <FormField
                                 control={form.control}
                                 name="code"
@@ -146,7 +120,20 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
                                     <FormItem>
                                         <FormLabel>Code</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="MATH" {...field} />
+                                            <Input placeholder="BIO" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Biology" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -161,7 +148,7 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Optional description..." className="resize-none" {...field} />
+                                        <Textarea placeholder="Course description..." {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -170,40 +157,50 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
 
                         <FormField
                             control={form.control}
-                            name="intelligenceTypes"
-                            render={({ field }) => (
+                            name="academicDomains"
+                            render={() => (
                                 <FormItem>
                                     <div className="mb-4">
-                                        <FormLabel className="text-base">Multiple Intelligences</FormLabel>
+                                        <FormLabel className="text-base">Academic Domains</FormLabel>
                                         <FormDescription>
-                                            Select the primary intelligences associated with this subject.
+                                            Select the primary academic domains for this subject.
                                         </FormDescription>
                                     </div>
                                     <ScrollArea className="h-[200px] border rounded-md p-4">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {Object.entries(INTELLIGENCE_LABELS).map(([key, label]) => (
-                                                <FormItem
+                                            {Object.entries(DOMAIN_LABELS).map(([key, label]) => (
+                                                <FormField
                                                     key={key}
-                                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                                >
-                                                    <FormControl>
-                                                        <Checkbox
-                                                            checked={field.value?.includes(key as IntelligenceType)}
-                                                            onCheckedChange={(checked) => {
-                                                                return checked
-                                                                    ? field.onChange([...(field.value || []), key])
-                                                                    : field.onChange(
-                                                                        (field.value || []).filter(
-                                                                            (value) => value !== key
-                                                                        )
-                                                                    )
-                                                            }}
-                                                        />
-                                                    </FormControl>
-                                                    <FormLabel className="font-normal cursor-pointer">
-                                                        {label}
-                                                    </FormLabel>
-                                                </FormItem>
+                                                    control={form.control}
+                                                    name="academicDomains"
+                                                    render={({ field }) => {
+                                                        return (
+                                                            <FormItem
+                                                                key={key}
+                                                                className="flex flex-row items-start space-x-3 space-y-0"
+                                                            >
+                                                                <FormControl>
+                                                                    <Checkbox
+                                                                        checked={field.value?.includes(key as AcademicDomain)}
+                                                                        onCheckedChange={(checked) => {
+                                                                            const current = field.value || []
+                                                                            return checked
+                                                                                ? field.onChange([...current, key])
+                                                                                : field.onChange(
+                                                                                    current.filter(
+                                                                                        (value) => value !== key
+                                                                                    )
+                                                                                )
+                                                                        }}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormLabel className="font-normal cursor-pointer">
+                                                                    {label}
+                                                                </FormLabel>
+                                                            </FormItem>
+                                                        )
+                                                    }}
+                                                />
                                             ))}
                                         </div>
                                     </ScrollArea>
@@ -213,12 +210,9 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
                         />
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Cancel
-                            </Button>
                             <Button type="submit" disabled={isPending}>
                                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {initialData ? "Save Changes" : "Create Subject"}
+                                {isEditMode ? "Save Changes" : "Create Subject"}
                             </Button>
                         </DialogFooter>
                     </form>
