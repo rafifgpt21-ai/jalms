@@ -30,7 +30,9 @@ export const authConfig = {
                 const pathname = nextUrl.pathname;
 
                 if (pathname.startsWith('/admin')) {
-                    return roles.includes("ADMIN");
+                    // Allow access to admin route in middleware to let the Layout handle the role check
+                    // This allows for fresh DB checks in the Layout and prevents issues with stale sessions
+                    return true;
                 }
 
                 if (pathname.startsWith('/teacher')) {

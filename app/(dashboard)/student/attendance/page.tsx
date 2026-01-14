@@ -14,13 +14,13 @@ export default async function StudentAttendancePage() {
         where: {
             studentIds: { has: user.id },
             term: { isActive: true },
-            deletedAt: null
+            deletedAt: { isSet: false }
         },
         include: {
             attendances: {
                 where: {
                     studentId: user.id,
-                    deletedAt: null
+                    deletedAt: { isSet: false }
                 }
             }
         }
@@ -34,6 +34,8 @@ export default async function StudentAttendancePage() {
 
     courses.forEach(course => {
         course.attendances.forEach(record => {
+            if (record.status === 'SKIPPED') return // Don't count skipped/cancelled classes
+
             if (record.status === 'PRESENT') totalPresent++
             if (record.status === 'ABSENT') totalAbsent++
             if (record.status === 'EXCUSED') totalExcused++
@@ -111,8 +113,10 @@ export default async function StudentAttendancePage() {
                                     const present = course.attendances.filter(r => r.status === 'PRESENT').length
                                     const absent = course.attendances.filter(r => r.status === 'ABSENT').length
                                     const excused = course.attendances.filter(r => r.status === 'EXCUSED').length
-                                    const total = course.attendances.length
-                                    const rate = total > 0 ? Math.round(((present + excused) / total) * 100) : 0 // Counting excused as present for rate? Or just present? Usually excused doesn't hurt rate. Let's say Present / (Total - Excused) or just (Present + Excused) / Total. Let's go with (Present + Excused) / Total for now as "Participation".
+                                    // Exclude SKIPPED from total sessions count
+                                    const validSessions = course.attendances.filter(r => r.status !== 'SKIPPED')
+                                    const total = validSessions.length
+                                    const rate = total > 0 ? Math.round(((present + excused) / total) * 100) : 100
 
                                     let statusVariant: "default" | "destructive" | "outline" | "secondary" = "default"
                                     let statusText = "Good"

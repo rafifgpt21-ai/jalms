@@ -10,6 +10,8 @@ import { DashboardContent } from "@/components/dashboard-content"
 
 import { getTeacherActiveCourses } from "@/lib/actions/teacher.actions"
 
+import { db } from "@/lib/db"
+
 export default async function DashboardLayout({
     children,
 }: {
@@ -18,7 +20,18 @@ export default async function DashboardLayout({
     const session = await auth()
     if (!session) redirect("/login")
 
-    const userRoles = session.user?.roles || []
+    let userRoles = session.user?.roles || []
+
+    // Fetch fresh roles to ensure UI updates immediately
+    if (session.user?.id) {
+        const user = await db.user.findUnique({
+            where: { id: session.user.id },
+            select: { roles: true }
+        })
+        if (user) {
+            userRoles = user.roles
+        }
+    }
 
     let teacherCourses: any[] = []
     if (userRoles.includes("SUBJECT_TEACHER") && session.user?.id) {

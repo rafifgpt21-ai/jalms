@@ -44,104 +44,127 @@ export async function getStudentDashboardStats() {
 
         const studentId = user.id
 
-        // 1. Get Today's Schedule
         const today = new Date()
         const dayOfWeek = today.getDay() // 0=Sunday, 1=Monday...
 
-        const schedule = await prisma.schedule.findMany({
-            where: {
-                dayOfWeek,
-                course: {
-                    studentIds: { has: studentId },
-                    term: { isActive: true },
-                    deletedAt: { isSet: false }
-                },
-                deletedAt: { isSet: false }
-            },
-            include: {
-                course: {
-                    include: { teacher: true }
-                }
-            },
-            orderBy: {
-                period: 'asc'
-            }
-        })
-
-        // 1.1 Enrich schedule with Topic info
+        // Date boundaries for attendance
         const startOfDay = new Date(today)
         startOfDay.setHours(0, 0, 0, 0)
         const endOfDay = new Date(today)
         endOfDay.setHours(23, 59, 59, 999)
 
-        const scheduleWithTopics = await Promise.all(schedule.map(async (slot) => {
-            const attendance = await prisma.attendance.findFirst({
+        // Run independent queries in parallel
+        const [schedule, allAssignments, recentGrades] = await Promise.all([
+            // 1. Get Today's Schedule
+            prisma.schedule.findMany({
                 where: {
-                    courseId: slot.courseId,
-                    period: slot.period,
+                    dayOfWeek,
+                    course: {
+                        studentIds: { has: studentId },
+                        term: { isActive: true },
+                        deletedAt: { isSet: false }
+                    },
+                    deletedAt: { isSet: false }
+                },
+                include: {
+                    course: {
+                        include: { teacher: true }
+                    }
+                },
+                orderBy: {
+                    period: 'asc'
+                }
+            }),
+
+            // 2. Get ALL Assignments for active courses (Filter in memory for speed)
+            // Complex OR/NOT EXISTS query was taking ~20s. Fetching all is much faster.
+            prisma.assignment.findMany({
+                where: {
+                    course: {
+                        studentIds: { has: studentId },
+                        term: { isActive: true },
+                        deletedAt: { isSet: false }
+                    },
+                    deletedAt: { isSet: false },
+                    type: { in: ["SUBMISSION", "QUIZ"] }
+                },
+                include: {
+                    course: true,
+                    submissions: {
+                        where: {
+                            studentId,
+                            deletedAt: { isSet: false }
+                        },
+                        select: { id: true, submittedAt: true }
+                    }
+                }
+            }),
+
+            // 3. Recent Activity (New assignments or Graded submissions)
+            prisma.submission.findMany({
+                where: {
+                    studentId,
+                    grade: { not: null },
+                    deletedAt: { isSet: false }
+                },
+                take: 5,
+                orderBy: { submittedAt: 'desc' },
+                include: {
+                    assignment: {
+                        include: { course: true }
+                    }
+                }
+            })
+        ])
+
+        // 1.1 Enrich schedule with Topic info (Batch optimized)
+        const courseIds = schedule.map(s => s.courseId)
+
+        let attendanceTopics: { topic: string | null, status: string, courseId: string, period: number }[] = []
+
+        if (courseIds.length > 0) {
+            attendanceTopics = await prisma.attendance.findMany({
+                where: {
+                    courseId: { in: courseIds },
                     date: {
                         gte: startOfDay,
                         lte: endOfDay
                     },
                     deletedAt: { isSet: false }
                 },
-                select: { topic: true, status: true }
+                select: { topic: true, status: true, courseId: true, period: true }
             })
+        }
+
+        const filteredSchedule = schedule.map(slot => {
+            const attendance = attendanceTopics.find(a =>
+                a.courseId === slot.courseId && a.period === slot.period
+            )
             return {
                 ...slot,
                 topic: attendance?.topic || null,
                 isSkipped: attendance?.status === "SKIPPED"
             }
-        }))
+        }).filter(slot => !slot.isSkipped)
 
-        const filteredSchedule = scheduleWithTopics.filter(slot => !slot.isSkipped)
+        // 2.1 Process Upcoming Deadlines in Memory
+        const now = new Date()
+        const upcomingDeadlines = allAssignments.filter(assignment => {
+            if (!assignment.dueDate) return false
 
-        // 2. Get Upcoming Deadlines (Next 5)
-        const upcomingDeadlines = await prisma.assignment.findMany({
-            where: {
-                course: {
-                    studentIds: { has: studentId },
-                    term: { isActive: true },
-                    deletedAt: { isSet: false }
-                },
-                deletedAt: { isSet: false },
-                type: { in: ["SUBMISSION", "QUIZ"] },
-                OR: [
-                    { dueDate: { gte: new Date() } },
-                    {
-                        AND: [
-                            { dueDate: { lt: new Date() } },
-                            { submissions: { none: { studentId } } }
-                        ]
-                    }
-                ]
-            },
-            take: 5,
-            orderBy: { dueDate: 'asc' },
-            include: {
-                course: true,
-                submissions: {
-                    where: { studentId }
-                }
-            }
-        })
+            // Allow if due in future
+            if (assignment.dueDate >= now) return true
 
-        // 3. Recent Activity (New assignments or Graded submissions)
-        // For now, let's just show recent graded submissions
-        const recentGrades = await prisma.submission.findMany({
-            where: {
-                studentId,
-                grade: { not: null },
-                deletedAt: { isSet: false }
-            },
-            take: 5,
-            orderBy: { submittedAt: 'desc' },
-            include: {
-                assignment: {
-                    include: { course: true }
-                }
-            }
-        })
+            // Allow if Overdue AND Not Submitted
+            const isSubmitted = assignment.submissions.length > 0
+            if (assignment.dueDate < now && !isSubmitted) return true
+
+            return false
+        }).sort((a, b) => {
+            // Sort by due date ascending
+            if (!a.dueDate || !b.dueDate) return 0
+            return a.dueDate.getTime() - b.dueDate.getTime()
+        }).slice(0, 5)
 
 
         return {
