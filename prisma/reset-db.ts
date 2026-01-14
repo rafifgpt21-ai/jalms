@@ -13,25 +13,77 @@ async function main() {
 
     console.log("🗑️  Emptying database tables...")
 
-    // Activity/Transaction related
+    // 1. Delete dependent data first (leaves)
+    // Submissions depend on Assignments and Students
+    console.log("   - Deleting Submissions...")
     await prisma.submission.deleteMany({})
+
+    // Attendance depends on Courses and Students
+    console.log("   - Deleting Attendance...")
     await prisma.attendance.deleteMany({})
+
+    // MaterialAssignments depend on Materials and Courses
+    console.log("   - Deleting Material Assignments...")
     await prisma.materialAssignment.deleteMany({})
+
+    // Schedules depend on Courses
+    console.log("   - Deleting Schedules...")
     await prisma.schedule.deleteMany({})
+
+    // Enrollments depend on Classes and Students
+    console.log("   - Deleting Enrollments...")
     await prisma.enrollment.deleteMany({})
+
+    // Messages depend on Conversations and Users
+    console.log("   - Deleting Messages...")
     await prisma.message.deleteMany({})
 
-    // Content/Structure related
+    // Quiz Questions/Choices depend on Quizzes
+    console.log("   - Deleting Quiz Content...")
+    await prisma.quizChoice.deleteMany({})
+    await prisma.quizQuestion.deleteMany({})
+
+    // 2. Delete mid-level data & content
+    // Assignments depend on Courses and Quizzes.
+    // Ensure Submissions are GONE.
+    const subCount = await prisma.submission.count()
+    if (subCount > 0) {
+        console.warn(`WARNING: ${subCount} submissions still exist. Retrying delete...`)
+        await prisma.submission.deleteMany({})
+    }
+
+    console.log("   - Deleting Assignments...")
     await prisma.assignment.deleteMany({})
+
+    console.log("   - Deleting Materials...")
     await prisma.material.deleteMany({})
+
+    console.log("   - Deleting Quizzes...")
+    await prisma.quiz.deleteMany({})
+
+    // 3. Delete Structural Data
+    // Courses depend on Subjects, Terms, Classes, Teachers
+    console.log("   - Deleting Courses...")
     await prisma.course.deleteMany({})
+
+    // Classes depend on Terms
+    console.log("   - Deleting Classes...")
     await prisma.class.deleteMany({})
+
+    console.log("   - Deleting Subjects...")
     await prisma.subject.deleteMany({})
+
+    console.log("   - Deleting Terms...")
     await prisma.term.deleteMany({})
+
+    console.log("   - Deleting Academic Years...")
     await prisma.academicYear.deleteMany({})
+
+    console.log("   - Deleting Conversations...")
     await prisma.conversation.deleteMany({})
 
-    // Users
+    // 4. Users (Roots)
+    console.log("   - Deleting Users...")
     await prisma.user.deleteMany({})
 
     console.log("✅ Database emptied.")

@@ -17,7 +17,7 @@ export default async function SchedulePage({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 h-full flex flex-col">
             <MobileHeaderSetter title="Schedule Manager" />
             <MasterScheduleManager teachers={(teachers as any) || []} />
         </div>

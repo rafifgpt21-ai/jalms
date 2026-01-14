@@ -43,7 +43,9 @@ import { Plus, X, Search, ChevronLeft, ChevronRight, Loader2, Save } from "lucid
 import { updateSchedule } from "@/lib/actions/schedule.actions"
 import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { toast } from "sonner"
+
 import { cn } from "@/lib/utils"
+import { ConflictListDialog } from "./conflict-list-dialog"
 
 // Constants
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -256,7 +258,8 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
     const [searchQuery, setSearchQuery] = useState("")
     const [isUpdating, setIsUpdating] = useState(false)
     const [viewMode, setViewMode] = useState<"day" | "week">("day")
-    const [conflictDetails, setConflictDetails] = useState<string[] | null>(null)
+
+    const [conflictEvents, setConflictEvents] = useState<any[]>([])
     const [showConflictDialog, setShowConflictDialog] = useState(false)
 
     // Editor State
@@ -318,8 +321,10 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
             const dbDay = DB_DAY_MAPPING[dayStr]
             const result = await updateSchedule(teacherId, dbDay, period, courseId)
 
-            if (result.conflictDetails) {
-                setConflictDetails(result.conflictDetails)
+
+
+            if (result.conflictEvents) {
+                setConflictEvents(result.conflictEvents)
                 setShowConflictDialog(true)
             } else if (result.error) {
                 toast.error(result.error)
@@ -335,29 +340,14 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 h-full flex flex-col gap-6">
             {/* Conflict Dialog */}
-            <AlertDialog open={showConflictDialog} onOpenChange={setShowConflictDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Schedule Conflict Detected</AlertDialogTitle>
-                        <AlertDialogDescription asChild>
-                            <div className="flex flex-col gap-2 mt-2">
-                                {conflictDetails?.map((detail, index) => (
-                                    <div key={index} className="text-sm bg-red-50 text-red-700 p-2 rounded border border-red-200">
-                                        {detail}
-                                    </div>
-                                ))}
-                            </div>
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogAction onClick={() => setShowConflictDialog(false)}>
-                            Understood
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+
+            <ConflictListDialog
+                open={showConflictDialog}
+                onOpenChange={setShowConflictDialog}
+                conflicts={conflictEvents}
+            />
 
             {/* Assignment Editor Dialog */}
             <Dialog open={!!editingSlot} onOpenChange={(open) => !open && setEditingSlot(null)}>
@@ -452,9 +442,9 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
             </div>
 
             {/* Main Grid */}
-            <div className="bg-background border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
-                <div className="overflow-x-auto max-w-[100vw] md:max-w-[calc(100vw-3rem)]">
-                    <Table className="relative min-w-full w-auto">
+            <div className="bg-background border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+                <div className="overflow-auto w-full max-w-[100vw] h-full">
+                    <table className="relative min-w-full w-auto caption-bottom text-sm">
                         <TableHeader className="sticky top-0 bg-background z-20 shadow-sm border-b border-border">
                             <TableRow className="hover:bg-transparent border-border">
                                 <TableHead className="w-[200px] min-w-[200px] max-w-[200px] bg-background z-30 sticky left-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-foreground font-medium border-b border-r border-border">
@@ -497,13 +487,10 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                                 ))
                             )}
                         </TableBody>
-                    </Table>
+                    </table>
                 </div>
             </div>
 
-            <div className="text-xs text-muted-foreground text-center">
-                Showing {filteredTeachers.length} teachers. Schedules are saved automatically.
-            </div>
         </div>
     )
 }

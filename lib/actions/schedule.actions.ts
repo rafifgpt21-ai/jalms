@@ -57,14 +57,16 @@ export async function updateSchedule(
             const conflicts = await checkCourseScheduleUpdateConflict(courseId, [{ day: dayOfWeek, period }])
 
             if (conflicts.length > 0) {
-                const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-                const conflictDetails = conflicts.map(c =>
-                    `Conflict for student ${c.studentName} with ${c.conflict.courseName} on ${days[c.conflict.dayOfWeek]} Period ${c.conflict.period}`
-                )
+                const conflictEvents = conflicts.map(c => ({
+                    studentName: c.studentName,
+                    courseName: c.conflict.courseName,
+                    day: c.conflict.dayOfWeek,
+                    period: c.conflict.period
+                }))
 
                 return {
                     error: "Schedule conflict detected",
-                    conflictDetails
+                    conflictEvents
                 }
             }
 
@@ -141,20 +143,30 @@ export async function saveTeacherSchedule(
             schedulesByCourse.get(s.courseId)!.push({ day: s.day, period: s.period })
         })
 
-        const conflicts = []
+
+        // Defined explicit type for conflict collection
+        const conflicts: { studentName: string; courseName: string; day: number; period: number }[] = []
         for (const [courseId, slots] of schedulesByCourse.entries()) {
             const courseConflicts = await checkCourseScheduleUpdateConflict(courseId, slots)
             if (courseConflicts.length > 0) {
                 const first = courseConflicts[0]
-                const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-                conflicts.push(`Conflict for student ${first.studentName} with ${first.conflict.courseName} on ${days[first.conflict.dayOfWeek]} Period ${first.conflict.period}`)
+                // Return structured data for the first conflict of this course (or all?)
+                // Let's return all to be safe and let UI handle display
+                courseConflicts.forEach(c => {
+                    conflicts.push({
+                        studentName: c.studentName,
+                        courseName: c.conflict.courseName,
+                        day: c.conflict.dayOfWeek,
+                        period: c.conflict.period
+                    })
+                })
             }
         }
 
         if (conflicts.length > 0) {
             return {
                 error: "Schedule conflicts detected",
-                conflictDetails: conflicts
+                conflictEvents: conflicts
             }
         }
 

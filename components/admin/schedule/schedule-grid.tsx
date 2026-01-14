@@ -6,7 +6,9 @@ import { Loader2, Plus, X, ArrowLeft, AlertCircle } from "lucide-react"
 import { saveTeacherSchedule, getTeacherSchedule } from "@/lib/actions/schedule.actions"
 import { Course, Schedule, Class, Subject, Term, AcademicYear } from "@prisma/client"
 import { toast } from "sonner"
+
 import { cn } from "@/lib/utils"
+import { ConflictListDialog } from "./conflict-list-dialog"
 import {
     Command,
     CommandEmpty,
@@ -20,16 +22,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+
 import { useRouter } from "next/navigation"
 
 type CourseWithDetails = Course & {
@@ -56,8 +49,9 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
     const [assignments, setAssignments] = useState<Record<string, string>>({})
     const [saving, setSaving] = useState(false)
     const [hasChanges, setHasChanges] = useState(false)
+
     const [conflictDialogOpen, setConflictDialogOpen] = useState(false)
-    const [conflictDetails, setConflictDetails] = useState<string[]>([])
+    const [conflictEvents, setConflictEvents] = useState<any[]>([])
     const [selectedDay, setSelectedDay] = useState(0)
 
     // Initialize assignments from initialCourses
@@ -116,8 +110,9 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
             toast.success("Schedule saved successfully")
             setHasChanges(false)
             router.refresh()
-        } else if (result.conflictDetails) {
-            setConflictDetails(result.conflictDetails)
+
+        } else if (result.conflictEvents) {
+            setConflictEvents(result.conflictEvents)
             setConflictDialogOpen(true)
         } else {
             toast.error(result.error)
@@ -180,7 +175,7 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
 
             {/* Desktop View */}
             {/* Desktop View */}
-            {/* Desktop View */}
+
             <div className="max-md:hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl p-4 shadow-sm overflow-x-auto">
                 <div className="grid grid-cols-8 gap-2 min-w-[800px]">
                     {/* Header Row */}
@@ -218,34 +213,11 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
                 </div>
             </div>
 
-            <AlertDialog open={conflictDialogOpen} onOpenChange={setConflictDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-                            <AlertCircle className="h-5 w-5" />
-                            Schedule Conflicts Detected
-                        </AlertDialogTitle>
-                        <AlertDialogDescription asChild>
-                            <div className="text-muted-foreground text-sm">
-                                The following conflicts prevent saving the schedule:
-                                <ul className="mt-2 list-disc list-inside space-y-1 text-gray-700 max-h-[200px] overflow-y-auto">
-                                    {conflictDetails.map((detail, index) => (
-                                        <li key={index}>
-                                            {/* Using regex to replace simple numbers with "Period X" if needed, 
-                                                but for now just passing string. The backend string formatter might need update too if consistency matters 
-                                            */}
-                                            {detail.replace(/Period 0/, "Morning").replace(/Period 7/, "Night")}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogAction onClick={() => setConflictDialogOpen(false)}>OK</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <ConflictListDialog
+                open={conflictDialogOpen}
+                onOpenChange={setConflictDialogOpen}
+                conflicts={conflictEvents}
+            />
         </div>
     )
 }

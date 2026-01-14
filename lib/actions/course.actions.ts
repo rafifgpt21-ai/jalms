@@ -37,7 +37,12 @@ export async function getCourses(options: { showAll?: boolean } = {}) {
             }
         })
 
-        return { courses }
+        const coursesWithCount = courses.map(course => ({
+            ...course,
+            _count: { students: course.studentIds.length }
+        }))
+
+        return { courses: coursesWithCount }
     } catch (error) {
         console.error("Error fetching courses:", error)
         return { courses: [] }
