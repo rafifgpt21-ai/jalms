@@ -472,11 +472,15 @@ export async function getCourseGradebook(courseId: string) {
     }
 }
 
-export async function getTeacherDashboardStats() {
+export async function getTeacherDashboardStats(explicitTeacherId?: string) {
     try {
-        const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
-        const teacherId = user.id
+        let teacherId = explicitTeacherId
+
+        if (!teacherId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            teacherId = user.id
+        }
 
         // Date calculations for classes today
         const dayOfWeek = new Date().getDay()
