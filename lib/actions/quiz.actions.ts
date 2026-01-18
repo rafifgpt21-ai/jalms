@@ -68,7 +68,7 @@ export async function getQuiz(quizId: string) {
     }
 }
 
-export async function createQuiz(title: string, description?: string) {
+export async function createQuiz(title: string, description?: string, randomizeChoices: boolean = false) {
     try {
         const session = await auth();
         if (!session?.user?.id) return { error: "Unauthorized" };
@@ -77,6 +77,7 @@ export async function createQuiz(title: string, description?: string) {
             data: {
                 title,
                 description,
+                randomizeChoices,
                 teacherId: session.user.id
             }
         })
@@ -89,7 +90,7 @@ export async function createQuiz(title: string, description?: string) {
     }
 }
 
-export async function updateQuiz(quizId: string, data: { title?: string, description?: string }) {
+export async function updateQuiz(quizId: string, data: { title?: string, description?: string, randomizeChoices?: boolean }) {
     try {
         const session = await auth();
         if (!session?.user?.id) return { error: "Unauthorized" };
@@ -185,6 +186,9 @@ interface QuestionInput {
     audioUrl?: string; // [NEW] Added audioUrl
     audioLimit?: number; // [NEW] Added audioLimit
     order: number;
+    points?: number;
+    gradingType?: 'ALL_OR_NOTHING' | 'RIGHT_MINUS_WRONG';
+    explanation?: string | null;
     choices: ChoiceInput[];
 }
 
@@ -226,6 +230,9 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
                         audioUrl: data.audioUrl,
                         audioLimit: data.audioLimit ?? 0,
                         order: data.order,
+                        points: data.points ?? 1,
+                        gradingType: data.gradingType ?? 'ALL_OR_NOTHING',
+                        explanation: data.explanation
                     }
                 });
 
@@ -285,6 +292,9 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
                     audioUrl: data.audioUrl,
                     audioLimit: data.audioLimit ?? 0,
                     order: data.order,
+                    points: data.points ?? 1,
+                    gradingType: data.gradingType ?? 'ALL_OR_NOTHING',
+                    explanation: data.explanation,
                     choices: {
                         create: data.choices.map((c, index) => ({
                             text: c.text,
@@ -378,6 +388,9 @@ export async function bulkCreateQuestions(quizId: string, questionsData: Questio
                         audioUrl: q.audioUrl,
                         audioLimit: q.audioLimit ?? 0,
                         order: startOrder++,
+                        points: q.points ?? 1,
+                        gradingType: q.gradingType ?? 'ALL_OR_NOTHING',
+                        explanation: q.explanation,
                         choices: {
                             create: q.choices.map((c, idx) => ({
                                 text: c.text,
@@ -441,10 +454,37 @@ export async function deleteQuizImages(urls: string[]) {
     }
 }
 
-export async function getStudentQuiz(quizId: string) {
+export async function getStudentQuiz(quizId: string, assignmentId?: string) {
     try {
         const session = await auth();
         if (!session?.user?.id) return { error: "Unauthorized" };
+
+        // 1. Check Submission Status if assignmentId provided
+        // 1. Check Submission Status
+        let isSubmitted = false
+        if (assignmentId) {
+            const submission = await db.submission.findFirst({
+                where: {
+                    assignmentId,
+                    studentId: session.user.id
+                }
+            })
+            if (submission) isSubmitted = true
+        } else {
+            // Check for direct quiz submission by finding related assignment
+            const assignment = await db.assignment.findFirst({
+                where: { quizId: quizId }
+            });
+            if (assignment) {
+                const submission = await db.submission.findFirst({
+                    where: {
+                        assignmentId: assignment.id,
+                        studentId: session.user.id
+                    }
+                })
+                if (submission) isSubmitted = true
+            }
+        }
 
         const quiz = await db.quiz.findUnique({
             where: { id: quizId },
@@ -453,14 +493,8 @@ export async function getStudentQuiz(quizId: string) {
                     orderBy: { order: 'asc' },
                     include: {
                         choices: {
-                            orderBy: { order: 'asc' },
-                            select: {
-                                id: true,
-                                text: true,
-                                imageUrl: true,
-                                order: true
-                                // Omit isCorrect
-                            }
+                            orderBy: { order: 'asc' }
+                            // Fetch all to compute flags, filter later
                         }
                     }
                 }
@@ -468,11 +502,60 @@ export async function getStudentQuiz(quizId: string) {
         })
 
         if (!quiz) return { error: "Quiz not found" }
-        // We don't strictly check teacherId here because students need to access it.
-        // We might want to check if the user is enrolled in a course that has an assignment using this quiz,
-        // but for now, simple access for logged-in users is acceptable (or if needed, add enrollment check).
 
-        return { quiz }
+        const questions = quiz.questions.map(q => {
+            const correctCount = q.choices.filter(c => c.isCorrect).length
+            const allowMultiple = correctCount > 1 || q.gradingType === 'RIGHT_MINUS_WRONG'
+
+            let choices = [...q.choices]
+            // Randomize only if NOT reviewing (or preserve order if reviewing? usually preserve original order is hard if we didn't save seed. 
+            // If we randomize, explanation might be confusing if it refers to "Option A". 
+            // For now, let's randomize if configured, even in review. 
+            // Ideally we store the randomized order in submission, but strictly for MVP:
+            // If isSubmitted, maybe we shouldn't randomize to avoid confusion? 
+            // But if we didn't store the order, showing "sorted" choices might mismap with user memory.
+            // Let's stick to randomizing if enabled. 
+            // NOTE: If user refreshes, order changes. This is acceptable for simple quiz.
+
+            if (quiz.randomizeChoices) {
+                for (let i = choices.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [choices[i], choices[j]] = [choices[j], choices[i]];
+                }
+            }
+
+            const sanitizedChoices = choices.map(c => ({
+                id: c.id,
+                text: c.text,
+                imageUrl: c.imageUrl,
+                order: c.order,
+                // Reveal isCorrect ONLY if submitted
+                isCorrect: isSubmitted ? c.isCorrect : undefined
+            }))
+
+            return {
+                id: q.id,
+                text: q.text,
+                imageUrl: q.imageUrl,
+                audioUrl: q.audioUrl,
+                audioLimit: q.audioLimit,
+                order: q.order,
+                points: q.points,
+                gradingType: q.gradingType,
+                allowMultiple,
+                // Reveal explanation ONLY if submitted
+                explanation: isSubmitted ? q.explanation : undefined,
+                choices: sanitizedChoices
+            }
+        })
+
+        return {
+            quiz: {
+                ...quiz,
+                questions
+            },
+            isSubmitted // Helpful to pass back
+        }
     } catch (error) {
         console.error("Error fetching student quiz:", error)
         return { error: "Failed to fetch quiz" }

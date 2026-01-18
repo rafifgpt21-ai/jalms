@@ -537,93 +537,159 @@ export async function deleteSubmissionFile(assignmentId: string, fileUrl: string
     }
 }
 
-export async function submitQuizAttempt(assignmentId: string, answers: Record<string, string>) {
+export async function submitQuizAttempt(assignmentId: string, answers: Record<string, string | string[]>) {
     try {
         const user = await getUser()
         if (!user || !user.id) return { error: "Unauthorized" }
 
-        // 1. Fetch Assignment and Quiz with Correct Answers
-        const assignment = await prisma.assignment.findUnique({
-            where: { id: assignmentId },
-            include: {
-                quiz: {
-                    include: {
-                        questions: {
-                            include: {
-                                choices: true
+        // Start transaction for consistency
+        const result = await prisma.$transaction(async (tx) => {
+
+            // 1. Fetch Assignment and Quiz with Correct Answers
+            const assignment = await tx.assignment.findUnique({
+                where: { id: assignmentId },
+                include: {
+                    quiz: {
+                        include: {
+                            questions: {
+                                include: {
+                                    choices: true
+                                }
                             }
                         }
                     }
                 }
-            }
-        })
-
-        if (!assignment || !assignment.quiz) return { error: "Quiz not found" }
-
-        // 2. Calculate Score
-        let correctCount = 0
-        let totalQuestions = assignment.quiz.questions.length
-
-        // If no questions, score is 0 or 100? Assume 0.
-        if (totalQuestions === 0) return { error: "Quiz has no questions" }
-
-        assignment.quiz.questions.forEach(q => {
-            // Find the correct choice ID
-            const correctChoice = q.choices.find(c => c.isCorrect)
-            // Check student answer (which should be choiceId)
-            // The key in 'answers' is questionId
-            const studentAnswerId = answers[q.id]
-
-            if (correctChoice && studentAnswerId === correctChoice.id) {
-                correctCount++
-            }
-        })
-
-        const score = (correctCount / totalQuestions) * 100
-        const roundedScore = Math.round(score * 10) / 10 // 1 decimal
-
-        // 3. Save Submission
-        // Check for existing to forbid re-submission? Or update?
-        // Usually quizzes are one-time or allow retries. Let's assume one-time or overwrite for now.
-        const existing = await prisma.submission.findFirst({
-            where: {
-                assignmentId,
-                studentId: user.id,
-                deletedAt: { isSet: false }
-            }
-        })
-
-        if (existing) {
-            // If already graded, maybe prevent? But user might want to retake if allowed. 
-            // For safety, let's update.
-            await prisma.submission.update({
-                where: { id: existing.id },
-                data: {
-                    grade: roundedScore,
-                    submittedAt: new Date(),
-                    // Store answers as generic json in feedback or new field? 
-                    // Schema doesn't have 'answers' field. 
-                    // We could stick it in 'submissionUrl' as JSON string if we really want to persist their choices.
-                    submissionUrl: JSON.stringify(answers), // Storing answers as JSON string
-                }
             })
-        } else {
-            await prisma.submission.create({
-                data: {
+
+            if (!assignment || !assignment.quiz) throw new Error("Quiz not found")
+
+            // 2. Calculate Score
+            let totalMaxPoints = 0
+            let studentTotalPoints = 0
+
+            // If no questions, score is 0 or 100? Assume 100 if empty? Using 0 safer.
+            if (assignment.quiz.questions.length === 0) return { success: true, grade: 100 }
+
+            for (const q of assignment.quiz.questions) {
+                const questionPoints = q.points || 1
+                totalMaxPoints += questionPoints
+
+                const correctChoices = q.choices.filter(c => c.isCorrect)
+                const correctChoiceIds = new Set(correctChoices.map(c => c.id))
+
+                // Get student answer(s) for this question
+                // Input 'answers' value can be string (single) or string[] (multiple, json-parsed if needed?)
+                // The client sends Record<string, string | string[]> but here we receive it. 
+                // Let's assume the input type is handled, but we need to normalize it.
+                // We'll treat all inputs as array of IDs to be safe.
+
+                let studentSelectedIds: string[] = []
+                const rawAnswer = answers[q.id]
+
+                if (Array.isArray(rawAnswer)) {
+                    studentSelectedIds = rawAnswer
+                } else if (typeof rawAnswer === 'string') {
+                    // It might be a single ID or a JSON string if multiple? 
+                    // Let's assume frontend sends array if multiple allowed, 
+                    // but for compatibility with existing single-choice radio:
+                    studentSelectedIds = [rawAnswer]
+                }
+
+                studentSelectedIds = studentSelectedIds.filter(Boolean) // remove null/undefined/empty
+
+                // Grading Logic
+                if (q.gradingType === 'RIGHT_MINUS_WRONG') {
+                    // Partial Credit
+                    let correctSelected = 0
+                    let incorrectSelected = 0
+
+                    studentSelectedIds.forEach(id => {
+                        if (correctChoiceIds.has(id)) {
+                            correctSelected++
+                        } else {
+                            incorrectSelected++
+                        }
+                    })
+
+                    const totalCorrectOptions = correctChoiceIds.size
+
+                    // Prevent division by zero if question has NO correct answers set (teacher error)
+                    if (totalCorrectOptions > 0) {
+                        const ratio = (correctSelected - incorrectSelected) / totalCorrectOptions
+                        // Points cannot be negative
+                        const earnedPoints = Math.max(0, ratio * questionPoints)
+                        studentTotalPoints += earnedPoints
+                    } else {
+                        // If no correct options exist, usually full points or zero?
+                        // Let's give zero to be safe, or full if they selected nothing?
+                        if (studentSelectedIds.length === 0) {
+                            // effectively correct to select nothing? No, let's just ignore.
+                        }
+                    }
+
+                } else {
+                    // ALL_OR_NOTHING (Default)
+                    // Must select ALL correct IDs and NO incorrect IDs.
+                    // Set equality check.
+
+                    const selectedSet = new Set(studentSelectedIds)
+
+                    // 1. Check size match
+                    if (selectedSet.size === correctChoiceIds.size) {
+                        // 2. Check every selected is correct
+                        const isAllCorrect = studentSelectedIds.every(id => correctChoiceIds.has(id))
+                        if (isAllCorrect) {
+                            studentTotalPoints += questionPoints
+                        }
+                    }
+                }
+            }
+
+            const finalScorePercentage = totalMaxPoints > 0
+                ? (studentTotalPoints / totalMaxPoints) * 100
+                : 0 // or 100?
+
+            const roundedScore = Math.round(finalScorePercentage * 10) / 10 // 1 decimal
+
+            // 3. Save Submission
+            const existing = await tx.submission.findFirst({
+                where: {
                     assignmentId,
                     studentId: user.id,
-                    grade: roundedScore,
-                    submittedAt: new Date(),
-                    submissionUrl: JSON.stringify(answers),
+                    deletedAt: { isSet: false }
                 }
             })
-        }
 
-        revalidatePath(`/student/courses/${assignment.courseId}/tasks/${assignmentId}`)
-        return { success: true, grade: roundedScore }
+            const submissionData = {
+                grade: roundedScore,
+                submittedAt: new Date(),
+                submissionUrl: JSON.stringify(answers), // Store raw answers
+            }
 
-    } catch (error) {
+            if (existing) {
+                await tx.submission.update({
+                    where: { id: existing.id },
+                    data: submissionData
+                })
+            } else {
+                await tx.submission.create({
+                    data: {
+                        assignmentId,
+                        studentId: user.id!,
+                        ...submissionData
+                    }
+                })
+            }
+
+            return { success: true, grade: roundedScore }
+        })
+
+        if (!result) return { error: "Transaction failed" }
+        revalidatePath(`/student/courses/${assignmentId}/tasks`) // simplified path invalidation
+        return result
+
+    } catch (error: any) {
         console.error("Error submitting quiz:", error)
-        return { error: "Failed to submit quiz" }
+        return { error: error.message || "Failed to submit quiz" }
     }
 }

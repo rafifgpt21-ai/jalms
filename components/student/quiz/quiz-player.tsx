@@ -29,6 +29,10 @@ interface Question {
     audioLimit?: number
     choices: Choice[]
     order: number
+    points: number
+    gradingType: 'ALL_OR_NOTHING' | 'RIGHT_MINUS_WRONG'
+    allowMultiple: boolean
+    explanation?: string
 }
 
 interface Choice {
@@ -41,14 +45,15 @@ interface Choice {
 export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = false, showGradeAfterSubmission = true }: QuizPlayerProps) {
     const [questions, setQuestions] = useState<Question[]>([])
     const [loading, setLoading] = useState(true)
-    const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers || {})
+    const [answers, setAnswers] = useState<Record<string, string | string[]>>(initialAnswers || {})
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
 
     useEffect(() => {
         async function loadQuiz() {
             setLoading(true)
-            const res = await getStudentQuiz(quizId)
+            // Pass assignmentId to fetch review data if submitted
+            const res = await getStudentQuiz(quizId, assignmentId)
             if (res.quiz) {
                 setQuestions(res.quiz.questions as any)
             } else {
@@ -57,16 +62,43 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
             setLoading(false)
         }
         loadQuiz()
-    }, [quizId])
+    }, [quizId, assignmentId])
 
-    const handleAnswer = (questionId: string, choiceId: string) => {
+    const handleAnswer = (questionId: string, choiceId: string, allowMultiple: boolean) => {
         if (isReadOnly) return
-        setAnswers(prev => ({ ...prev, [questionId]: choiceId }))
+
+        setAnswers(prev => {
+            const current = prev[questionId]
+
+            if (allowMultiple) {
+                // Handle Array
+                const currentArray = Array.isArray(current) ? current : (current ? [current as string] : [])
+                if (currentArray.includes(choiceId)) {
+                    return { ...prev, [questionId]: currentArray.filter(id => id !== choiceId) }
+                } else {
+                    return { ...prev, [questionId]: [...currentArray, choiceId] }
+                }
+            } else {
+                // Handle Single
+                return { ...prev, [questionId]: choiceId }
+            }
+        })
+    }
+
+    const isSelected = (questionId: string, choiceId: string) => {
+        const current = answers[questionId]
+        if (Array.isArray(current)) {
+            return current.includes(choiceId)
+        }
+        return current === choiceId
     }
 
     const handleSubmit = () => {
-        // Check if all questions answered?
-        const unanswered = questions.filter(q => !answers[q.id])
+        const unanswered = questions.filter(q => {
+            const ans = answers[q.id]
+            return !ans || (Array.isArray(ans) && ans.length === 0)
+        })
+
         if (unanswered.length > 0) {
             toast.warning(`You have ${unanswered.length} unanswered questions.`)
             if (!confirm("You have unanswered questions. Are you sure you want to submit?")) {
@@ -75,6 +107,8 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
         }
 
         startTransition(async () => {
+            // Need to ensure answers are compatible with server expectation
+            // Server expects Record<string, string | string[]>
             const res = await submitQuizAttempt(assignmentId, answers)
             if (res.success) {
                 if (showGradeAfterSubmission) {
@@ -107,7 +141,8 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
             {!isReadOnly && (
                 <div className="flex items-center justify-between p-4 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
                     <span className="text-sm font-medium text-indigo-700 dark:text-indigo-400">
-                        Zen Mode Active
+                        {/* If multiple allowed, "Zen Mode" label is fine */}
+                        Quiz in Progress
                     </span>
                     <span className="text-sm text-slate-500">
                         {Object.keys(answers).length} / {questions.length} Answered
@@ -143,9 +178,16 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
 
                             <div className="flex-1 space-y-6">
                                 <div className="space-y-4">
-                                    <h3 className="text-xl md:text-2xl font-heading font-medium text-slate-900 dark:text-white leading-relaxed">
-                                        {question.text}
-                                    </h3>
+                                    <div className="flex justify-between items-start gap-4">
+                                        <h3 className="text-xl md:text-2xl font-heading font-medium text-slate-900 dark:text-white leading-relaxed">
+                                            {question.text}
+                                            {question.points && (
+                                                <span className="ml-3 inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                                                    {question.points} pts
+                                                </span>
+                                            )}
+                                        </h3>
+                                    </div>
 
                                     {question.imageUrl && (
                                         <div className="relative w-full max-w-2xl aspect-video rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700">
@@ -171,56 +213,95 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                     )}
                                 </div>
 
-                                <RadioGroup
-                                    value={answers[question.id] || ""}
-                                    onValueChange={(val) => handleAnswer(question.id, val)}
-                                    disabled={isReadOnly}
-                                    className="space-y-3 pt-2"
-                                >
-                                    {question.choices.map((choice) => (
-                                        <motion.div
-                                            whileHover={!isReadOnly ? { scale: 1.01, x: 4 } : {}}
-                                            whileTap={!isReadOnly ? { scale: 0.99 } : {}}
-                                            key={choice.id}
-                                            onClick={() => handleAnswer(question.id, choice.id)}
-                                            className={cn(
-                                                "relative flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer overflow-hidden backdrop-blur-sm",
-                                                answers[question.id] === choice.id
-                                                    ? 'bg-indigo-50/80 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 shadow-sm'
-                                                    : 'bg-white/40 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 hover:bg-white/60 dark:hover:bg-slate-900/60'
-                                            )}
-                                        >
-                                            <div className={cn(
-                                                "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-none transition-colors",
-                                                answers[question.id] === choice.id
-                                                    ? "border-indigo-600 dark:border-indigo-400"
-                                                    : "border-slate-300 dark:border-slate-600"
-                                            )}>
-                                                {answers[question.id] === choice.id && (
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                                <div className="space-y-3 pt-2">
+                                    {/* Handle Choice Rendering using custom buttons for both Radio/Checkbox feel */}
+                                    {question.choices.map((choice) => {
+                                        const selected = isSelected(question.id, choice.id)
+                                        // If ReadOnly (Review Mode) + Explain:
+                                        // Highlight Correct: Green border/bg
+                                        // Highlight Incorrect Selected: Red border/bg
+                                        // We need 'isCorrect' from question.choices (which is populated if submitted/reviewing)
+                                        // If question.choices doesn't have isCorrect typed yet, we cast or assume.
+
+                                        const isCorrect = (choice as any).isCorrect
+
+                                        let statusColorClass = ""
+                                        if (isReadOnly) {
+                                            if (selected && isCorrect) statusColorClass = "ring-2 ring-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20"
+                                            else if (selected && !isCorrect) statusColorClass = "ring-2 ring-red-500 bg-red-50/50 dark:bg-red-900/20"
+                                            else statusColorClass = "opacity-60 grayscale-[0.5]" // dimmed other options
+                                        } else {
+                                            if (selected) statusColorClass = "bg-indigo-50/80 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 shadow-sm"
+                                            else statusColorClass = "bg-white/40 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 hover:bg-white/60 dark:hover:bg-slate-900/60"
+                                        }
+
+                                        return (
+                                            <motion.div
+                                                whileHover={!isReadOnly ? { scale: 1.01, x: 4 } : {}}
+                                                whileTap={!isReadOnly ? { scale: 0.99 } : {}}
+                                                key={choice.id}
+                                                onClick={() => handleAnswer(question.id, choice.id, (question as any).allowMultiple)}
+                                                className={cn(
+                                                    "relative flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer overflow-hidden backdrop-blur-sm",
+                                                    statusColorClass
                                                 )}
-                                            </div>
+                                            >
+                                                <div className={cn(
+                                                    "w-5 h-5 flex items-center justify-center flex-none transition-colors",
+                                                    (question as any).allowMultiple ? "rounded-sm" : "rounded-full", // Checkbox vs Radio Shape
+                                                    "border-2",
+                                                    selected
+                                                        ? (isReadOnly ? (isCorrect ? "border-emerald-500" : "border-red-500") : "border-indigo-600 dark:border-indigo-400")
+                                                        : "border-slate-300 dark:border-slate-600"
+                                                )}>
+                                                    {selected && (
+                                                        <div className={cn(
+                                                            "w-2.5 h-2.5",
+                                                            (question as any).allowMultiple ? "rounded-sm" : "rounded-full",
+                                                            isReadOnly ? (isCorrect ? "bg-emerald-500" : "bg-red-500") : "bg-indigo-600 dark:bg-indigo-400"
+                                                        )} />
+                                                    )}
+                                                    {/* Removed the hint for unselected correct answers */}
+                                                </div>
 
-                                            <RadioGroupItem value={choice.id} id={choice.id} className="sr-only" />
+                                                <div className="flex-1">
+                                                    <Label className="cursor-pointer text-base font-normal text-slate-700 dark:text-slate-200 block pointer-events-none">
+                                                        {choice.text}
+                                                    </Label>
+                                                    {choice.imageUrl && (
+                                                        <div className="mt-3 relative w-full aspect-video md:w-64 md:aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                                            <Image
+                                                                src={choice.imageUrl}
+                                                                alt="Choice"
+                                                                fill
+                                                                className="object-cover"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
 
-                                            <div className="flex-1">
-                                                <Label htmlFor={choice.id} className="cursor-pointer text-base font-normal text-slate-700 dark:text-slate-200 block pointer-events-none">
-                                                    {choice.text}
-                                                </Label>
-                                                {choice.imageUrl && (
-                                                    <div className="mt-3 relative w-full aspect-video md:w-64 md:aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
-                                                        <Image
-                                                            src={choice.imageUrl}
-                                                            alt="Choice"
-                                                            fill
-                                                            className="object-cover"
-                                                        />
+                                                {/* Correct/Incorrect Icon Indicators */}
+                                                {isReadOnly && (
+                                                    <div className="flex-none">
+                                                        {isCorrect && <CheckCircle className="w-5 h-5 text-emerald-500" />}
+                                                        {selected && !isCorrect && <XCircle className="w-5 h-5 text-red-500" />}
                                                     </div>
                                                 )}
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </RadioGroup>
+                                            </motion.div>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* Explanation Section if ReadOnly */}
+                                {isReadOnly && (question as any).explanation && (
+                                    <div className="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm border border-blue-100 dark:border-blue-900/50 animate-in fade-in slide-in-from-top-2">
+                                        <div className="flex items-center gap-2 font-semibold mb-1">
+                                            <AlertTriangle className="w-4 h-4" />
+                                            Explanation
+                                        </div>
+                                        <p>{(question as any).explanation}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </motion.div>
@@ -241,7 +322,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                 ) : (
                     <div className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-6 py-3 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
                         <CheckCircle className="h-5 w-5" />
-                        <span className="font-medium">Quiz Completed</span>
+                        <span className="font-medium">Quiz Review Mode</span>
                     </div>
                 )}
             </div>

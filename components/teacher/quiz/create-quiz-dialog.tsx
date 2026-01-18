@@ -19,10 +19,13 @@ import { createQuiz } from "@/lib/actions/quiz.actions"
 import { toast } from "sonner"
 import { Loader2, Plus } from "lucide-react"
 
+import { Switch } from "@/components/ui/switch"
+
 export function CreateQuizDialog() {
     const [open, setOpen] = useState(false)
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
+    const [randomizeChoices, setRandomizeChoices] = useState(false)
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
 
@@ -31,7 +34,7 @@ export function CreateQuizDialog() {
         if (!title.trim()) return
 
         startTransition(async () => {
-            const result = await createQuiz(title, description)
+            const result = await createQuiz(title, description, randomizeChoices)
             if (result.error) {
                 toast.error(result.error)
             } else if (result.quiz) {
@@ -86,6 +89,15 @@ export function CreateQuizDialog() {
                                 placeholder="Optional description..."
                             />
                         </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="randomize" className="text-right">
+                                Settings
+                            </Label>
+                            <div className="flex items-center space-x-2 col-span-3">
+                                <Switch id="randomize" checked={randomizeChoices} onCheckedChange={setRandomizeChoices} />
+                                <Label htmlFor="randomize">Randomize Choices for Students</Label>
+                            </div>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -98,6 +110,6 @@ export function CreateQuizDialog() {
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     )
 }

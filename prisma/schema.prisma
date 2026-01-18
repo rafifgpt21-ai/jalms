@@ -322,6 +322,11 @@ model Message {
   readByIds String[] @db.ObjectId // For read receipts if needed later
 }
 
+enum QuizGradingType {
+  ALL_OR_NOTHING
+  RIGHT_MINUS_WRONG
+}
+
 model Quiz {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
@@ -334,6 +339,8 @@ model Quiz {
   questions   QuizQuestion[]
   assignments Assignment[]
 
+  randomizeChoices Boolean @default(false)
+
   deletedAt   DateTime?
 }
 
@@ -345,6 +352,10 @@ model QuizQuestion {
   audioUrl  String?
   audioLimit Int      @default(0) // 0 = unlimited
   order     Int      @default(0)
+
+  points      Int             @default(1)
+  gradingType QuizGradingType @default(ALL_OR_NOTHING)
+  explanation String?
 
   quizId    String   @db.ObjectId
   quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)

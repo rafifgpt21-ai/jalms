@@ -23,7 +23,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { AudioLines, Play } from "lucide-react"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { AudioLines, Play, Check } from "lucide-react"
 
 interface Choice {
     id?: string
@@ -49,6 +56,9 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
     ])
     const [audioUrl, setAudioUrl] = useState<string | undefined>(question?.audioUrl || undefined)
     const [audioLimit, setAudioLimit] = useState<number>(question?.audioLimit || 0)
+    const [points, setPoints] = useState<number>(question?.points ?? 1)
+    const [gradingType, setGradingType] = useState<string>(question?.gradingType || 'ALL_OR_NOTHING')
+    const [explanation, setExplanation] = useState<string>(question?.explanation || "")
 
     // Lazy Upload State
     const [pendingQuestionFile, setPendingQuestionFile] = useState<File | null>(null)
@@ -111,10 +121,9 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
         const newChoices = [...choices]
         newChoices[index] = { ...newChoices[index], [field]: value }
 
-        if (field === 'isCorrect' && value === true) {
-            newChoices.forEach((c, i) => {
-                if (i !== index) c.isCorrect = false
-            })
+        if (field === 'isCorrect') {
+            // Toggle logic (Checkbox behavior)
+            // No need to uncheck others
         }
 
         setChoices(newChoices)
@@ -263,6 +272,9 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                 audioUrl: finalAudioUrl,
                 audioLimit: audioLimit,
                 order: question?.order || 0,
+                points: points,
+                gradingType: gradingType,
+                explanation: explanation,
                 choices: finalChoices.map((c, i) => ({ ...c, order: i }))
             }
 
@@ -322,6 +334,43 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                                 onChange={(e) => setText(e.target.value)}
                                 placeholder="Enter your question here..."
                                 className="resize-none"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Points</Label>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    value={points}
+                                    onChange={(e) => setPoints(Math.max(1, parseInt(e.target.value) || 1))}
+                                />
+                            </div>
+
+                            {choices.filter(c => c.isCorrect).length > 1 && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 bg-muted/40 p-2 rounded-md border border-dashed">
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Grading Strategy</Label>
+                                    <Select value={gradingType} onValueChange={setGradingType}>
+                                        <SelectTrigger className="h-9">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ALL_OR_NOTHING">All or Nothing</SelectItem>
+                                            <SelectItem value="RIGHT_MINUS_WRONG">Partial Credit (Right - Wrong)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Explanation (Optional)</Label>
+                            <Textarea
+                                value={explanation}
+                                onChange={(e) => setExplanation(e.target.value)}
+                                placeholder="Explain the correct answer..."
+                                className="resize-none h-20 text-sm"
                             />
                         </div>
 
@@ -458,11 +507,11 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                                 <div className="flex items-start gap-2">
                                     <div className="pt-2">
                                         <div
-                                            className={`h-4 w-4 rounded-full border border-primary cursor-pointer ${choice.isCorrect ? 'bg-primary' : 'bg-transparent'}`}
-                                            onClick={() => updateChoice(index, 'isCorrect', true)}
+                                            className={`h-5 w-5 rounded-md border border-primary cursor-pointer flex items-center justify-center transition-all ${choice.isCorrect ? 'bg-primary text-primary-foreground' : 'bg-transparent'}`}
+                                            onClick={() => updateChoice(index, 'isCorrect', !choice.isCorrect)}
                                             title="Mark as correct answer"
                                         >
-                                            {choice.isCorrect && <div className="h-full w-full rounded-full bg-white scale-[0.4]" />}
+                                            {choice.isCorrect && <Check className="h-3.5 w-3.5" />}
                                         </div>
                                     </div>
                                     <div className="flex-1 space-y-2">
