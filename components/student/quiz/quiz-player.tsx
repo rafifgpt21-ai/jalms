@@ -110,7 +110,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
             // Need to ensure answers are compatible with server expectation
             // Server expects Record<string, string | string[]>
             const res = await submitQuizAttempt(assignmentId, answers)
-            if (res.success) {
+            if ("success" in res && res.success) {
                 if (showGradeAfterSubmission) {
                     toast.success(`Quiz submitted! Grade: ${res.grade}`)
                 } else {
@@ -118,7 +118,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                 }
                 router.refresh()
             } else {
-                toast.error(res.error || "Failed to submit quiz")
+                toast.error("error" in res ? res.error : "Failed to submit quiz")
             }
         })
     }
