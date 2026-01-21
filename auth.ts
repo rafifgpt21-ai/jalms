@@ -15,29 +15,47 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
         Credentials({
             async authorize(credentials) {
-                const parsedCredentials = z
-                    .object({ email: z.string().email(), password: z.string().min(6) })
-                    .safeParse(credentials);
+                try {
+                    console.log("Authorize called with email:", (credentials as any)?.email);
+                    const parsedCredentials = z
+                        .object({ email: z.string().email(), password: z.string().min(6) })
+                        .safeParse(credentials);
 
-                if (parsedCredentials.success) {
-                    const { email, password } = parsedCredentials.data;
-                    const user = await db.user.findUnique({ where: { email } });
-                    if (!user || !user.password) return null;
+                    if (parsedCredentials.success) {
+                        const { email, password } = parsedCredentials.data;
+                        console.log("Finding user in database...");
+                        const user = await db.user.findUnique({ where: { email } });
+                        console.log("User found:", !!user);
 
-                    const passwordsMatch = await bcrypt.compare(password, user.password);
-                    if (passwordsMatch) {
-                        try {
-                            await db.user.update({
-                                where: { id: user.id },
-                                data: { lastLoginAt: new Date() }
-                            });
-                        } catch (error) {
-                            console.error("Failed to update last login:", error);
+                        if (!user || !user.password) {
+                            console.log("User not found or has no password.");
+                            return null;
                         }
-                        return user;
+
+                        console.log("Comparing password...");
+                        const passwordsMatch = await bcrypt.compare(password, user.password);
+                        console.log("Password match:", passwordsMatch);
+
+                        if (passwordsMatch) {
+                            try {
+                                await db.user.update({
+                                    where: { id: user.id },
+                                    data: { lastLoginAt: new Date() }
+                                });
+                            } catch (error) {
+                                console.error("Failed to update last login:", error);
+                            }
+                            return user;
+                        }
+                    } else {
+                        console.log("Invalid credentials format");
                     }
+                    return null;
+                } catch (error) {
+                    console.error("Authorize callback error:", error);
+                    // Return null instead of throwing to prevent 500 error page
+                    return null;
                 }
-                return null;
             },
         }),
     ],
