@@ -53,12 +53,14 @@ export default async function MaterialPage({ params }: MaterialPageProps) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" asChild>
-                        <a href={material.fileUrl} target="_blank" rel="noopener noreferrer" download>
-                            <Download className="mr-2 h-4 w-4" />
-                            Download
-                        </a>
-                    </Button>
+                    {material.fileUrl && (
+                        <Button variant="outline" asChild>
+                            <a href={material.fileUrl} target="_blank" rel="noopener noreferrer" download>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download
+                            </a>
+                        </Button>
+                    )}
                     <Button asChild>
                         <Link href={`/teacher/courses/${courseId}/materials/${materialId}/edit`}>
                             Edit
@@ -75,7 +77,7 @@ export default async function MaterialPage({ params }: MaterialPageProps) {
 
             <div className="flex-1 bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden border">
                 <iframe
-                    src={material.fileUrl}
+                    src={material.fileUrl || undefined}
                     className="w-full h-full"
                     title={material.title}
                 />

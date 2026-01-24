@@ -45,17 +45,19 @@ export default async function StudentMaterialViewPage({ params }: { params: Prom
                         )}
                     </div>
                 </div>
-                <Button asChild>
-                    <a href={`${material.fileUrl}?download=true`} target="_blank" rel="noopener noreferrer">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                    </a>
-                </Button>
+                {material.fileUrl && (
+                    <Button asChild>
+                        <a href={`${material.fileUrl}?download=true`} target="_blank" rel="noopener noreferrer">
+                            <Download className="mr-2 h-4 w-4" />
+                            Download
+                        </a>
+                    </Button>
+                )}
             </div>
 
             <div className="flex-1 border rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900">
                 <iframe
-                    src={material.fileUrl}
+                    src={material.fileUrl || undefined}
                     className="w-full h-full"
                     title={material.title}
                 />
