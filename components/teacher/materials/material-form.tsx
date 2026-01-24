@@ -21,7 +21,8 @@ import { useLocalUpload } from "@/hooks/use-local-upload"
 import { createMaterial, updateMaterial, deleteMaterialFile } from "@/lib/actions/material.actions"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Loader2, X, FileText, Upload, Trash } from "lucide-react"
+import { Loader2, X, FileText, Upload, Trash, RefreshCw, ExternalLink } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -37,7 +38,8 @@ import {
 const formSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
-    fileUrl: z.string().optional(), // Optional because we might be uploading a new one
+    fileUrl: z.string().optional(),
+    linkUrl: z.string().optional(),
 })
 
 interface MaterialFormProps {
@@ -45,7 +47,8 @@ interface MaterialFormProps {
         id: string
         title: string
         description?: string | null
-        fileUrl: string
+        fileUrl?: string | null
+        linkUrl?: string | null
     }
     courseId?: string
 }
@@ -56,7 +59,6 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [existingFileUrl, setExistingFileUrl] = useState(initialData?.fileUrl || "")
 
-    // const { startUpload } = useUploadThing("courseAttachment")
     const { startUpload, isUploading } = useLocalUpload()
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -65,29 +67,34 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
             title: initialData?.title || "",
             description: initialData?.description || "",
             fileUrl: initialData?.fileUrl || "",
+            linkUrl: initialData?.linkUrl || "",
         },
     })
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        const toastId = toast.loading(initialData ? "Updating material..." : "Creating material...")
+
         setIsSubmitting(true)
         try {
             let fileUrl = existingFileUrl
 
             // If a new file is selected, upload it first
             if (selectedFile) {
+                toast.loading("Uploading file...", { id: toastId })
                 const uploadRes = await startUpload([selectedFile], "materials")
                 if (!uploadRes || !uploadRes[0]) {
                     throw new Error("Failed to upload file")
                 }
-                // Local upload returns { url, name }
                 fileUrl = uploadRes[0].url
             }
 
-            if (!fileUrl) {
-                toast.error("Please upload a file")
+            if (!fileUrl && !values.linkUrl) {
+                toast.error("Please provide either a file or a link", { id: toastId })
                 setIsSubmitting(false)
                 return
             }
+
+            toast.loading("Saving changes...", { id: toastId })
 
             let res;
             if (initialData) {
@@ -95,29 +102,35 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                     initialData.id,
                     values.title,
                     values.description || "",
-                    fileUrl
+                    fileUrl || null,
+                    values.linkUrl || null,
                 )
             } else {
                 res = await createMaterial({
                     title: values.title,
                     description: values.description || "",
-                    fileUrl
+                    fileUrl: fileUrl || undefined,
+                    linkUrl: values.linkUrl || undefined,
                 })
             }
 
+            if (!res.success) {
+                toast.error(`Server Error: ${res.error}`, { id: toastId })
+            }
+
             if (res.success || res.material) {
-                toast.success(initialData ? "Material updated" : "Material created")
+                toast.success(initialData ? "Material updated" : "Material created", { id: toastId })
                 if (courseId) {
                     router.push(`/teacher/courses/${courseId}`)
                 } else {
                     router.push(`/teacher/materials`)
                 }
             } else {
-                toast.error(res.error || "Operation failed")
+                toast.error(res.error || "Operation failed", { id: toastId })
             }
         } catch (error) {
             console.error("Submission error:", error)
-            toast.error(error instanceof Error ? error.message : "Something went wrong")
+            toast.error(error instanceof Error ? error.message : "Something went wrong", { id: toastId })
         } finally {
             setIsSubmitting(false)
         }
@@ -130,6 +143,10 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                 toast.error("Only PDF files are allowed")
                 return
             }
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error("File size must be less than 2MB")
+                return
+            }
             setSelectedFile(file)
             // Auto-fill title if empty
             if (!form.getValues("title")) {
@@ -140,7 +157,7 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit, (errors) => console.log("Form Errors:", errors))} className="space-y-8">
                 <FormField
                     control={form.control}
                     name="title"
@@ -172,104 +189,184 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                     )}
                 />
 
-                <FormItem>
-                    <FormLabel>Material File (PDF only)</FormLabel>
-                    <FormControl>
-                        <div className="space-y-4">
-                            {existingFileUrl && !selectedFile && (
-                                <div className="flex items-center gap-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-900">
-                                    <FileText className="h-8 w-8 text-blue-500" />
-                                    <div className="flex-1 truncate text-sm">
-                                        <a href={existingFileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                            Current File
+                <div className="grid gap-6 md:grid-cols-2">
+                    {/* File Upload Section */}
+                    <div className="space-y-4 rounded-lg border p-4 bg-card">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded text-blue-600">
+                                <FileText className="h-4 w-4" />
+                            </div>
+                            <h3 className="font-medium text-sm">File Attachment</h3>
+                        </div>
+
+                        {!existingFileUrl && !selectedFile && (
+                            <div
+                                onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+                                className={`
+                                    border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
+                                    hover:border-blue-500/50 hover:bg-muted/50
+                                `}
+                            >
+                                <input
+                                    type="file"
+                                    accept=".pdf"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                    disabled={isUploading || isSubmitting}
+                                />
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="p-2 bg-muted rounded-full">
+                                        <Upload className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium">Upload PDF</p>
+                                        <p className="text-xs text-muted-foreground">Max 2MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedFile && (
+                            <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <FileText className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                    <div className="truncate">
+                                        <p className="text-sm font-medium text-green-900 dark:text-green-300 truncate">
+                                            {selectedFile.name}
+                                        </p>
+                                        <p className="text-xs text-green-600 dark:text-green-400">
+                                            {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setSelectedFile(null)}
+                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+
+                        {existingFileUrl && !selectedFile && (
+                            <div className="flex items-center justify-between p-3 border rounded-lg bg-secondary/50">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <FileText className="h-4 w-4 text-blue-600" />
+                                    <div className="truncate">
+                                        <p className="text-sm font-medium">Current File Attached</p>
+                                        <a
+                                            href={existingFileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-xs text-muted-foreground hover:underline truncate block"
+                                        >
+                                            {existingFileUrl.split('/').pop()}
                                         </a>
                                     </div>
+                                </div>
+                                <div className="flex gap-1">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+                                    >
+                                        <RefreshCw className="h-3 w-3" />
+                                    </Button>
+
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button
                                                 type="button"
-                                                variant="destructive"
-                                                size="sm"
-                                                disabled={isSubmitting || isUploading}
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                                             >
-                                                {isSubmitting ? (
-                                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                ) : (
-                                                    <Trash className="h-4 w-4 mr-2" />
-                                                )}
-                                                Remove current file
+                                                <Trash className="h-3 w-3" />
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogTitle>Remove file?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete the file from our servers (simulated).
+                                                    This will permanently delete the file from the server. This action cannot be undone.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                 <AlertDialogAction
-                                                    onClick={async (e) => {
-                                                        setIsSubmitting(true)
-                                                        try {
-                                                            if (initialData?.id) {
+                                                    onClick={async () => {
+                                                        if (initialData?.id) {
+                                                            const toastId = toast.loading("Removing file...")
+                                                            try {
                                                                 const res = await deleteMaterialFile(initialData.id, existingFileUrl)
                                                                 if (res.success) {
                                                                     setExistingFileUrl("")
-                                                                    toast.success("File deleted successfully")
+                                                                    toast.success("File removed", { id: toastId })
+                                                                    router.refresh()
                                                                 } else {
-                                                                    toast.error(res.error || "Failed to delete file")
+                                                                    toast.error(res.error || "Failed to remove file", { id: toastId })
                                                                 }
-                                                            } else {
-                                                                setExistingFileUrl("")
+                                                            } catch (error) {
+                                                                toast.error("Something went wrong", { id: toastId })
                                                             }
-                                                        } catch (error) {
-                                                            console.error(error)
-                                                            toast.error("Something went wrong")
-                                                        } finally {
-                                                            setIsSubmitting(false)
                                                         }
                                                     }}
-                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                    className="bg-red-500 hover:bg-red-600"
                                                 >
-                                                    Delete
+                                                    Remove
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
-                                </div>
-                            )}
 
-                            {(!existingFileUrl || selectedFile) && (
-                                <div className="flex items-center gap-2">
-                                    <Input
+                                    <input
                                         type="file"
                                         accept=".pdf"
+                                        className="hidden"
                                         onChange={handleFileChange}
-                                        className="cursor-pointer"
                                         disabled={isUploading || isSubmitting}
                                     />
                                 </div>
-                            )}
+                            </div>
+                        )}
+                    </div>
 
-                            {selectedFile && (
-                                <p className="text-sm text-muted-foreground">
-                                    Selected: {selectedFile.name}
-                                </p>
-                            )}
+                    {/* Link Section */}
+                    <div className="space-y-4 rounded-lg border p-4 bg-card">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded text-purple-600">
+                                <ExternalLink className="h-4 w-4" />
+                            </div>
+                            <h3 className="font-medium text-sm">External Link</h3>
                         </div>
-                    </FormControl>
-                    <FormDescription>
-                        Upload the study material file. Only PDF files are allowed.
-                    </FormDescription>
-                    <FormMessage />
-                </FormItem>
 
-                <div className="flex items-center gap-4">
+                        <FormField
+                            control={form.control}
+                            name="linkUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <Input {...field} placeholder="https://youtube.com/..." />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Paste a URL to a video or article.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => router.back()}
                         disabled={isSubmitting || isUploading}
                     >
@@ -277,10 +374,10 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                     </Button>
                     <Button type="submit" disabled={isSubmitting || isUploading}>
                         {(isSubmitting || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {initialData ? "Update Material" : "Create Material"}
+                        {initialData ? "Save Changes" : "Create Material"}
                     </Button>
                 </div>
             </form>
-        </Form>
+        </Form >
     )
 }

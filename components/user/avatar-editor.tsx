@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react"
 import { createAvatar } from "@dicebear/core"
 import { funEmoji } from "@dicebear/collection"
+import imageCompression from "browser-image-compression"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -164,8 +165,24 @@ export function AvatarEditor({ initialConfig, onSaved }: { initialConfig?: any, 
             // Convert Blob to File for UploadThing
             const file = new File([blob], "avatar.jpg", { type: "image/jpeg" })
 
+            // Compress image
+            const options = {
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 512,
+                useWebWorker: true,
+            }
+
+            let uploadFile = file
+            try {
+                const compressedFile = await imageCompression(file, options)
+                uploadFile = compressedFile
+            } catch (error) {
+                console.error("Compression failed:", error)
+                // Fallback to original file if compression fails
+            }
+
             // Client-side Upload to UploadThing
-            const uploaded = await startUpload([file], "avatar")
+            const uploaded = await startUpload([uploadFile], "avatar")
 
             if (!uploaded || !uploaded[0]) throw new Error("Upload failed")
 

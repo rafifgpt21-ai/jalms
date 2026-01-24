@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Inter } from "next/font/google"; // [NEW] Premium fonts
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 
 
 // [NEW] Primary Heading Font - Geometric & Modern
@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   title: "Arsync",
   description: "Arsync application",
   icons: {
-    icon: "/arsyncLogo.svg",
-    apple: "/arsyncLogo.svg",
+    icon: "https://jjuy48ud0l.ufs.sh/f/h9KMQVU48dkngJ8vJO6mplvt3DPjiHqOXYorsf8C5zRhynb2",
+    apple: "https://jjuy48ud0l.ufs.sh/f/h9KMQVU48dkngJ8vJO6mplvt3DPjiHqOXYorsf8C5zRhynb2",
   },
 };
 

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Editor } from "@/components/ui/editor"
 import { Label } from "@/components/ui/label"
 import { submitAssignment, deleteSubmissionFile } from "@/lib/actions/student.actions"
-import { Loader2, Paperclip, FileText, Trash, Link as LinkIcon } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { Loader2, Paperclip, FileText, Trash, Link as LinkIcon, RefreshCw } from "lucide-react"
+import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { useLocalUpload } from "@/hooks/use-local-upload"
 
@@ -36,7 +36,7 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showLateConfirmation, setShowLateConfirmation] = useState(false)
-    const { toast } = useToast()
+
 
     const { startUpload, isUploading } = useLocalUpload()
 
@@ -52,12 +52,14 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
     }
 
     const submit = async () => {
+        const toastId = toast.loading("Submitting assignment...")
         setIsSubmitting(true)
         try {
             let finalAttachmentUrl = attachmentUrl
 
             // 1. Upload file if selected
             if (selectedFile) {
+                toast.loading("Uploading file...", { id: toastId })
                 const res = await startUpload([selectedFile], "tasks")
                 if (res && res[0]) {
                     finalAttachmentUrl = res[0].url
@@ -67,29 +69,19 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
             }
 
             // 2. Submit assignment
+            toast.loading("Saving submission...", { id: toastId })
             const res = await submitAssignment(assignmentId, url, finalAttachmentUrl, link)
             if (res.error) {
-                toast({
-                    title: "Error",
-                    description: res.error,
-                    variant: "destructive"
-                })
+                toast.error(res.error, { id: toastId })
             } else {
-                toast({
-                    title: "Success",
-                    description: "Assignment submitted successfully!",
-                })
+                toast.success("Assignment submitted successfully!", { id: toastId })
                 setShowLateConfirmation(false)
                 // Clear selected file after successful submission
                 setSelectedFile(null)
                 setAttachmentUrl(finalAttachmentUrl)
             }
         } catch (error: any) {
-            toast({
-                title: "Error",
-                description: error.message || "Something went wrong",
-                variant: "destructive"
-            })
+            toast.error(error.message || "Something went wrong", { id: toastId })
         } finally {
             setIsSubmitting(false)
         }
@@ -98,49 +90,43 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0]
+
+            if (file.size > 1 * 1024 * 1024) {
+                toast.error("File is too large. Max 1MB allowed.")
+                e.target.value = "" // Reset input
+                return
+            }
+
             setSelectedFile(file)
-            // If we are replacing an existing file, we might want to clear the old URL from view?
-            // Or just keep it until the new one is uploaded. 
-            // Let's keep the old one in state but show the new pending file in UI.
         }
     }
 
     const handleRemoveFile = async () => {
         if (selectedFile) {
             setSelectedFile(null)
-            // Reset file input value if needed, but since we hide it, it's fine.
-            // Actually, we should probably reset the input value to allow re-selecting same file.
             const fileInput = document.getElementById("file-upload") as HTMLInputElement
             if (fileInput) fileInput.value = ""
             return
         }
 
         if (attachmentUrl) {
+            const toastId = toast.loading("Removing file...")
+
             // Optimistic update
             const urlToDelete = attachmentUrl
             setAttachmentUrl("")
-
-            toast({
-                title: "Removing file...",
-                description: "Please wait while we remove the file.",
-            })
 
             try {
                 // Call server action to delete from UT and DB
                 const res = await deleteSubmissionFile(assignmentId, urlToDelete)
                 if (res.error) {
-                    toast({
-                        title: "Error",
-                        description: "Failed to delete file from server, but removed from view.",
-                        variant: "destructive"
-                    })
+                    toast.error("Failed to delete file", { id: toastId })
+                    // Revert optimistic update if needed, but for now let's prioritize UI responsiveness
                 } else {
-                    toast({
-                        title: "File removed",
-                        description: "The file has been deleted successfully.",
-                    })
+                    toast.success("File removed", { id: toastId })
                 }
             } catch (e) {
+                toast.error("Error removing file", { id: toastId })
                 console.error(e)
             }
         }
@@ -149,6 +135,8 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
     return (
         <>
             <form onSubmit={handleFormSubmit} className="space-y-4">
+                {/* ... existing content ... */}
+
                 <div className="space-y-2">
                     <Label>Submission Content</Label>
                     <Editor
@@ -187,7 +175,7 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
                                 className="w-full"
                             >
                                 <Paperclip className="mr-2 h-4 w-4" />
-                                Attach File (PDF, DOCX - Max 2MB)
+                                Attach File (PDF, DOCX - Max 1MB)
                             </Button>
                             <input
                                 id="file-upload"
@@ -221,16 +209,38 @@ export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl,
                                     )}
                                 </div>
                             </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleRemoveFile}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                disabled={isSubmitting}
-                            >
-                                <Trash className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => document.getElementById("file-upload")?.click()}
+                                    className="text-muted-foreground hover:text-foreground"
+                                    disabled={isSubmitting}
+                                    title="Replace File"
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleRemoveFile}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    disabled={isSubmitting}
+                                    title="Remove File"
+                                >
+                                    <Trash className="h-4 w-4" />
+                                </Button>
+                                <input
+                                    id="file-upload"
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.docx,.doc"
+                                    onChange={handleFileChange}
+                                    disabled={isSubmitting}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>

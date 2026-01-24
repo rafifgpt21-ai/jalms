@@ -6,6 +6,9 @@ import { revalidatePath } from "next/cache"
 
 import { unlink } from "fs/promises"
 import path from "path"
+import { UTApi } from "uploadthing/server";
+
+const utapi = new UTApi();
 
 export async function getStudentCourses() {
     try {
@@ -455,6 +458,29 @@ export async function submitAssignment(assignmentId: string, content: string, at
             }
 
             if (attachmentUrl !== undefined) {
+                // Check if we need to delete old file (if replacing)
+                if (existing.attachmentUrl && existing.attachmentUrl !== attachmentUrl) {
+                    console.log("Replacing file. Old:", existing.attachmentUrl, "New:", attachmentUrl)
+                    if (existing.attachmentUrl.startsWith("/api/files/")) {
+                        // Local deletion - Fire and forget
+                        const relativePath = existing.attachmentUrl.replace(/^\/api\/files\//, "")
+                        const fullPath = path.join(process.cwd(), "uploads", relativePath)
+                        unlink(fullPath).catch((err) => {
+                            console.log("Bg unlink failed:", err)
+                        })
+                    } else if (existing.attachmentUrl.startsWith("http")) {
+                        // Remote/UT deletion - Fire and forget
+                        const key = existing.attachmentUrl.split("/").pop();
+                        if (key) {
+                            console.log("Deleting Remote/UT file in background, key:", key)
+                            utapi.deleteFiles(key).then((res) => {
+                                console.log("Bg UT Delete result:", res)
+                            }).catch((err) => {
+                                console.error("Bg Remote cleanup error:", err);
+                            })
+                        }
+                    }
+                }
                 updateData.attachmentUrl = attachmentUrl
             }
 
@@ -464,32 +490,29 @@ export async function submitAssignment(assignmentId: string, content: string, at
             })
 
         } else {
-            // Create new
             await prisma.submission.create({
                 data: {
                     assignmentId,
                     studentId: user.id,
                     submittedAt: new Date(),
                     submissionUrl: content,
-                    attachmentUrl,
-                    link
+                    link: link || null,
+                    attachmentUrl: attachmentUrl || null
                 }
             })
         }
 
-        revalidatePath(`/student/courses/${assignment.courseId}/tasks/${assignmentId}`)
+        revalidatePath("/student/dashboard")
         return { success: true }
-
     } catch (error) {
         console.error("Error submitting assignment:", error)
         return { error: "Failed to submit assignment" }
     }
 }
 
-
-
 export async function deleteSubmissionFile(assignmentId: string, fileUrl: string) {
     try {
+        console.log("deleteSubmissionFile called for:", fileUrl)
         const user = await getUser()
         if (!user || !user.id) return { error: "Unauthorized" }
 
@@ -509,16 +532,31 @@ export async function deleteSubmissionFile(assignmentId: string, fileUrl: string
             })
         }
 
-        // 2. Delete from Local Storage (Skip if Remote)
+        // 2. Delete from Storage
         if (fileUrl.startsWith("/api/files/")) {
             // Local file deletion
             try {
                 const relativePath = fileUrl.replace(/^\/api\/files\//, "")
                 const fullPath = path.join(process.cwd(), "uploads", relativePath)
-                await unlink(fullPath).catch(() => { })
+                console.log("Unlinking local file:", fullPath)
+                await unlink(fullPath).catch((err) => { console.log("Local unlink fail:", err) })
             } catch (fsError) {
                 console.error("Error deleting local file:", fsError)
             }
+        } else if (fileUrl.startsWith("http")) {
+            // UploadThing deletion (Remote)
+            try {
+                const key = fileUrl.split("/").pop();
+                console.log("Deleting Remote/UT file, key:", key)
+                if (key) {
+                    const res = await utapi.deleteFiles(key);
+                    console.log("UT Delete result:", res)
+                }
+            } catch (error) {
+                console.error("Error deleting Remote file:", error);
+            }
+        } else {
+            console.log("Unknown file format for delete:", fileUrl)
         }
 
 

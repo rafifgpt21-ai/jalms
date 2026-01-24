@@ -150,7 +150,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                 </div>
             )}
 
-            <div className="space-y-16">
+            <div className="space-y-8 md:space-y-16">
                 {questions.map((question, index) => (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -161,13 +161,13 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                     >
                         {/* Connector Line */}
                         {index !== questions.length - 1 && (
-                            <div className="absolute left-[19px] top-12 bottom-[-64px] w-0.5 bg-slate-100 dark:bg-slate-800 -z-10 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 transition-colors" />
+                            <div className="hidden md:block absolute left-[15px] md:left-[19px] top-10 md:top-12 bottom-[-32px] md:bottom-[-64px] w-0.5 bg-slate-100 dark:bg-slate-800 -z-10 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 transition-colors" />
                         )}
 
-                        <div className="flex gap-6">
+                        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                             <div className="flex-none">
                                 <span className={cn(
-                                    "flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm shadow-sm transition-all duration-300",
+                                    "flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full font-bold text-sm shadow-sm transition-all duration-300",
                                     answers[question.id]
                                         ? "bg-indigo-600 text-white shadow-indigo-500/30 scale-100"
                                         : "bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
@@ -176,10 +176,10 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                 </span>
                             </div>
 
-                            <div className="flex-1 space-y-6">
-                                <div className="space-y-4">
+                            <div className="flex-1 space-y-4 md:space-y-6">
+                                <div className="space-y-3 md:space-y-4">
                                     <div className="flex justify-between items-start gap-4">
-                                        <h3 className="text-xl md:text-2xl font-heading font-medium text-slate-900 dark:text-white leading-relaxed">
+                                        <h3 className="text-lg md:text-2xl font-heading font-medium text-slate-900 dark:text-white leading-relaxed">
                                             {question.text}
                                             {question.points && (
                                                 <span className="ml-3 inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
@@ -190,12 +190,14 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                     </div>
 
                                     {question.imageUrl && (
-                                        <div className="relative w-full max-w-2xl aspect-video rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700">
+                                        <div className="w-full max-w-2xl rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700">
                                             <Image
                                                 src={question.imageUrl}
                                                 alt="Question"
-                                                fill
-                                                className="object-cover"
+                                                width={0}
+                                                height={0}
+                                                sizes="100vw"
+                                                className="w-full h-auto block"
                                             />
                                         </div>
                                     )}
@@ -213,7 +215,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                     )}
                                 </div>
 
-                                <div className="space-y-3 pt-2">
+                                <div className="space-y-2 md:space-y-3 pt-1 md:pt-2">
                                     {/* Handle Choice Rendering using custom buttons for both Radio/Checkbox feel */}
                                     {question.choices.map((choice) => {
                                         const selected = isSelected(question.id, choice.id)
@@ -242,7 +244,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                                 key={choice.id}
                                                 onClick={() => handleAnswer(question.id, choice.id, (question as any).allowMultiple)}
                                                 className={cn(
-                                                    "relative flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer overflow-hidden backdrop-blur-sm",
+                                                    "relative flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl border transition-all cursor-pointer overflow-hidden backdrop-blur-sm",
                                                     statusColorClass
                                                 )}
                                             >
@@ -269,12 +271,14 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                                         {choice.text}
                                                     </Label>
                                                     {choice.imageUrl && (
-                                                        <div className="mt-3 relative w-full aspect-video md:w-64 md:aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                                        <div className="mt-2 md:mt-3 w-full md:w-64 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
                                                             <Image
                                                                 src={choice.imageUrl}
                                                                 alt="Choice"
-                                                                fill
-                                                                className="object-cover"
+                                                                width={0}
+                                                                height={0}
+                                                                sizes="(max-width: 768px) 100vw, 256px"
+                                                                className="w-full h-auto block"
                                                             />
                                                         </div>
                                                     )}
@@ -334,6 +338,7 @@ function AudioPlayer({ src, limit, quizId, questionId, isReadOnly }: { src: stri
     const audioRef = useRef<HTMLAudioElement>(null)
     const [plays, setPlays] = useState(0)
     const [isPlaying, setIsPlaying] = useState(false)
+    const [progress, setProgress] = useState(0)
 
     // Key for local storage
     const storageKey = `quiz-audio-${quizId}-${questionId}-plays`
@@ -345,34 +350,74 @@ function AudioPlayer({ src, limit, quizId, questionId, isReadOnly }: { src: stri
         }
     }, [storageKey])
 
-    const handleNativePlay = () => {
-        if (limit > 0 && plays >= limit) {
-            if (audioRef.current) {
-                audioRef.current.pause()
-                audioRef.current.currentTime = 0
+    useEffect(() => {
+        const audio = audioRef.current
+        if (!audio) return
+
+        const updateProgress = () => {
+            if (audio.duration) {
+                setProgress((audio.currentTime / audio.duration) * 100)
             }
+        }
+
+        audio.addEventListener('timeupdate', updateProgress)
+        return () => audio.removeEventListener('timeupdate', updateProgress)
+    }, [])
+
+    // Standard Player for Review Mode
+    if (isReadOnly) {
+        return (
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <Volume2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Audio Clip (Review)</p>
+                    </div>
+                </div>
+                <audio controls className="w-full h-10" src={src} />
+            </div>
+        )
+    }
+
+    // Strict Player for Attempt Mode
+    const handleStrictPlay = () => {
+        if (isPlaying) return // Ignore if already playing (no pause)
+
+        if (limit > 0 && plays >= limit) {
             toast.error("Maximum playback limit reached")
             return
         }
 
-        if (!isPlaying) {
-            if (audioRef.current && audioRef.current.currentTime < 1) {
-                const newPlays = plays + 1
-                setPlays(newPlays)
-                localStorage.setItem(storageKey, newPlays.toString())
-            }
+        if (audioRef.current) {
+            audioRef.current.currentTime = 0
+            audioRef.current.play()
+            setIsPlaying(true)
         }
-        setIsPlaying(true)
     }
 
-    const handlePause = () => setIsPlaying(false)
-    const handleEnded = () => setIsPlaying(false)
+    const handleEnded = () => {
+        setIsPlaying(false)
+        setProgress(0)
+
+        // Decrement count (increment plays) ONLY on completion
+        const newPlays = plays + 1
+        setPlays(newPlays)
+        localStorage.setItem(storageKey, newPlays.toString())
+    }
+
+    // Prevent manual pausing via media keys/menu if possible by forced resume? 
+    // It's aggressive, but user asked "not even pausing". 
+    // Simple approach: Just hide UI controls. If they pause via OS, it just pauses.
+    // But we won't count it as complete until it Ends.
 
     const remaining = limit > 0 ? Math.max(0, limit - plays) : Infinity
+    const isLimitReached = limit > 0 && plays >= limit
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-            <div className="flex items-center gap-3 mb-3">
+        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 select-none">
+            <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                     <Volume2 className="w-5 h-5" />
                 </div>
@@ -380,7 +425,7 @@ function AudioPlayer({ src, limit, quizId, questionId, isReadOnly }: { src: stri
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Audio Clip</p>
                     {limit > 0 && (
                         <p className={`text-xs ${remaining === 0 ? "text-red-500" : "text-slate-500"}`}>
-                            {remaining === 0 ? "Limit reached" : `${remaining} plays remaining`}
+                            {remaining === 0 ? "No plays remaining" : `${remaining} plays remaining`}
                         </p>
                     )}
                 </div>
@@ -388,14 +433,45 @@ function AudioPlayer({ src, limit, quizId, questionId, isReadOnly }: { src: stri
 
             <audio
                 ref={audioRef}
-                controls
-                className="w-full h-10"
+                className="hidden"
                 src={src}
-                onPlay={handleNativePlay}
-                onPause={handlePause}
                 onEnded={handleEnded}
-                controlsList={limit > 0 ? "nodownload" : undefined}
+            // No controls attribute = No scrubbing/pausing UI
             />
+
+            <div className="space-y-3">
+                {/* Custom Progress Bar (Non-interactive) */}
+                <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-indigo-600 transition-all duration-300 ease-linear"
+                        style={{ width: `${progress}%` }}
+                    />
+                </div>
+
+                <Button
+                    onClick={handleStrictPlay}
+                    disabled={isPlaying || isLimitReached}
+                    className="w-full"
+                    variant={isPlaying ? "secondary" : "default"}
+                >
+                    {isPlaying ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Playing...
+                        </>
+                    ) : isLimitReached ? (
+                        <>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Limit Reached
+                        </>
+                    ) : (
+                        <>
+                            <Play className="mr-2 h-4 w-4" />
+                            Play Audio
+                        </>
+                    )}
+                </Button>
+            </div>
         </div>
     )
 }

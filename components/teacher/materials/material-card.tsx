@@ -28,7 +28,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { FileText, MoreVertical, Eye, Download, Pencil, Trash2, Loader2 } from "lucide-react"
+import { FileText, MoreVertical, Eye, Download, Pencil, Trash2, Loader2, ExternalLink, Link as LinkIcon } from "lucide-react"
 import Link from "next/link"
 import { deleteMaterial } from "@/lib/actions/material.actions"
 import { toast } from "sonner"
@@ -40,10 +40,12 @@ interface MaterialCardProps {
         id: string
         title: string
         description?: string | null
-        fileUrl: string
+        fileUrl?: string | null
+        linkUrl?: string | null
         uploadedAt: Date
-        courseId?: string | null // Made optional as per schema change
-        assignments?: any[] // Using any for simplicity or define proper type
+        materialType?: string | null
+        courseId?: string | null
+        assignments?: any[]
     }
     isTeacher?: boolean
     courseId?: string
@@ -54,45 +56,54 @@ export function MaterialCard({ material, isTeacher = false, courseId }: Material
     const [isDeleting, setIsDeleting] = useState(false)
 
     async function handleDelete() {
+        const toastId = toast.loading("Deleting material...")
         setIsDeleting(true)
         try {
             const res = await deleteMaterial(material.id)
             if (res.success) {
-                toast.success("Material deleted")
+                toast.success("Material deleted", { id: toastId })
                 router.refresh()
             } else {
-                toast.error("Failed to delete material")
+                toast.error("Failed to delete material", { id: toastId })
             }
         } catch (error) {
-            toast.error("Something went wrong")
+            toast.error("Something went wrong", { id: toastId })
         } finally {
             setIsDeleting(false)
         }
     }
 
-    const viewUrl = isTeacher
+    const hasFile = !!material.fileUrl
+    const hasLink = !!material.linkUrl
+
+    // Construct File View URL (Internal)
+    const fileViewUrl = isTeacher
         ? `/teacher/materials/${material.id}`
         : `/student/courses/${courseId || material.courseId}/materials/${material.id}`
 
-    // If teacher, we might not have a specific courseId for the view link if it's global.
-    // But for now let's keep it simple. If it's teacher, maybe just show file?
-    // User said "same download and view menu". 
-    // If I click view, where does it go?
-    // Maybe just open the file?
-    // For now I'll point to fileUrl for teacher if courseId is missing.
+    // Construct Download URL
+    const downloadUrl = material.fileUrl ? `${material.fileUrl}?download=true` : undefined
 
     return (
         <Card>
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <div className="flex items-start gap-4">
                     <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
-                        <FileText className="h-6 w-6" />
+                        {hasFile ? <FileText className="h-6 w-6" /> : <LinkIcon className="h-6 w-6" />}
                     </div>
                     <div className="space-y-1">
                         <CardTitle className="text-base font-semibold leading-none">
-                            <Link href={viewUrl} className="hover:underline">
-                                {material.title}
-                            </Link>
+                            {hasFile ? (
+                                <Link href={fileViewUrl} className="hover:underline">
+                                    {material.title}
+                                </Link>
+                            ) : hasLink ? (
+                                <a href={material.linkUrl!} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                    {material.title}
+                                </a>
+                            ) : (
+                                <span>{material.title}</span>
+                            )}
                         </CardTitle>
                         <CardDescription className="text-xs">
                             Uploaded on {format(new Date(material.uploadedAt), "MMM d, yyyy")}
@@ -107,18 +118,30 @@ export function MaterialCard({ material, isTeacher = false, courseId }: Material
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                            <Link href={viewUrl}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <a href={`${material.fileUrl}?download=true`} target="_blank" rel="noopener noreferrer">
-                                <Download className="mr-2 h-4 w-4" />
-                                Download
-                            </a>
-                        </DropdownMenuItem>
+                        {hasFile && (
+                            <DropdownMenuItem asChild>
+                                <Link href={fileViewUrl}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View File
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
+                        {hasLink && (
+                            <DropdownMenuItem asChild>
+                                <a href={material.linkUrl!} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    Open Link
+                                </a>
+                            </DropdownMenuItem>
+                        )}
+                        {hasFile && (
+                            <DropdownMenuItem asChild>
+                                <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download
+                                </a>
+                            </DropdownMenuItem>
+                        )}
                         {isTeacher && (
                             <>
                                 <DropdownMenuItem asChild>
@@ -165,6 +188,12 @@ export function MaterialCard({ material, isTeacher = false, courseId }: Material
                 <p className="text-sm text-muted-foreground line-clamp-2">
                     {material.description || "No description provided."}
                 </p>
+                {hasLink && hasFile && (
+                    <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                        <LinkIcon className="h-3 w-3" />
+                        Link attached
+                    </div>
+                )}
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
                 {isTeacher && (
@@ -174,18 +203,24 @@ export function MaterialCard({ material, isTeacher = false, courseId }: Material
                         assignments={material.assignments || []}
                     />
                 )}
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={viewUrl}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View
-                    </Link>
-                </Button>
-                <Button size="sm" asChild>
-                    <a href={`${material.fileUrl}?download=true`} target="_blank" rel="noopener noreferrer">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                    </a>
-                </Button>
+
+                {hasLink && (
+                    <Button variant="outline" size="sm" asChild>
+                        <a href={material.linkUrl!} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Open Link
+                        </a>
+                    </Button>
+                )}
+
+                {hasFile && (
+                    <Button size="sm" asChild>
+                        <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
+                            <Download className="mr-2 h-4 w-4" />
+                            Download
+                        </a>
+                    </Button>
+                )}
             </CardFooter>
         </Card>
     )

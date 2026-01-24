@@ -8,6 +8,9 @@ import { auth } from "@/auth"
 import { writeFile, mkdir, unlink } from "fs/promises"
 import path from "path"
 import { existsSync } from "fs"
+import { UTApi } from "uploadthing/server"
+
+const utapi = new UTApi()
 
 export async function getUser() {
     const session = await auth()
@@ -279,6 +282,24 @@ export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
         // Old local files will clutter the ephemeral disk until instance restart, which is fine.
         // We do NOT attempt to unlink old files because we don't know if they are local or remote 
         // and 'fs' operations are risky/useless on Serverless.
+
+        // Get current user to check for existing avatar
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { image: true }
+        })
+
+        // If current image is hosted on UploadThing, delete it
+        if (currentUser?.image && currentUser.image.includes("utfs.io")) {
+            const key = currentUser.image.split("/f/")[1]
+            if (key) {
+                try {
+                    await utapi.deleteFiles(key)
+                } catch (error) {
+                    console.error("Failed to delete old avatar from UploadThing:", error)
+                }
+            }
+        }
 
         await prisma.user.update({
             where: { id: session.user.id },

@@ -11,16 +11,20 @@ export const ourFileRouter = {
         image: { maxFileSize: "4MB", maxFileCount: 1 },
         pdf: { maxFileSize: "8MB", maxFileCount: 1 },
         text: { maxFileSize: "1MB", maxFileCount: 1 },
+        audio: { maxFileSize: "1MB", maxFileCount: 1 },
         blob: { maxFileSize: "16MB", maxFileCount: 1 }
     })
         // Set permissions and file types for this FileRoute
         .middleware(async ({ req }) => {
+            console.log("UT Middleware start");
+            const start = Date.now();
             // This code runs on your server before upload
             const session = await auth();
 
             // If you throw, the user will not be able to upload
             if (!session?.user) throw new UploadThingError("Unauthorized");
 
+            console.log("UT Middleware end, took:", Date.now() - start, "ms");
             // Whatever is returned here is accessible in onUploadComplete as `metadata`
             return { userId: session.user.id };
         })

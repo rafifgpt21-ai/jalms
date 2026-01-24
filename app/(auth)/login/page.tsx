@@ -22,8 +22,9 @@ export default function LoginPage() {
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
                 {/* Content */}
+                {/* Content */}
                 <div className="relative z-10">
-                    <ArsyncLogo className="h-8 w-auto text-white" />
+                    {/* Logo moved to right side */}
                 </div>
 
                 <div className="relative z-10 max-w-md">
@@ -47,10 +48,9 @@ export default function LoginPage() {
 
                 <div className="w-full max-w-[400px] space-y-8 relative z-10">
                     <div className="text-center lg:text-left">
-                        <div className="flex justify-center lg:hidden mb-8">
-                            <ArsyncLogo className="h-12 w-auto" />
+                        <div className="flex justify-center mb-8">
+                            <img src="https://jjuy48ud0l.ufs.sh/f/h9KMQVU48dknaGxcHu5OjXlCnvKP0dqtwHxcyTzZfMG8g6u4" alt="Arsync Logo" className="h-24 w-auto" />
                         </div>
-                        <h1 className="text-3xl font-heading font-bold text-slate-900 dark:text-white">Welcome back</h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-2">
                             Enter your credentials to access your workspace.
                         </p>

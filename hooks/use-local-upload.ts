@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { uploadFiles } from "@/lib/uploadthing";
 
 interface UseLocalUploadReturn {
     startUpload: (files: File[], folder?: string) => Promise<{ url: string; name: string }[] | undefined>;
@@ -14,9 +15,6 @@ export function useLocalUpload(): UseLocalUploadReturn {
         const uploadedFiles: { url: string; name: string }[] = [];
 
         try {
-            // Dynamically import to avoid server-side issues if called there, though this hook is likely client-side
-            const { uploadFiles } = await import("@/lib/uploadthing");
-
             // We use the "courseUpload" endpoint we defined in core.ts
             // Note: UploadThing doesn't strictly use "folders" in the same way, but we can pass it as input if we extended the metadata 
             // For now, we just upload to the configured bucket
@@ -27,9 +25,9 @@ export function useLocalUpload(): UseLocalUploadReturn {
             if (!res) throw new Error("Upload failed - no response");
 
             // Transform UploadThing response to match our expected format
-            res.forEach((file: { url: string; name: string }) => {
+            res.forEach((file: any) => {
                 uploadedFiles.push({
-                    url: file.url,
+                    url: file.ufsUrl || file.url,
                     name: file.name
                 });
             });

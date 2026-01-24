@@ -172,7 +172,8 @@ model Material {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
-  fileUrl     String
+  fileUrl     String?
+  linkUrl     String?
   uploadedAt  DateTime @default(now())
 
   // Owner of the material
@@ -182,6 +183,8 @@ model Material {
   // Optional link to Course (deprecated or for specific single-use)
   courseId String? @db.ObjectId
   course   Course? @relation(fields: [courseId], references: [id])
+  
+  materialType String? @default("FILE") // Start optional, "FILE", "LINK", "HYBRID"
 
   assignments MaterialAssignment[]
 

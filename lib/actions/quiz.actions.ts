@@ -120,24 +120,55 @@ export async function deleteQuiz(quizId: string) {
         const session = await auth();
         if (!session?.user?.id) return { error: "Unauthorized" };
 
+        // Fetch quiz with all questions and choices to find files
         const quiz = await db.quiz.findUnique({
-            where: { id: quizId }
+            where: { id: quizId },
+            include: {
+                questions: {
+                    include: {
+                        choices: true
+                    }
+                }
+            }
         });
 
         if (!quiz) return { error: "Quiz not found" };
         if (quiz.teacherId !== session.user.id) return { error: "Unauthorized" };
 
-        // Soft delete
-        await db.quiz.update({
-            where: { id: quizId },
-            data: { deletedAt: new Date() }
+        // Collect all file URLs to delete
+        const filesToDelete: string[] = [];
+        quiz.questions.forEach(q => {
+            if (q.imageUrl) filesToDelete.push(q.imageUrl);
+            if (q.audioUrl) filesToDelete.push(q.audioUrl);
+            q.choices.forEach(c => {
+                if (c.imageUrl) filesToDelete.push(c.imageUrl);
+            });
+        });
+
+        // Hard Delete from DB
+        // Note: Relation to 'Assignment' might cause issues if not set to SetNull or Cascade.
+        // Assuming Validation or Cascade is handled, or we let it fail if in use.
+        // If it fails, files won't be deleted (good).
+        await db.quiz.delete({
+            where: { id: quizId }
         })
+
+        // If DB delete successful, delete files
+        if (filesToDelete.length > 0) {
+            // Fire and forget or await? Await is safer to ensuring it triggers but we don't want to block too long.
+            // deleteQuizImages handles mixed local/remote
+            await deleteQuizImages(filesToDelete);
+        }
 
         revalidatePath("/teacher/quiz-manager")
         return { success: true }
 
     } catch (error) {
         console.error("Error deleting quiz:", error)
+        // Check for Foreign Key constraint
+        if ((error as any).code === 'P2003') {
+            return { error: "Cannot delete quiz because it is assigned to students. Delete the assignment first." }
+        }
         return { error: "Failed to delete quiz" }
     }
 }
@@ -413,6 +444,10 @@ export async function bulkCreateQuestions(quizId: string, questionsData: Questio
     }
 }
 
+import { UTApi } from "uploadthing/server";
+
+const utapi = new UTApi();
+
 export async function deleteQuizImages(urls: string[]) {
     try {
         const session = await auth();
@@ -424,27 +459,28 @@ export async function deleteQuizImages(urls: string[]) {
             // Check if it is a local file
             if (url.startsWith("/api/files/")) {
                 // Local file deletion logic
-                try {
-                    // Expected format: /api/files/quiz-pictures/filename
-                    const relativePath = url.replace("/api/files/", "");
+                const relativePath = url.replace("/api/files/", "");
 
-                    // Sanitize check
-                    if (relativePath.includes("..")) {
-                        console.warn(`Skipping deletion of potential path traversal: ${relativePath}`);
-                        continue;
-                    }
-
-                    const filePath = path.join(process.cwd(), "uploads", relativePath);
-                    if (relativePath.startsWith("quiz-pictures/") || relativePath.startsWith("quiz-audio/")) {
-                        await unlink(filePath).catch(() => { }); // Ignore not found
-                    }
-                } catch (err) {
-                    console.error(`Failed to delete local file ${url}:`, err);
+                // Sanitize check
+                if (relativePath.includes("..")) {
+                    console.warn(`Skipping deletion of potential path traversal: ${relativePath}`);
+                    continue;
                 }
-            } else {
-                // Remote file (UploadThing)
-                // We currently do not delete remote files server-side to avoid auth complexity or blocking.
-                // They will persist in UT.
+
+                const filePath = path.join(process.cwd(), "uploads", relativePath);
+                if (relativePath.startsWith("quiz-pictures/") || relativePath.startsWith("quiz-audio/")) {
+                    // Fire and forget local unlink
+                    unlink(filePath).catch((err) => console.error("Bg unlink error:", err));
+                }
+
+            } else if (url.startsWith("http")) {
+                // Remote file (UploadThing) - Fire and forget
+                const key = url.split("/").pop();
+                if (key) {
+                    utapi.deleteFiles(key)
+                        .then(res => console.log("Bg UT delete result:", res))
+                        .catch(err => console.error("Bg UT delete error:", err));
+                }
             }
         }
         return { success: true }

@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/select"
 import { AudioLines, Play, Check } from "lucide-react"
 
+import imageCompression from "browser-image-compression";
+
 interface Choice {
     id?: string
     text: string
@@ -84,10 +86,52 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
         return url
     }
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>, target: 'question' | 'audio' | number) => {
+    const compressFile = async (file: File) => {
+        // Options for compression
+        const options = {
+            maxSizeMB: 0.5, // 512KB
+            maxWidthOrHeight: 1920, // Max width/height
+            useWebWorker: true,
+            fileType: "image/webp", // Optimized format
+            initialQuality: 0.8
+        }
+
+        try {
+            // Only compress images
+            if (file.type.startsWith('image/')) {
+                toast.info("Compressing image...", { duration: 1000 })
+                const compressedFile = await imageCompression(file, options);
+                return compressedFile;
+            }
+            return file;
+        } catch (error) {
+            console.error("Compression failed:", error);
+            // Fallback to original
+            return file;
+        }
+    }
+
+    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>, target: 'question' | 'audio' | number) => {
         const files = e.target.files
         if (!files || files.length === 0) return
-        const file = files[0]
+        let file = files[0]
+
+        // Validate Audio Size (1MB Strict Limit)
+        if (target === 'audio') {
+            if (file.size > 1 * 1024 * 1024) { // 1MB in bytes
+                toast.error("Audio file must be less than 1MB");
+                // Reset input value so user can select again
+                e.target.value = "";
+                return;
+            }
+        }
+
+        // Compress if it's an image
+        if (target === 'question' || (typeof target === 'number')) {
+            if (file.type.startsWith('image/')) {
+                file = await compressFile(file);
+            }
+        }
 
         if (target === 'question') {
             setPendingQuestionFile(file)
@@ -190,19 +234,13 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
             // 1. Upload Images
             let finalQuestionImageUrl = imageUrl
             const finalChoices = [...choices]
-            const imagesToDelete: string[] = []
 
             // Question Image
             if (pendingQuestionFile) {
                 const uploaded = await startUpload([pendingQuestionFile], "quiz-pictures")
                 if (uploaded?.[0]) {
                     finalQuestionImageUrl = uploaded[0].url
-                    // Check if we replaced an existing image
-                    if (question?.imageUrl && question.imageUrl !== finalQuestionImageUrl) {
-                        imagesToDelete.push(question.imageUrl)
-                    }
                 }
-                imagesToDelete.push(question.imageUrl)
             }
 
             // Audio Upload
@@ -211,58 +249,18 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                 const uploaded = await startUpload([pendingAudioFile], "quiz-audio")
                 if (uploaded?.[0]) {
                     finalAudioUrl = uploaded[0].url
-                    if (question?.audioUrl && question.audioUrl !== finalAudioUrl) {
-                        imagesToDelete.push(question.audioUrl)
-                    }
                 }
-            } else if (question?.audioUrl && !audioUrl) {
-                // Audio was removed
-                imagesToDelete.push(question.audioUrl)
             }
 
             // Choice Images
-            // Parallel upload? sequential for now to keep it simple with hook
             for (let i = 0; i < finalChoices.length; i++) {
                 const pendingFile = pendingChoiceFiles[i]
-                const originalChoice = question?.choices?.[i] // This matching by index assumes order preserved. 
-                // Wait, if we added/removed choices, matching by index to original question.choices is risky if IDs not aligned.
-                // But for deletion logic: 
-                // If original choice had URL, and now we track it by ID?
-
-                // Better deletion logic:
-                // Collect ALL original URLs from `question`. 
-                // Collect ALL final URLs we are about to save.
-                // Any original URL not in final set should be deleted.
-                // This handles reordering, deletion, replacement automatically.
-
                 if (pendingFile) {
                     const uploaded = await startUpload([pendingFile], "quiz-pictures")
                     if (uploaded?.[0]) {
                         finalChoices[i].imageUrl = uploaded[0].url
                     }
                 }
-            }
-
-            // Calculate images to delete (Global diff approach)
-            const oldUrls = new Set<string>()
-            if (question?.imageUrl) oldUrls.add(question.imageUrl)
-            if (question?.audioUrl) oldUrls.add(question.audioUrl)
-
-            question?.choices?.forEach((c: any) => {
-                if (c.imageUrl) oldUrls.add(c.imageUrl)
-            })
-
-            const newUrls = new Set<string>()
-            if (finalQuestionImageUrl) newUrls.add(finalQuestionImageUrl)
-            if (finalAudioUrl) newUrls.add(finalAudioUrl)
-            finalChoices.forEach(c => {
-                if (c.imageUrl) newUrls.add(c.imageUrl)
-            })
-
-            const toDelete = Array.from(oldUrls).filter(url => !newUrls.has(url))
-
-            if (toDelete.length > 0) {
-                await deleteQuizImages(toDelete)
             }
 
             const questionData = {
@@ -282,6 +280,26 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
             if ('error' in result && result.error) {
                 toast.error(result.error)
             } else {
+                // Success! Now we can safely delete old images in background
+                const oldUrls = new Set<string>()
+                if (question?.imageUrl) oldUrls.add(question.imageUrl)
+                if (question?.audioUrl) oldUrls.add(question.audioUrl)
+                question?.choices?.forEach((c: any) => {
+                    if (c.imageUrl) oldUrls.add(c.imageUrl)
+                })
+
+                const newUrls = new Set<string>()
+                if (finalQuestionImageUrl) newUrls.add(finalQuestionImageUrl)
+                if (finalAudioUrl) newUrls.add(finalAudioUrl)
+                finalChoices.forEach(c => {
+                    if (c.imageUrl) newUrls.add(c.imageUrl)
+                })
+
+                const toDelete = Array.from(oldUrls).filter(url => !newUrls.has(url))
+                if (toDelete.length > 0) {
+                    deleteQuizImages(toDelete)
+                }
+
                 toast.success(isNew ? "Question added" : "Question updated")
                 if (isNew && onCancelNew) onCancelNew()
                 router.refresh()
@@ -439,14 +457,19 @@ export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
                                                 className="h-7 w-20 text-center"
                                             />
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeImage('audio')}
-                                            className="h-8 w-8 text-destructive hover:text-destructive"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
+                                        <div className="flex gap-1">
+                                            <Label htmlFor={`q-audio-${question?.id || 'new'}`} className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted cursor-pointer">
+                                                <AudioLines className="h-4 w-4 text-muted-foreground" />
+                                            </Label>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => removeImage('audio')}
+                                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (

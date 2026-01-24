@@ -8,6 +8,10 @@ import { unlink } from "fs/promises"
 import path from "path"
 
 
+import { UTApi } from "uploadthing/server";
+
+const utapi = new UTApi();
+
 
 export async function deleteMaterialFile(materialId: string, fileUrl: string) {
     try {
@@ -23,16 +27,21 @@ export async function deleteMaterialFile(materialId: string, fileUrl: string) {
         }
 
         // Extract file key from URL
+        // Extract file key from URL
         // Local File Deletion
         if (fileUrl.startsWith("/api/files/")) {
-            try {
-                // Remove /api/files/ prefix
-                const relativePath = fileUrl.replace(/^\/api\/files\//, "")
-                const fullPath = path.join(process.cwd(), "uploads", relativePath)
-                // Attempt delete, ignore error if missing
-                await unlink(fullPath).catch(() => { })
-            } catch (error) {
-                console.error("Error deleting local file:", error)
+            // Background local delete
+            const relativePath = fileUrl.replace(/^\/api\/files\//, "")
+            const fullPath = path.join(process.cwd(), "uploads", relativePath)
+            unlink(fullPath).catch((err) => console.log("Bg unlink error:", err))
+        } else if (fileUrl.startsWith("http")) {
+            // Background UT/Remote delete
+            const key = fileUrl.split("/").pop();
+            console.log("Deleting Remote/UT file (Material):", key)
+            if (key) {
+                utapi.deleteFiles(key)
+                    .then(res => console.log("Bg UT Delete result:", res))
+                    .catch(err => console.error("Bg UT delete error:", err));
             }
         }
 
@@ -53,9 +62,12 @@ export async function deleteMaterialFile(materialId: string, fileUrl: string) {
 export async function createMaterial(data: {
     title: string
     description?: string
-    fileUrl: string
+    fileUrl?: string
+    linkUrl?: string
+    type?: string // Deprecated
 }) {
     try {
+        console.log("createMaterial: Starting", JSON.stringify(data, null, 2))
         const user = await getUser()
         if (!user || !user.id) return { success: false, material: null, error: "Unauthorized" }
 
@@ -63,15 +75,18 @@ export async function createMaterial(data: {
             data: {
                 title: data.title,
                 description: data.description || null,
-                fileUrl: data.fileUrl,
+                fileUrl: data.fileUrl || null,
+                linkUrl: data.linkUrl || null,
+                materialType: "HYBRID", // Just default
                 teacherId: user.id
             }
         })
 
+        console.log("createMaterial: DB Create Success", material.id)
         revalidatePath("/teacher/materials")
         return { success: true, material, error: undefined }
     } catch (error) {
-        console.error("Error creating material:", error)
+        console.error("Error creating material (DETAILED):", error)
         return { success: false, material: null, error: "Failed to create material" }
     }
 }
@@ -79,12 +94,14 @@ export async function createMaterial(data: {
 export async function getTeacherMaterials() {
     try {
         const user = await getUser()
+        console.log("getTeacherMaterials: User", user?.id, user?.email)
+
         if (!user) return { materials: [], error: "Unauthorized" }
 
         const materials = await prisma.material.findMany({
             where: {
                 teacherId: user.id,
-                deletedAt: { isSet: false }
+                deletedAt: { isSet: false } as any
             },
             include: {
                 assignments: {
@@ -106,6 +123,7 @@ export async function getTeacherMaterials() {
             }
         })
 
+        console.log("getTeacherMaterials: Found", materials.length, "materials")
         return { materials, error: undefined }
     } catch (error) {
         console.error("Error fetching teacher materials:", error)
@@ -233,13 +251,16 @@ export async function deleteMaterial(materialId: string) {
         }
 
         // Delete associated file if it exists
-        if (material.fileUrl && material.fileUrl.startsWith("/api/files/")) {
-            try {
+        if (material.fileUrl) {
+            if (material.fileUrl.startsWith("/api/files/")) {
                 const relativePath = material.fileUrl.replace(/^\/api\/files\//, "")
                 const fullPath = path.join(process.cwd(), "uploads", relativePath)
-                await unlink(fullPath).catch(() => { })
-            } catch (error) {
-                console.error("Error deleting local file:", error)
+                unlink(fullPath).catch(() => { })
+            } else if (material.fileUrl.startsWith("http")) {
+                const key = material.fileUrl.split("/").pop();
+                if (key) {
+                    utapi.deleteFiles(key).catch(err => console.error("Bg UT delete error:", err));
+                }
             }
         }
 
@@ -263,7 +284,9 @@ export async function updateMaterial(
     materialId: string,
     title: string,
     description: string,
-    fileUrl: string
+    fileUrl: string | null,
+    linkUrl: string | null,
+    // type: string // Deprecated
 ) {
     try {
         const user = await getUser()
@@ -277,12 +300,34 @@ export async function updateMaterial(
             return { success: false, material: null, error: "Unauthorized or material not found" }
         }
 
+        // Delete old file if it's being replaced
+        if (material.fileUrl && material.fileUrl !== fileUrl) {
+            console.log("Replacing Material file. Old:", material.fileUrl)
+            // Local File Deletion
+            if (material.fileUrl.startsWith("/api/files/")) {
+                const relativePath = material.fileUrl.replace(/^\/api\/files\//, "")
+                const fullPath = path.join(process.cwd(), "uploads", relativePath)
+                unlink(fullPath).catch((err) => {
+                    console.warn(`Bg unlink error: ${fullPath}`, err)
+                })
+            }
+            // UploadThing File Deletion (Remote)
+            else if (material.fileUrl.startsWith("http")) {
+                const key = material.fileUrl.split("/").pop();
+                if (key) {
+                    utapi.deleteFiles(key).catch(err => console.error("Bg UT delete error:", err));
+                }
+            }
+        }
+
         const updated = await prisma.material.update({
             where: { id: materialId },
             data: {
                 title,
                 description,
-                fileUrl
+                fileUrl,
+                linkUrl,
+                materialType: "HYBRID"
             }
         })
 
