@@ -186,3 +186,5 @@ export const ReportCardDocument = ({ student, classData, courses }: ReportCardDo
         </Page>
     </Document>
 );
+
+export default ReportCardDocument;

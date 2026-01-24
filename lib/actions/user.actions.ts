@@ -245,45 +245,8 @@ export async function changePassword(currentPassword: string, newPassword: strin
     }
 }
 
-export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
-    try {
-        const session = await auth()
-        if (!session?.user?.id) {
-            return { error: "Unauthorized" }
-        }
-
-        // Get current user to check for old avatar
-        const currentUser = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { image: true }
-        })
-
-        await prisma.user.update({
-            where: { id: session.user.id },
-            data: {
-                avatarConfig,
-                image: imageUrl
-            }
-        })
-
-        // Delete old avatar if it exists and update was successful
-        if (currentUser?.image && currentUser.image.startsWith("/api/files/avatar/")) {
-            const oldFilename = currentUser.image.split("/").pop()
-            if (oldFilename) {
-                const oldPath = path.join(process.cwd(), "uploads", "avatar", oldFilename)
-                if (existsSync(oldPath)) {
-                    await unlink(oldPath).catch(console.error)
-                }
-            }
-        }
-
-        revalidatePath("/admin/users")
-        return { success: true, error: undefined }
-    } catch (error) {
-        console.error("Error updating avatar:", error)
-        return { success: false, error: "Failed to update avatar" }
-    }
-}
+// Removed uploadAvatarImage to enforce client-side uploading for Vercel compatibility
+// and to reduce server load.
 
 export async function updateNickname(nickname: string) {
     try {
@@ -305,73 +268,31 @@ export async function updateNickname(nickname: string) {
     }
 }
 
-
-export async function uploadAvatarImage(formData: FormData) {
+export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
     try {
         const session = await auth()
         if (!session?.user?.id) {
             return { error: "Unauthorized" }
         }
 
-        const file = formData.get("file") as File
-        if (!file) {
-            return { error: "No file provided" }
-        }
+        // We no longer manage local files, so we simply update the DB.
+        // Old local files will clutter the ephemeral disk until instance restart, which is fine.
+        // We do NOT attempt to unlink old files because we don't know if they are local or remote 
+        // and 'fs' operations are risky/useless on Serverless.
 
-        const bytes = await file.arrayBuffer()
-        const buffer = Buffer.from(bytes)
-
-        // Create avatar directory if it doesn't exist
-        const uploadDir = path.join(process.cwd(), "uploads", "avatar")
-        if (!existsSync(uploadDir)) {
-            await mkdir(uploadDir, { recursive: true })
-        }
-
-        // Generate filename
-        const filename = `${session.user.id}-${Date.now()}.jpg`
-        const filepath = path.join(uploadDir, filename)
-
-        // Get current user to check for old avatar
-        const currentUser = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { image: true }
-        })
-
-        // Save file
-        await writeFile(filepath, buffer)
-
-        // Upload path for public access
-        const publicUrl = `/api/files/avatar/${filename}`
-
-        // Update user
         await prisma.user.update({
             where: { id: session.user.id },
             data: {
-                image: publicUrl,
-                avatarConfig: undefined // Clear dicebear config if using custom image
+                avatarConfig,
+                image: imageUrl
             }
         })
 
-        // Delete old avatar if it exists and update was successful
-        if (currentUser?.image && currentUser.image.startsWith("/api/files/avatar/")) {
-            const oldFilename = currentUser.image.split("/").pop()
-            if (oldFilename) {
-                const oldPath = path.join(process.cwd(), "uploads", "avatar", oldFilename)
-                // Avoid deleting the NEW file if for some reason the name collision happened (unlikely with timestamp)
-                if (oldPath !== filepath && existsSync(oldPath)) {
-                    await unlink(oldPath).catch(console.error)
-                }
-            }
-        }
-
         revalidatePath("/admin/users")
-        revalidatePath("/")
-
-        return { success: true, imageUrl: publicUrl }
+        return { success: true, error: undefined }
     } catch (error) {
-        console.error("Error uploading avatar:", error)
-
-        return { error: "Failed to upload avatar" }
+        console.error("Error updating avatar:", error)
+        return { success: false, error: "Failed to update avatar" }
     }
 }
 

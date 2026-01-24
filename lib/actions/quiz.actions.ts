@@ -421,30 +421,30 @@ export async function deleteQuizImages(urls: string[]) {
         for (const url of urls) {
             if (!url) continue;
 
-            // Expected format: /api/files/quiz-pictures/filename
-            // or just filename if relative? The DB stores URL.
+            // Check if it is a local file
+            if (url.startsWith("/api/files/")) {
+                // Local file deletion logic
+                try {
+                    // Expected format: /api/files/quiz-pictures/filename
+                    const relativePath = url.replace("/api/files/", "");
 
-            // Basic validation to prevent deleting outside uploads
-            if (!url.includes("/api/files/quiz-pictures/") && !url.includes("/api/files/quiz-audio/")) {
-                console.warn(`Skipping deletion of invalid image path: ${url}`);
-                continue;
-            }
+                    // Sanitize check
+                    if (relativePath.includes("..")) {
+                        console.warn(`Skipping deletion of potential path traversal: ${relativePath}`);
+                        continue;
+                    }
 
-            const relativePath = url.replace("/api/files/", "");
-            // Sanitize check
-            if (relativePath.includes("..")) {
-                console.warn(`Skipping deletion of potential path traversal: ${relativePath}`);
-                continue;
-            }
-
-            const filePath = path.join(process.cwd(), "uploads", relativePath);
-
-            try {
-                await unlink(filePath);
-                console.log(`Deleted file: ${filePath}`);
-            } catch (err) {
-                console.error(`Failed to delete file ${filePath}:`, err);
-                // Continue to next file even if one fails
+                    const filePath = path.join(process.cwd(), "uploads", relativePath);
+                    if (relativePath.startsWith("quiz-pictures/") || relativePath.startsWith("quiz-audio/")) {
+                        await unlink(filePath).catch(() => { }); // Ignore not found
+                    }
+                } catch (err) {
+                    console.error(`Failed to delete local file ${url}:`, err);
+                }
+            } else {
+                // Remote file (UploadThing)
+                // We currently do not delete remote files server-side to avoid auth complexity or blocking.
+                // They will persist in UT.
             }
         }
         return { success: true }

@@ -509,23 +509,15 @@ export async function deleteSubmissionFile(assignmentId: string, fileUrl: string
             })
         }
 
-        // 2. Delete from UploadThing or Local Storage
+        // 2. Delete from Local Storage (Skip if Remote)
         if (fileUrl.startsWith("/api/files/")) {
             // Local file deletion
             try {
-                // Remove /api/files/ prefix to get the relative path
                 const relativePath = fileUrl.replace(/^\/api\/files\//, "")
-
-                // Construct full path: process.cwd() + /uploads + /relativePath
-                // Note: route.ts serves files from process.cwd() + /uploads
                 const fullPath = path.join(process.cwd(), "uploads", relativePath)
-
-                // We should probably check if it exists before unlinking to avoid error, 
-                // but unlink might throw if not found anyway, which we catch below.
-                await unlink(fullPath)
+                await unlink(fullPath).catch(() => { })
             } catch (fsError) {
                 console.error("Error deleting local file:", fsError)
-                // Continue execution to update DB even if file delete fails (e.g. file already gone)
             }
         }
 

@@ -29,7 +29,8 @@ export async function deleteMaterialFile(materialId: string, fileUrl: string) {
                 // Remove /api/files/ prefix
                 const relativePath = fileUrl.replace(/^\/api\/files\//, "")
                 const fullPath = path.join(process.cwd(), "uploads", relativePath)
-                await unlink(fullPath)
+                // Attempt delete, ignore error if missing
+                await unlink(fullPath).catch(() => { })
             } catch (error) {
                 console.error("Error deleting local file:", error)
             }
@@ -232,15 +233,13 @@ export async function deleteMaterial(materialId: string) {
         }
 
         // Delete associated file if it exists
-        if (material.fileUrl) {
-            if (material.fileUrl.startsWith("/api/files/")) {
-                try {
-                    const relativePath = material.fileUrl.replace(/^\/api\/files\//, "")
-                    const fullPath = path.join(process.cwd(), "uploads", relativePath)
-                    await unlink(fullPath)
-                } catch (error) {
-                    console.error("Error deleting local file:", error)
-                }
+        if (material.fileUrl && material.fileUrl.startsWith("/api/files/")) {
+            try {
+                const relativePath = material.fileUrl.replace(/^\/api\/files\//, "")
+                const fullPath = path.join(process.cwd(), "uploads", relativePath)
+                await unlink(fullPath).catch(() => { })
+            } catch (error) {
+                console.error("Error deleting local file:", error)
             }
         }
 

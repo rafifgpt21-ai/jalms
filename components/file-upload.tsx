@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { X, UploadCloud, Loader2, FileIcon } from "lucide-react";
 import Image from "next/image";
+import { UploadDropzone } from "@/lib/uploadthing";
 
 interface FileUploadProps {
     onChange: (url?: string) => void;
@@ -72,58 +73,31 @@ export const FileUpload = ({ onChange, value, endpoint }: FileUploadProps) => {
         );
     }
 
-    const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files?.[0]) return;
-
-        setIsUploading(true);
-        const file = e.target.files[0];
-        const formData = new FormData();
-        formData.append("file", file);
-        if (endpoint) {
-            formData.append("folder", endpoint);
-        }
-
-        try {
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body: formData
-            });
-
-            if (!res.ok) {
-                throw new Error("Upload failed");
-            }
-
-            const data = await res.json();
-            onChange(data.url);
+    const onUploadComplete = (res: any[]) => {
+        const url = res?.[0]?.url;
+        if (url) {
+            onChange(url);
             toast.success("File uploaded");
-        } catch (error) {
-            toast.error("Something went wrong");
-            console.error(error);
-        } finally {
-            setIsUploading(false);
         }
+    }
+
+    const onUploadError = (error: Error) => {
+        toast.error(`Upload failed: ${error.message}`);
     }
 
     return (
         <div className="flex flex-col items-center justify-center w-full">
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    {isUploading ? (
-                        <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
-                    ) : (
-                        <UploadCloud className="w-8 h-8 mb-2 text-slate-500" />
-                    )}
-                    <p className="mb-2 text-sm text-slate-500 dark:text-slate-400">
-                        <span className="font-semibold">Click to upload</span>
-                    </p>
-                </div>
-                <input
-                    type="file"
-                    className="hidden"
-                    onChange={onUpload}
-                    disabled={isUploading}
-                />
-            </label>
+            <UploadDropzone
+                endpoint="courseUpload"
+                onClientUploadComplete={onUploadComplete}
+                onUploadError={onUploadError}
+                appearance={{
+                    container: "w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-4",
+                    uploadIcon: "text-slate-500",
+                    label: "text-slate-500 dark:text-slate-400 hover:text-slate-600",
+                    allowedContent: "hidden"
+                }}
+            />
         </div>
     );
 }

@@ -11,7 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { Loader2, RefreshCw, Save, Upload, Image as ImageIcon, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
-import { updateUserAvatar, uploadAvatarImage } from "@/lib/actions/user.actions"
+import { useLocalUpload } from "@/hooks/use-local-upload"
+
+import { updateUserAvatar } from "@/lib/actions/user.actions"
 import { useRouter } from "next/navigation"
 
 type AvatarConfig = {
@@ -37,6 +39,9 @@ const defaultOptions: AvatarConfig = {
 export function AvatarEditor({ initialConfig, onSaved }: { initialConfig?: any, onSaved?: () => void }) {
     const [mode, setMode] = useState<"generate" | "upload">("generate")
     const [config, setConfig] = useState<AvatarConfig>(initialConfig || defaultOptions)
+
+    // Use UploadThing hook
+    const { startUpload, isUploading: isUploadThingUploading } = useLocalUpload()
 
     // Upload State
     const [imageSrc, setImageSrc] = useState<string | null>(null)
@@ -132,21 +137,10 @@ export function AvatarEditor({ initialConfig, onSaved }: { initialConfig?: any, 
 
             if (!ctx) throw new Error("No canvas context")
 
-            // Wait for image to be fully loaded (it should be)
+            // Wait for image to be fully loaded
             const img = imageRef.current
 
-            // Calculate scale relative to the container logic
-            // The container is 256px. The image is displayed at `zoom` scale.
-            // We need to map the visible area in the container to the canvas.
-
-            // The logic:
-            // Display: translate(x, y) scale(zoom)
-            // We want to capture the center 256x256 of the *transformed* image.
-
-            // Let's do it simply:
-            // Draw the image onto the canvas with the same transforms, but scaled up to 512.
-            // Container size: 256. Output size: 512. Ratio: 2.
-            const ratio = size / 256
+            const ratio = size / 256;
 
             ctx.fillStyle = '#FFFFFF'
             ctx.fillRect(0, 0, size, size)
@@ -158,10 +152,6 @@ export function AvatarEditor({ initialConfig, onSaved }: { initialConfig?: any, 
             ctx.translate(position.x * ratio, position.y * ratio)
             ctx.scale(zoom * ratio, zoom * ratio)
 
-            // Draw image centered
-            // We need to know the rendered width/height ratio to the natural size?
-            // In the CSS, we don't force width/height, we let it be natural but scaled.
-            // Actually, for this to work robustly, we should draw it centered.
             ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2)
 
             // Convert to blob
@@ -171,10 +161,18 @@ export function AvatarEditor({ initialConfig, onSaved }: { initialConfig?: any, 
 
             if (!blob) throw new Error("Failed to create blob")
 
-            const formData = new FormData()
-            formData.append('file', blob, 'avatar.jpg')
+            // Convert Blob to File for UploadThing
+            const file = new File([blob], "avatar.jpg", { type: "image/jpeg" })
 
-            const result = await uploadAvatarImage(formData)
+            // Client-side Upload to UploadThing
+            const uploaded = await startUpload([file], "avatar")
+
+            if (!uploaded || !uploaded[0]) throw new Error("Upload failed")
+
+            const publicUrl = uploaded[0].url
+
+            // Update User Profile
+            const result = await updateUserAvatar(null, publicUrl)
 
             if (result.error) {
                 toast.error(result.error)

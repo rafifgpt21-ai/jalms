@@ -14,31 +14,32 @@ export function useLocalUpload(): UseLocalUploadReturn {
         const uploadedFiles: { url: string; name: string }[] = [];
 
         try {
-            for (const file of files) {
-                const formData = new FormData();
-                formData.append("file", file);
-                if (folder) {
-                    formData.append("folder", folder);
-                }
+            // Dynamically import to avoid server-side issues if called there, though this hook is likely client-side
+            const { uploadFiles } = await import("@/lib/uploadthing");
 
-                const response = await fetch("/api/upload", {
-                    method: "POST",
-                    body: formData,
+            // We use the "courseUpload" endpoint we defined in core.ts
+            // Note: UploadThing doesn't strictly use "folders" in the same way, but we can pass it as input if we extended the metadata 
+            // For now, we just upload to the configured bucket
+            const res = await uploadFiles("courseUpload", {
+                files,
+            });
+
+            if (!res) throw new Error("Upload failed - no response");
+
+            // Transform UploadThing response to match our expected format
+            res.forEach((file: { url: string; name: string }) => {
+                uploadedFiles.push({
+                    url: file.url,
+                    name: file.name
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || "Failed to upload file");
-                }
-
-                const data = await response.json();
-                uploadedFiles.push(data);
-            }
+            });
 
             return uploadedFiles;
         } catch (error) {
             console.error("Upload error:", error);
-            toast.error(error instanceof Error ? error.message : "Upload failed");
+            // Improve error message for UploadThing specific errors
+            const msg = error instanceof Error ? error.message : "Upload failed";
+            toast.error(`Upload failed: ${msg}`);
             return undefined;
         } finally {
             setIsUploading(false);
