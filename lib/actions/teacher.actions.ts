@@ -472,32 +472,16 @@ export async function getCourseGradebook(courseId: string) {
     }
 }
 
-export async function getTeacherDashboardStats(explicitTeacherId?: string) {
+export async function getTeacherStats(explicitTeacherId?: string) {
     try {
         let teacherId = explicitTeacherId
-
         if (!teacherId) {
             const user = await getUser()
             if (!user) return { error: "Unauthorized" }
             teacherId = user.id
         }
 
-        // Date calculations for classes today
-        const dayOfWeek = new Date().getDay()
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-
-        // Step 1: Fetch Base Data (Assignments, Students, Classes, Active Courses)
-        // We removed separate count queries as they are derived from arrays
-        const [
-            studentsCount,
-            allAssignments,
-            activeCourses,
-            rawClassesToday
-        ] = await Promise.all([
-            // 1. Students Count
+        const [studentsCount, activeCoursesCount, assignmentsCount, ungradedCount] = await Promise.all([
             prisma.user.count({
                 where: {
                     roles: { has: "STUDENT" },
@@ -510,8 +494,142 @@ export async function getTeacherDashboardStats(explicitTeacherId?: string) {
                     }
                 }
             }),
+            prisma.course.count({
+                where: {
+                    teacherId,
+                    term: { isActive: true },
+                    deletedAt: { isSet: false }
+                }
+            }),
+            prisma.assignment.count({
+                where: {
+                    course: {
+                        teacherId,
+                        term: { isActive: true },
+                        deletedAt: { isSet: false },
+                    },
+                    deletedAt: { isSet: false },
+                }
+            }),
+            prisma.submission.count({
+                where: {
+                    grade: null,
+                    assignment: {
+                        course: {
+                            teacherId,
+                            term: { isActive: true },
+                            deletedAt: { isSet: false },
+                        },
+                        deletedAt: { isSet: false }
+                    },
+                    deletedAt: { isSet: false }
+                }
+            })
+        ])
 
-            // 2. All Assignments (Used for dashboard widget AND to get IDs for other queries)
+        return {
+            stats: {
+                courses: activeCoursesCount,
+                students: studentsCount,
+                assignments: assignmentsCount,
+                ungraded: ungradedCount
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching teacher stats:", error)
+        return { error: "Failed to fetch stats" }
+    }
+}
+
+export async function getClassesToday(explicitTeacherId?: string) {
+    try {
+        let teacherId = explicitTeacherId
+        if (!teacherId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            teacherId = user.id
+        }
+
+        const dayOfWeek = new Date().getDay()
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+
+        const rawClassesToday = await prisma.schedule.findMany({
+            where: {
+                dayOfWeek,
+                course: {
+                    teacherId,
+                    term: { isActive: true },
+                    deletedAt: { isSet: false }
+                },
+                deletedAt: { isSet: false }
+            },
+            orderBy: { period: 'asc' },
+            include: {
+                course: {
+                    include: {
+                        class: true,
+                        subject: true,
+                        term: true
+                    }
+                }
+            }
+        })
+
+        const validClassesToday = rawClassesToday.filter(schedule => {
+            const term = schedule.course.term
+            const targetDate = new Date(today)
+            return targetDate >= term.startDate && targetDate <= term.endDate
+        })
+
+        let attendanceRecords: { topic: string | null, courseId: string, period: number }[] = []
+
+        if (validClassesToday.length > 0) {
+            const courseIds = validClassesToday.map(s => s.courseId)
+
+            attendanceRecords = await prisma.attendance.findMany({
+                where: {
+                    courseId: { in: courseIds },
+                    date: {
+                        gte: today,
+                        lt: tomorrow
+                    },
+                    deletedAt: { isSet: false },
+                },
+                select: { topic: true, courseId: true, period: true }
+            })
+        }
+
+        const classesToday = validClassesToday.map(schedule => {
+            const attendance = attendanceRecords.find(a =>
+                a.courseId === schedule.courseId && a.period === schedule.period
+            )
+            return {
+                ...schedule,
+                topic: attendance?.topic || null
+            }
+        })
+
+        return { classesToday }
+
+    } catch (error) {
+        console.error("Error fetching classes today:", error)
+        return { error: "Failed to fetch classes" }
+    }
+}
+
+export async function getAssignmentsOverview(explicitTeacherId?: string) {
+    try {
+        let teacherId = explicitTeacherId
+        if (!teacherId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            teacherId = user.id
+        }
+
+        const [allAssignments, activeCourses] = await Promise.all([
             prisma.assignment.findMany({
                 where: {
                     course: {
@@ -532,7 +650,6 @@ export async function getTeacherDashboardStats(explicitTeacherId?: string) {
                             }
                         }
                     },
-                    // Get graded submissions count
                     submissions: {
                         where: {
                             grade: { not: null },
@@ -542,8 +659,6 @@ export async function getTeacherDashboardStats(explicitTeacherId?: string) {
                     }
                 }
             }),
-
-            // 3. Active Courses (Used for filter AND course count)
             prisma.course.findMany({
                 where: {
                     teacherId,
@@ -552,12 +667,28 @@ export async function getTeacherDashboardStats(explicitTeacherId?: string) {
                 },
                 select: { id: true, name: true },
                 orderBy: { name: 'asc' }
-            }),
+            })
+        ])
 
-            // 4. Raw Classes Today
-            prisma.schedule.findMany({
-                where: {
-                    dayOfWeek,
+        return { allAssignments, activeCourses }
+    } catch (error) {
+        console.error("Error fetching assignments overview:", error)
+        return { error: "Failed to fetch assignments overview" }
+    }
+}
+
+export async function getRecentSubmissions(explicitTeacherId?: string) {
+    try {
+        let teacherId = explicitTeacherId
+        if (!teacherId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            teacherId = user.id
+        }
+
+        const recentSubmissions = await prisma.submission.findMany({
+            where: {
+                assignment: {
                     course: {
                         teacherId,
                         term: { isActive: true },
@@ -565,108 +696,45 @@ export async function getTeacherDashboardStats(explicitTeacherId?: string) {
                     },
                     deletedAt: { isSet: false }
                 },
-                orderBy: { period: 'asc' },
-                include: {
-                    course: {
-                        include: {
-                            class: true,
-                            subject: true,
-                            term: true
-                        }
-                    }
+                deletedAt: { isSet: false }
+            },
+            take: 5,
+            orderBy: { submittedAt: 'desc' },
+            include: {
+                student: true,
+                assignment: {
+                    include: { course: true }
                 }
-            })
-        ])
-
-        // Step 2: Dependent Queries (Submissions)
-        // Use assignment IDs to filter instead of deep relation filter
-        const assignmentIds = allAssignments.map(a => a.id)
-
-        const [
-            recentSubmissions,
-            ungradedCount
-        ] = await Promise.all([
-            // 5. Recent Submissions (Optimized with ID filter)
-            prisma.submission.findMany({
-                where: {
-                    assignmentId: { in: assignmentIds },
-                    deletedAt: { isSet: false }
-                },
-                take: 5,
-                orderBy: { submittedAt: 'desc' },
-                include: {
-                    student: true,
-                    assignment: {
-                        include: { course: true }
-                    }
-                }
-            }),
-
-            // 6. Ungraded Count (Optimized with ID filter)
-            prisma.submission.count({
-                where: {
-                    grade: null,
-                    assignmentId: { in: assignmentIds },
-                    deletedAt: { isSet: false }
-                }
-            })
-        ])
-
-        // Filter valid schedules based on term dates
-        const validClassesToday = rawClassesToday.filter(schedule => {
-            const term = schedule.course.term
-            // Ensure we compare just dates or handle time correctly
-            // Assuming startDate and endDate are set to midnight or relevant boundaries
-            const targetDate = new Date(today)
-            return targetDate >= term.startDate && targetDate <= term.endDate
-        })
-
-        // Optimize Topic Fetching (Batch Query)
-        let attendanceRecords: { topic: string | null, courseId: string, period: number }[] = []
-
-        if (validClassesToday.length > 0) {
-            const courseIds = validClassesToday.map(s => s.courseId)
-
-            attendanceRecords = await prisma.attendance.findMany({
-                where: {
-                    courseId: { in: courseIds },
-                    date: {
-                        gte: today,
-                        lt: tomorrow
-                    },
-                    deletedAt: { isSet: false },
-                },
-                select: { topic: true, courseId: true, period: true }
-            })
-        }
-
-        // Map topics to classes
-        const classesToday = validClassesToday.map(schedule => {
-            const attendance = attendanceRecords.find(a =>
-                a.courseId === schedule.courseId && a.period === schedule.period
-            )
-            return {
-                ...schedule,
-                topic: attendance?.topic || null
             }
         })
 
-        return {
-            stats: {
-                courses: activeCourses.length,
-                students: studentsCount,
-                assignments: allAssignments.length,
-                ungraded: ungradedCount
-            },
-            recentSubmissions,
-            allAssignments,
-            activeCourses,
-            classesToday
-        }
+        return { recentSubmissions }
 
     } catch (error) {
-        console.error("Error fetching dashboard stats:", error)
+        console.error("Error fetching recent submissions:", error)
+        return { error: "Failed to fetch recent submissions" }
+    }
+}
+
+// Deprecated: Kept for backward compatibility if needed, but we should move away from it.
+export async function getTeacherDashboardStats(explicitTeacherId?: string) {
+    const [statsRes, classesRes, assignmentsRes, submissionsRes] = await Promise.all([
+        getTeacherStats(explicitTeacherId),
+        getClassesToday(explicitTeacherId),
+        getAssignmentsOverview(explicitTeacherId),
+        getRecentSubmissions(explicitTeacherId)
+    ])
+
+    if (statsRes.error || classesRes.error || assignmentsRes.error || submissionsRes.error) {
         return { error: "Failed to fetch dashboard stats" }
+    }
+
+    return {
+        stats: statsRes.stats!,
+        classesToday: classesRes.classesToday!,
+        allAssignments: assignmentsRes.allAssignments!,
+        activeCourses: assignmentsRes.activeCourses!,
+        recentSubmissions: submissionsRes.recentSubmissions!
     }
 }
 

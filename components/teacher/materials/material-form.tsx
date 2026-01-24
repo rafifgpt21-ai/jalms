@@ -229,7 +229,7 @@ export function MaterialForm({ initialData, courseId }: MaterialFormProps) {
                         {selectedFile && (
                             <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800">
                                 <div className="flex items-center gap-3 overflow-hidden">
-                                    <FileText className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                    <FileText className="h-4 w-4 text-green-600 shrink-0" />
                                     <div className="truncate">
                                         <p className="text-sm font-medium text-green-900 dark:text-green-300 truncate">
                                             {selectedFile.name}

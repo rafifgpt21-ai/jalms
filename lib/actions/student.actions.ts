@@ -40,89 +40,41 @@ export async function getStudentCourses() {
     }
 }
 
-export async function getStudentDashboardStats() {
+export async function getStudentSchedule() {
     try {
         const user = await getUser()
         if (!user) return { error: "Unauthorized" }
-
         const studentId = user.id
 
         const today = new Date()
-        const dayOfWeek = today.getDay() // 0=Sunday, 1=Monday...
-
-        // Date boundaries for attendance
+        const dayOfWeek = today.getDay()
         const startOfDay = new Date(today)
         startOfDay.setHours(0, 0, 0, 0)
         const endOfDay = new Date(today)
         endOfDay.setHours(23, 59, 59, 999)
 
-        // Run independent queries in parallel
-        const [schedule, allAssignments, recentGrades] = await Promise.all([
-            // 1. Get Today's Schedule
-            prisma.schedule.findMany({
-                where: {
-                    dayOfWeek,
-                    course: {
-                        studentIds: { has: studentId },
-                        term: { isActive: true },
-                        deletedAt: { isSet: false }
-                    },
+        const schedule = await prisma.schedule.findMany({
+            where: {
+                dayOfWeek,
+                course: {
+                    studentIds: { has: studentId },
+                    term: { isActive: true },
                     deletedAt: { isSet: false }
                 },
-                include: {
-                    course: {
-                        include: { teacher: true }
-                    }
-                },
-                orderBy: {
-                    period: 'asc'
+                deletedAt: { isSet: false }
+            },
+            include: {
+                course: {
+                    include: { teacher: true }
                 }
-            }),
+            },
+            orderBy: {
+                period: 'asc'
+            }
+        })
 
-            // 2. Get ALL Assignments for active courses (Filter in memory for speed)
-            // Complex OR/NOT EXISTS query was taking ~20s. Fetching all is much faster.
-            prisma.assignment.findMany({
-                where: {
-                    course: {
-                        studentIds: { has: studentId },
-                        term: { isActive: true },
-                        deletedAt: { isSet: false }
-                    },
-                    deletedAt: { isSet: false },
-                    type: { in: ["SUBMISSION", "QUIZ"] }
-                },
-                include: {
-                    course: true,
-                    submissions: {
-                        where: {
-                            studentId,
-                            deletedAt: { isSet: false }
-                        },
-                        select: { id: true, submittedAt: true }
-                    }
-                }
-            }),
-
-            // 3. Recent Activity (New assignments or Graded submissions)
-            prisma.submission.findMany({
-                where: {
-                    studentId,
-                    grade: { not: null },
-                    deletedAt: { isSet: false }
-                },
-                take: 5,
-                orderBy: { submittedAt: 'desc' },
-                include: {
-                    assignment: {
-                        include: { course: true }
-                    }
-                }
-            })
-        ])
-
-        // 1.1 Enrich schedule with Topic info (Batch optimized)
+        // Enrich with attendance
         const courseIds = schedule.map(s => s.courseId)
-
         let attendanceTopics: { topic: string | null, status: string, courseId: string, period: number }[] = []
 
         if (courseIds.length > 0) {
@@ -150,7 +102,44 @@ export async function getStudentDashboardStats() {
             }
         }).filter(slot => !slot.isSkipped)
 
-        // 2.1 Process Upcoming Deadlines in Memory
+        return { schedule: filteredSchedule }
+
+    } catch (error) {
+        console.error("Error fetching student schedule:", error)
+        return { error: "Failed to fetch schedule" }
+    }
+}
+
+export async function getStudentAssignments() {
+    try {
+        const user = await getUser()
+        if (!user) return { error: "Unauthorized" }
+        const studentId = user.id
+
+        // Fetch ALL Assignments for active courses (Filter in memory for speed)
+        const allAssignments = await prisma.assignment.findMany({
+            where: {
+                course: {
+                    studentIds: { has: studentId },
+                    term: { isActive: true },
+                    deletedAt: { isSet: false }
+                },
+                deletedAt: { isSet: false },
+                type: { in: ["SUBMISSION", "QUIZ"] }
+            },
+            include: {
+                course: true,
+                submissions: {
+                    where: {
+                        studentId,
+                        deletedAt: { isSet: false }
+                    },
+                    select: { id: true, submittedAt: true }
+                }
+            }
+        })
+
+        // Process Upcoming Deadlines in Memory
         const now = new Date()
         const upcomingDeadlines = allAssignments.filter(assignment => {
             if (!assignment.dueDate) return false
@@ -169,13 +158,60 @@ export async function getStudentDashboardStats() {
             return a.dueDate.getTime() - b.dueDate.getTime()
         }).slice(0, 5)
 
+        return { upcomingDeadlines }
 
-        return {
-            schedule: filteredSchedule,
-            upcomingDeadlines,
-            recentGrades
+    } catch (error) {
+        console.error("Error fetching student assignments:", error)
+        return { error: "Failed to fetch assignments" }
+    }
+}
+
+export async function getRecentGrades() {
+    try {
+        const user = await getUser()
+        if (!user) return { error: "Unauthorized" }
+        const studentId = user.id
+
+        const recentGrades = await prisma.submission.findMany({
+            where: {
+                studentId,
+                grade: { not: null },
+                deletedAt: { isSet: false }
+            },
+            take: 5,
+            orderBy: { submittedAt: 'desc' },
+            include: {
+                assignment: {
+                    include: { course: true }
+                }
+            }
+        })
+
+        return { recentGrades }
+
+    } catch (error) {
+        console.error("Error fetching recent grades:", error)
+        return { error: "Failed to fetch recent grades" }
+    }
+}
+
+export async function getStudentDashboardStats() {
+    try {
+        const [scheduleRes, assignmentsRes, gradesRes] = await Promise.all([
+            getStudentSchedule(),
+            getStudentAssignments(),
+            getRecentGrades()
+        ])
+
+        if (scheduleRes.error || assignmentsRes.error || gradesRes.error) {
+            return { error: "Failed to fetch dashboard stats" }
         }
 
+        return {
+            schedule: scheduleRes.schedule!,
+            upcomingDeadlines: assignmentsRes.upcomingDeadlines!,
+            recentGrades: gradesRes.recentGrades!
+        }
     } catch (error) {
         console.error("Error fetching student dashboard stats:", error)
         return { error: "Failed to fetch dashboard stats" }
