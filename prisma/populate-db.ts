@@ -1,6 +1,6 @@
 
 import { PrismaClient, Role, SemesterType, AcademicDomain, AttendanceStatus, AssignmentType } from "@prisma/client"
-import bcrypt from "bcryptjs"
+import * as bcrypt from "bcryptjs"
 import { faker } from "@faker-js/faker"
 
 const prisma = new PrismaClient()
@@ -303,13 +303,37 @@ async function main() {
                         }
                     })
 
+                    // --- MATERIALS (LINKS ONLY) ---
+                    // Create 3-5 Materials per course
+                    const materialCount = faker.number.int({ min: 3, max: 5 })
+                    for (let m = 0; m < materialCount; m++) {
+                        const material = await prisma.material.create({
+                            data: {
+                                title: `${subject.name} Resource ${m + 1}`,
+                                description: faker.lorem.sentence(),
+                                linkUrl: faker.internet.url(),
+                                materialType: "LINK",
+                                teacherId: teacher.id,
+                                // Optional: link to course directly if needed by schema, but schema has MaterialAssignment
+                            }
+                        })
+
+                        // Link to Course via MaterialAssignment
+                        await prisma.materialAssignment.create({
+                            data: {
+                                materialId: material.id,
+                                courseId: course.id
+                            }
+                        })
+                    }
+
                     // --- ASSIGNMENTS & GRADING ---
 
                     // A. Standard Assignments
                     // Create 3-5 Assignments
                     const assignCount = 4
                     for (let a = 0; a < assignCount; a++) {
-                        const maxPoints = 100 // Fixed to 100 as per user complaint about scores > 100
+                        const maxPoints = 100
                         const assignment = await prisma.assignment.create({
                             data: {
                                 title: `${subject.code} ${a === 0 ? 'Project' : 'Homework'} ${a + 1}`,
@@ -340,45 +364,7 @@ async function main() {
                         }
                     }
 
-                    // B. Quiz
-                    const quiz = await prisma.quiz.create({
-                        data: {
-                            title: `${subject.code} Mid-Term Assessment`,
-                            teacherId: teacher.id,
-                            questions: {
-                                create: [
-                                    { text: "Question 1?", order: 1, choices: { create: [{ text: "A", isCorrect: true }, { text: "B" }] } },
-                                    { text: "Question 2?", order: 2, choices: { create: [{ text: "C", isCorrect: true }, { text: "D" }] } }
-                                ]
-                            }
-                        }
-                    })
-
-                    const quizAssign = await prisma.assignment.create({
-                        data: {
-                            title: "Mid-Term Quiz",
-                            dueDate: faker.date.between({ from: CONFIG.TERMS[tIndex].startDate, to: CONFIG.TERMS[tIndex].endDate }),
-                            type: AssignmentType.QUIZ,
-                            courseId: course.id,
-                            quizId: quiz.id,
-                            maxPoints: 100,
-                            academicDomains: subject.academicDomains
-                        }
-                    })
-
-                    // Quiz Submissions
-                    for (const student of section.students) {
-                        const percent = faker.number.float({ min: 0.60, max: 1.00 })
-                        const grade = Math.round(100 * percent)
-                        await prisma.submission.create({
-                            data: {
-                                assignmentId: quizAssign.id,
-                                studentId: student.id,
-                                grade: grade,
-                                submittedAt: quizAssign.dueDate
-                            }
-                        })
-                    }
+                    // B. Quiz (REMOVED per user request)
 
                     // C. Participation / Attendance Assignment (Special 10 Points)
                     const partAssign = await prisma.assignment.create({
