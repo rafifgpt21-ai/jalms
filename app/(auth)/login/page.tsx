@@ -22,7 +22,6 @@ export default function LoginPage() {
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
                 {/* Content */}
-                {/* Content */}
                 <div className="relative z-10">
                     {/* Logo moved to right side */}
                 </div>

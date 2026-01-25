@@ -132,7 +132,7 @@ export function AvatarEditor({ initialConfig, onSaved }: { initialConfig?: any, 
             // Create canvas for cropping
             const canvas = document.createElement('canvas')
             const ctx = canvas.getContext('2d')
-            const size = 512 // Output size
+            const size = 256 // Output size reduced to 256x256
             canvas.width = size
             canvas.height = size
 
@@ -155,21 +155,22 @@ export function AvatarEditor({ initialConfig, onSaved }: { initialConfig?: any, 
 
             ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2)
 
-            // Convert to blob
+            // Convert to blob (WEBP)
             const blob = await new Promise<Blob | null>(resolve =>
-                canvas.toBlob(resolve, 'image/jpeg', 0.8)
+                canvas.toBlob(resolve, 'image/webp', 0.8)
             )
 
             if (!blob) throw new Error("Failed to create blob")
 
             // Convert Blob to File for UploadThing
-            const file = new File([blob], "avatar.jpg", { type: "image/jpeg" })
+            const file = new File([blob], "avatar.webp", { type: "image/webp" })
 
             // Compress image
             const options = {
-                maxSizeMB: 0.5,
-                maxWidthOrHeight: 512,
+                maxSizeMB: 0.1, // 100KB Limit
+                maxWidthOrHeight: 256,
                 useWebWorker: true,
+                fileType: "image/webp"
             }
 
             let uploadFile = file

@@ -12,6 +12,16 @@ import { submitQuizAttempt } from "@/lib/actions/student.actions"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface QuizPlayerProps {
     quizId: string
@@ -64,6 +74,9 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
         loadQuiz()
     }, [quizId, assignmentId])
 
+    const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false)
+    const [unansweredCount, setUnansweredCount] = useState(0)
+
     const handleAnswer = (questionId: string, choiceId: string, allowMultiple: boolean) => {
         if (isReadOnly) return
 
@@ -93,19 +106,18 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
         return current === choiceId
     }
 
-    const handleSubmit = () => {
+    const handlePreSubmit = () => {
         const unanswered = questions.filter(q => {
             const ans = answers[q.id]
             return !ans || (Array.isArray(ans) && ans.length === 0)
         })
 
-        if (unanswered.length > 0) {
-            toast.warning(`You have ${unanswered.length} unanswered questions.`)
-            if (!confirm("You have unanswered questions. Are you sure you want to submit?")) {
-                return
-            }
-        }
+        setUnansweredCount(unanswered.length)
+        setIsSubmitDialogOpen(true)
+    }
 
+    const handleConfirmSubmit = () => {
+        setIsSubmitDialogOpen(false)
         startTransition(async () => {
             // Need to ensure answers are compatible with server expectation
             // Server expects Record<string, string | string[]>
@@ -229,9 +241,16 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
 
                                         let statusColorClass = ""
                                         if (isReadOnly) {
-                                            if (selected && isCorrect) statusColorClass = "ring-2 ring-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20"
-                                            else if (selected && !isCorrect) statusColorClass = "ring-2 ring-red-500 bg-red-50/50 dark:bg-red-900/20"
-                                            else statusColorClass = "opacity-60 grayscale-[0.5]" // dimmed other options
+                                            // IF showing grades is allowed, show RED/GREEN
+                                            if (showGradeAfterSubmission) {
+                                                if (selected && isCorrect) statusColorClass = "ring-2 ring-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20"
+                                                else if (selected && !isCorrect) statusColorClass = "ring-2 ring-red-500 bg-red-50/50 dark:bg-red-900/20"
+                                                else statusColorClass = "opacity-60 grayscale-[0.5]" // dimmed other options
+                                            } else {
+                                                // IF hiding grades, show NEUTRAL for selected, dimmed for others
+                                                if (selected) statusColorClass = "ring-2 ring-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20"
+                                                else statusColorClass = "opacity-60 grayscale-[0.5]"
+                                            }
                                         } else {
                                             if (selected) statusColorClass = "bg-indigo-50/80 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 shadow-sm"
                                             else statusColorClass = "bg-white/40 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 hover:bg-white/60 dark:hover:bg-slate-900/60"
@@ -253,14 +272,18 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                                     (question as any).allowMultiple ? "rounded-sm" : "rounded-full", // Checkbox vs Radio Shape
                                                     "border-2",
                                                     selected
-                                                        ? (isReadOnly ? (isCorrect ? "border-emerald-500" : "border-red-500") : "border-indigo-600 dark:border-indigo-400")
+                                                        ? (isReadOnly
+                                                            ? (showGradeAfterSubmission ? (isCorrect ? "border-emerald-500" : "border-red-500") : "border-indigo-600 dark:border-indigo-400")
+                                                            : "border-indigo-600 dark:border-indigo-400")
                                                         : "border-slate-300 dark:border-slate-600"
                                                 )}>
                                                     {selected && (
                                                         <div className={cn(
                                                             "w-2.5 h-2.5",
                                                             (question as any).allowMultiple ? "rounded-sm" : "rounded-full",
-                                                            isReadOnly ? (isCorrect ? "bg-emerald-500" : "bg-red-500") : "bg-indigo-600 dark:bg-indigo-400"
+                                                            isReadOnly
+                                                                ? (showGradeAfterSubmission ? (isCorrect ? "bg-emerald-500" : "bg-red-500") : "bg-indigo-600 dark:bg-indigo-400")
+                                                                : "bg-indigo-600 dark:bg-indigo-400"
                                                         )} />
                                                     )}
                                                     {/* Removed the hint for unselected correct answers */}
@@ -285,7 +308,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                                 </div>
 
                                                 {/* Correct/Incorrect Icon Indicators */}
-                                                {isReadOnly && (
+                                                {isReadOnly && showGradeAfterSubmission && (
                                                     <div className="flex-none">
                                                         {isCorrect && <CheckCircle className="w-5 h-5 text-emerald-500" />}
                                                         {selected && !isCorrect && <XCircle className="w-5 h-5 text-red-500" />}
@@ -297,7 +320,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                 </div>
 
                                 {/* Explanation Section if ReadOnly */}
-                                {isReadOnly && (question as any).explanation && (
+                                {isReadOnly && showGradeAfterSubmission && (question as any).explanation && (
                                     <div className="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm border border-blue-100 dark:border-blue-900/50 animate-in fade-in slide-in-from-top-2">
                                         <div className="flex items-center gap-2 font-semibold mb-1">
                                             <AlertTriangle className="w-4 h-4" />
@@ -315,7 +338,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
             <div className="flex justify-end pt-12 border-t border-slate-100 dark:border-slate-800">
                 {!isReadOnly ? (
                     <Button
-                        onClick={handleSubmit}
+                        onClick={handlePreSubmit}
                         disabled={isPending}
                         size="lg"
                         className="w-full sm:w-auto min-w-[240px] h-12 text-lg rounded-xl shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all hover:-translate-y-1"
@@ -330,6 +353,29 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                     </div>
                 )}
             </div>
+
+            <AlertDialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to submit?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {unansweredCount > 0 ? (
+                                <span className="text-red-600 font-medium block mb-2">
+                                    Warning: You have {unansweredCount} unanswered questions.
+                                </span>
+                            ) : (
+                                <span>You are about to submit your quiz answers. This action cannot be undone.</span>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmSubmit} className="bg-indigo-600 hover:bg-indigo-700">
+                            Submit Quiz
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

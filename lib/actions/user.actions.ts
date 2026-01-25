@@ -290,7 +290,7 @@ export async function updateUserAvatar(avatarConfig: any, imageUrl: string) {
         })
 
         // If current image is hosted on UploadThing, delete it
-        if (currentUser?.image && currentUser.image.includes("utfs.io")) {
+        if (currentUser?.image && (currentUser.image.includes("utfs.io") || currentUser.image.includes("ufs.sh") || currentUser.image.includes("/f/"))) {
             const key = currentUser.image.split("/f/")[1]
             if (key) {
                 try {

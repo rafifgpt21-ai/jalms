@@ -25,7 +25,7 @@ export function PulseSkeleton() {
                         <Skeleton className="h-2 w-full mt-4 rounded-full" />
                         <Skeleton className="h-4 w-48 mt-3" />
                     </div>
-                    <Skeleton className="hidden sm:block h-24 w-24 rounded-full rounded-2xl" />
+                    <Skeleton className="hidden sm:block h-24 w-24 rounded-full" />
                 </div>
             </div>
         </div>
