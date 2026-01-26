@@ -52,16 +52,7 @@ export const columns: ColumnDef<UserColumn>[] = [
             )
         },
     },
-    {
-        accessorKey: "officialId",
-        header: "ID",
-        meta: {
-            className: "max-md:hidden",
-        },
-        cell: ({ row }) => {
-            return <span className="text-sm font-mono">{row.getValue("officialId") || "-"}</span>
-        },
-    },
+
     {
         accessorKey: "roles",
         header: "Roles",

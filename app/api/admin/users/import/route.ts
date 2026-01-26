@@ -21,6 +21,7 @@ export async function POST(req: Request) {
         const results = {
             success: 0,
             failed: 0,
+            skipped: 0,
             errors: [] as string[]
         }
 
@@ -32,37 +33,77 @@ export async function POST(req: Request) {
                     throw new Error(`Missing fields for ${user.email || 'unknown user'}`)
                 }
 
-                const hashedPassword = await bcrypt.hash(String(user.password), 10)
-
-                // Parse roles (comma separated string -> array of enums)
-                let roles: Role[] = [Role.STUDENT]
-                if (user.roles) {
-                    const roleStrings = user.roles.split(',').map((r: string) => r.trim().toUpperCase().replace(' ', '_'))
-                    // Filter valid roles
-                    const validRoles = roleStrings.filter((r: string) => Object.values(Role).includes(r as Role))
-                    if (validRoles.length > 0) roles = validRoles
-                }
-
-                await prisma.user.upsert({
-                    where: { email: user.email },
-                    update: {
-                        name: user.name,
-                        roles: roles,
-                        // We typically don't re-hash/update password on bulk re-import unless specified, 
-                        // but for simplicity we will update it to ensure the excel file is the source of truth.
-                        password: hashedPassword,
-                        officialId: user.officialId ? String(user.officialId) : undefined,
-                    },
-                    create: {
-                        email: user.email,
-                        name: user.name,
-                        password: hashedPassword,
-                        roles: roles,
-                        isActive: true,
-                        officialId: user.officialId ? String(user.officialId) : undefined,
-                        creationSource: "excel_import"
-                    }
+                // Check if user exists by NAME first (for bulk update)
+                const existingUserByName = await prisma.user.findFirst({
+                    where: { name: { equals: user.name, mode: "insensitive" } }
                 })
+
+                if (existingUserByName) {
+                    // Update existing user (Partial Update)
+                    const updateData: any = {}
+
+                    if (user.email) updateData.email = user.email
+                    if (user.password) updateData.password = await bcrypt.hash(String(user.password), 10)
+                    if (user.nip) updateData.nip = String(user.nip)
+                    if (user.nis) updateData.nis = String(user.nis)
+                    if (user.nisn) updateData.nisn = String(user.nisn)
+
+                    if (user.roles) {
+                        const roleStrings = user.roles.split(',').map((r: string) => r.trim().toUpperCase().replace(' ', '_'))
+                        const validRoles = roleStrings.filter((r: string) => Object.values(Role).includes(r as Role))
+                        if (validRoles.length > 0) {
+                            updateData.roles = validRoles
+                        }
+                    }
+
+                    if (Object.keys(updateData).length > 0) {
+                        await prisma.user.update({
+                            where: { id: existingUserByName.id },
+                            data: updateData
+                        })
+                    }
+                    results.success++
+                } else {
+                    // Create new user (using email as unique identifier for upsert safety, but really it's a new entry)
+                    // If name doesn't exist but email does, this might fail or upsert depending on intent.
+                    // Standard import flow usually relies on Email uniqueness. 
+                    // However, here we prioritize Name match. If Name not found, we check if Email exists to avoid dupes via unique constraint.
+
+                    const hashedPassword = await bcrypt.hash(String(user.password), 10)
+
+                    // Parse roles with default
+                    let roles: Role[] = [Role.STUDENT]
+                    if (user.roles) {
+                        const roleStrings = user.roles.split(',').map((r: string) => r.trim().toUpperCase().replace(' ', '_'))
+                        const validRoles = roleStrings.filter((r: string) => Object.values(Role).includes(r as Role))
+                        if (validRoles.length > 0) roles = validRoles
+                    }
+
+                    await prisma.user.upsert({
+                        where: { email: user.email },
+                        update: {
+                            // If email matches but name didn't (case insensitive), we essentially update that email's user to matches the new name
+                            name: user.name,
+                            roles: roles,
+                            password: hashedPassword,
+                            nip: user.nip ? String(user.nip) : undefined,
+                            nis: user.nis ? String(user.nis) : undefined,
+                            nisn: user.nisn ? String(user.nisn) : undefined,
+                        },
+                        create: {
+                            email: user.email,
+                            name: user.name,
+                            password: hashedPassword,
+                            roles: roles,
+                            isActive: true,
+                            nip: user.nip ? String(user.nip) : undefined,
+                            nis: user.nis ? String(user.nis) : undefined,
+                            nisn: user.nisn ? String(user.nisn) : undefined,
+                            creationSource: "excel_import"
+                        }
+                    })
+                    results.success++
+                }
                 results.success++
             } catch (error: any) {
                 results.failed++

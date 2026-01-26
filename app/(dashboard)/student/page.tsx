@@ -13,6 +13,7 @@ import {
     GradesSkeleton,
     UpNextSkeleton
 } from "@/components/student/dashboard/student-skeletons"
+import { QuickMenu, QuickMenuSkeleton } from "@/components/student/dashboard/quick-menu"
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +24,10 @@ export default function StudentDashboard() {
 
             <Suspense fallback={<div className="h-20 animate-pulse bg-slate-100 dark:bg-slate-800 rounded-3xl" />}>
                 <DashboardWelcome />
+            </Suspense>
+
+            <Suspense fallback={<QuickMenuSkeleton />}>
+                <QuickMenu />
             </Suspense>
 
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-min">

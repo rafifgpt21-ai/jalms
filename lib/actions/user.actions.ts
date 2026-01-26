@@ -88,6 +88,9 @@ export async function getUsers({
                     image: true,
                     createdAt: true,
                     officialId: true,
+                    nip: true,
+                    nis: true,
+                    nisn: true,
                 },
             }),
             prisma.user.count({ where }),
@@ -122,6 +125,10 @@ export async function createUser(data: any) {
                 ...data,
                 password: hashedPassword,
                 roles: data.roles || [Role.STUDENT],
+                // Explicitly mapping new fields, though ...data might cover it if types align
+                nip: data.nip,
+                nis: data.nis,
+                nisn: data.nisn,
             }
         })
 
@@ -143,6 +150,9 @@ export async function updateUser(id: string, data: any) {
             email: data.email,
             roles: data.roles,
             officialId: data.officialId,
+            nip: data.nip,
+            nis: data.nis,
+            nisn: data.nisn,
             isActive: data.isActive,
             avatarConfig: data.avatarConfig,
         }

@@ -35,7 +35,9 @@ const formSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().optional(),
     roles: z.array(z.enum(["ADMIN", "SUBJECT_TEACHER", "HOMEROOM_TEACHER", "STUDENT", "PARENT"])).min(1, "At least one role is required"),
-    officialId: z.string().optional(),
+    nip: z.string().optional(),
+    nis: z.string().optional(),
+    nisn: z.string().optional(),
 })
 
 interface UserModalProps {
@@ -67,7 +69,9 @@ export function UserModal({ initialData, open: controlledOpen, onOpenChange, sho
             email: "",
             password: "",
             roles: ["STUDENT"],
-            officialId: "",
+            nip: "",
+            nis: "",
+            nisn: "",
         },
     })
 
@@ -78,7 +82,9 @@ export function UserModal({ initialData, open: controlledOpen, onOpenChange, sho
                 email: initialData.email,
                 password: "", // Don't populate password
                 roles: initialData.roles as any,
-                officialId: initialData.officialId || "",
+                nip: initialData.nip || "",
+                nis: initialData.nis || "",
+                nisn: initialData.nisn || "",
             })
         } else {
             form.reset({
@@ -86,7 +92,9 @@ export function UserModal({ initialData, open: controlledOpen, onOpenChange, sho
                 email: "",
                 password: "",
                 roles: ["STUDENT"],
-                officialId: "",
+                nip: "",
+                nis: "",
+                nisn: "",
             })
         }
     }, [initialData, form])
@@ -233,20 +241,52 @@ export function UserModal({ initialData, open: controlledOpen, onOpenChange, sho
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="officialId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Official ID (NIS/NIP)</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="12345678" {...field} />
-                                    </FormControl>
-                                    <FormDescription>Optional official identification number.</FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        {form.watch("roles")?.some(r => ["SUBJECT_TEACHER", "HOMEROOM_TEACHER"].includes(r)) && (
+                            <FormField
+                                control={form.control}
+                                name="nip"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>NIP (Teacher ID)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="19870101..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+                        {form.watch("roles")?.includes("STUDENT") && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="nis"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>NIS</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="12345" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="nisn"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>NISN</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="0012345678" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
                         <DialogFooter>
                             <Button type="submit" disabled={isLoading}>
                                 {isLoading ? "Saving..." : (initialData ? "Save Changes" : "Create User")}

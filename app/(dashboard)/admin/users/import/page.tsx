@@ -19,9 +19,9 @@ export default function ImportUsersPage() {
 
         // Sheet 1: Template
         const templateData = [
-            { Name: "John Doe", Email: "john@example.com", Roles: "STUDENT", Password: "password123", ID: "123456" },
-            { Name: "Jane Smith", Email: "jane@example.com", Roles: "SUBJECT_TEACHER, HOMEROOM_TEACHER", Password: "password123", ID: "789012" }, // Multi-role example
-            { Name: "", Email: "", Roles: "", Password: "", ID: "" } // Empty row for user input
+            { Name: "John Doe", Email: "john@example.com", Roles: "STUDENT", Password: "password123", NIP: "", NIS: "12345", NISN: "0012345678" },
+            { Name: "Jane Smith", Email: "jane@example.com", Roles: "SUBJECT_TEACHER", Password: "password123", NIP: "19870101", NIS: "", NISN: "" },
+            { Name: "", Email: "", Roles: "", Password: "", NIP: "", NIS: "", NISN: "" } // Empty row for user input
         ]
         const wsTemplate = utils.json_to_sheet(templateData)
 
@@ -29,9 +29,11 @@ export default function ImportUsersPage() {
         wsTemplate["!cols"] = [
             { wch: 20 }, // Name
             { wch: 25 }, // Email
-            { wch: 35 }, // Roles (wider for multiple roles)
+            { wch: 35 }, // Roles
             { wch: 15 }, // Password
-            { wch: 15 }  // ID
+            { wch: 15 }, // NIP
+            { wch: 15 }, // NIS
+            { wch: 15 }  // NISN
         ]
 
         utils.book_append_sheet(wb, wsTemplate, "Template")
@@ -41,9 +43,13 @@ export default function ImportUsersPage() {
             ["Column", "Description", "Required"],
             ["Name", "Full name of the user", "Yes"],
             ["Email", "Unique email address", "Yes"],
-            ["Roles", "Comma-separated roles (see below)", "No (Default: STUDENT)"],
+            ["Roles", "Comma-separated roles", "No (Default: STUDENT)"],
             ["Password", "Initial password", "Yes"],
-            ["ID", "Official ID (NIS/NIP)", "No"],
+            ["NIP", "Teacher Official ID", "Yes (for Teachers)"],
+            ["NIS", "Student School ID", "Yes (for Students)"],
+            ["NISN", "Student National ID", "Yes/Optional (for Students)"],
+            [],
+            ["Duplicate Name Policy", "Users with names that exactly match an existing user will be SKIPPED."],
             [],
             ["Multiple Roles", "Description"],
             ["Format", "You can assign multiple roles by separating them with commas."],
@@ -59,7 +65,7 @@ export default function ImportUsersPage() {
         const wsGuide = utils.aoa_to_sheet(guideData)
 
         // Set column widths for guide
-        wsGuide["!cols"] = [{ wch: 20 }, { wch: 40 }, { wch: 15 }]
+        wsGuide["!cols"] = [{ wch: 20 }, { wch: 40 }, { wch: 25 }]
 
         utils.book_append_sheet(wb, wsGuide, "Guide")
 
@@ -92,7 +98,10 @@ export default function ImportUsersPage() {
                 email: row.Email || row.email,
                 roles: row.Roles || row.roles,
                 password: row.Password || row.password,
-                officialId: row.ID || row.id || row.officialId // Map ID column to officialId
+                // officialId: row.ID || row.id || row.officialId // Old ID logic
+                nip: row.NIP || row.nip,
+                nis: row.NIS || row.nis,
+                nisn: row.NISN || row.nisn || row.nisn
             }))
 
             setData(mappedData)
@@ -161,7 +170,9 @@ export default function ImportUsersPage() {
                                         <TableHead>Name</TableHead>
                                         <TableHead>Email</TableHead>
                                         <TableHead>Roles</TableHead>
-                                        <TableHead>ID</TableHead>
+                                        <TableHead>NIP</TableHead>
+                                        <TableHead>NIS</TableHead>
+                                        <TableHead>NISN</TableHead>
                                         <TableHead>Password</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -171,7 +182,9 @@ export default function ImportUsersPage() {
                                             <TableCell>{row.name}</TableCell>
                                             <TableCell>{row.email}</TableCell>
                                             <TableCell>{row.roles}</TableCell>
-                                            <TableCell>{row.officialId}</TableCell>
+                                            <TableCell>{row.nip}</TableCell>
+                                            <TableCell>{row.nis}</TableCell>
+                                            <TableCell>{row.nisn}</TableCell>
                                             <TableCell>******</TableCell>
                                         </TableRow>
                                     ))}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -46,6 +46,9 @@ const formSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     officialId: z.string().optional(),
+    nip: z.string().optional(),
+    nis: z.string().optional(),
+    nisn: z.string().optional(),
     password: z.string().optional(),
     roles: z.array(z.nativeEnum(Role)).min(1, "At least one role is required"),
     isActive: z.boolean(),
@@ -57,6 +60,9 @@ interface UserEditModalProps {
         name: string
         email: string
         officialId?: string | null
+        nip?: string | null
+        nis?: string | null
+        nisn?: string | null
         roles: Role[]
         isActive: boolean
     }
@@ -78,11 +84,28 @@ export function UserEditModal({ user, trigger, open, onOpenChange }: UserEditMod
             name: user.name,
             email: user.email,
             officialId: user.officialId || "",
+            nip: user.nip || "",
+            nis: user.nis || "",
+            nisn: user.nisn || "",
             password: "",
             roles: user.roles,
             isActive: user.isActive,
         },
     })
+
+    useEffect(() => {
+        form.reset({
+            name: user.name,
+            email: user.email,
+            officialId: user.officialId || "",
+            nip: user.nip || "",
+            nis: user.nis || "",
+            nisn: user.nisn || "",
+            password: "",
+            roles: user.roles,
+            isActive: user.isActive,
+        })
+    }, [user, form])
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true)
@@ -187,7 +210,7 @@ export function UserEditModal({ user, trigger, open, onOpenChange }: UserEditMod
                                     </FormItem>
                                 )}
                             />
-                            <FormField
+                            {/* <FormField
                                 control={form.control}
                                 name="officialId"
                                 render={({ field }) => (
@@ -199,8 +222,55 @@ export function UserEditModal({ user, trigger, open, onOpenChange }: UserEditMod
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
                         </div>
+
+                        {form.watch("roles")?.some(r => ["SUBJECT_TEACHER", "HOMEROOM_TEACHER"].includes(r)) && (
+                            <FormField
+                                control={form.control}
+                                name="nip"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>NIP (Teacher ID)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="19870101..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
+                        {form.watch("roles")?.includes("STUDENT") && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="nis"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>NIS</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="12345" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="nisn"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>NISN</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="0012345678" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
 
                         <FormField
                             control={form.control}

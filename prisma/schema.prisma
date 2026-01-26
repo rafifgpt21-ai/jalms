@@ -37,7 +37,12 @@ model User {
 
   isActive Boolean @default(true)
 
-  officialId     String? // NIS or NIP
+  // Specific IDs
+  nip  String? // For teachers
+  nis  String? // For students
+  nisn String? // For students
+  
+  officialId     String? // Deprecated in favor of specific IDs above
   creationSource String  @default("manual") // "manual" or "excel_import"
 
 
