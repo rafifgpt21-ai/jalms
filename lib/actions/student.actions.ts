@@ -24,6 +24,7 @@ export async function getStudentCourses() {
             include: {
                 teacher: true,
                 term: true,
+                subject: true,
                 _count: {
                     select: { assignments: true }
                 }
@@ -65,7 +66,7 @@ export async function getStudentSchedule() {
             },
             include: {
                 course: {
-                    include: { teacher: true }
+                    include: { teacher: true, subject: true }
                 }
             },
             orderBy: {
@@ -128,7 +129,9 @@ export async function getStudentAssignments() {
                 type: { in: ["SUBMISSION", "QUIZ"] }
             },
             include: {
-                course: true,
+                course: {
+                    include: { subject: true }
+                },
                 submissions: {
                     where: {
                         studentId,
@@ -182,7 +185,11 @@ export async function getRecentGrades() {
             orderBy: { submittedAt: 'desc' },
             include: {
                 assignment: {
-                    include: { course: true }
+                    include: {
+                        course: {
+                            include: { subject: true }
+                        }
+                    }
                 }
             }
         })
@@ -282,7 +289,8 @@ export async function getStudentGrades(termId?: string) {
                 },
                 attendances: {
                     where: { studentId, deletedAt: { isSet: false } }
-                }
+                },
+                subject: true
             }
         })
 
@@ -353,7 +361,7 @@ export async function getStudentGrades(termId?: string) {
 
             return {
                 courseId: course.id,
-                courseName: course.reportName || course.name,
+                courseName: course.subject?.reportName || course.reportName || course.name,
                 teacherName: course.teacher.name,
                 grade: Math.round(totalScore * 10) / 10,
                 attendancePercentage: Math.round(attendancePercentage * 100),

@@ -92,7 +92,7 @@ export default async function StudentSchedulePage() {
                                                     <>
                                                         <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 rounded-l-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                                                         <div className="font-heading font-bold text-indigo-900 dark:text-indigo-100 line-clamp-2 px-1 text-sm sm:text-base">
-                                                            {course.reportName || course.name}
+                                                            {course.subject?.reportName || course.reportName || course.name}
                                                         </div>
                                                         <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
@@ -138,7 +138,7 @@ export default async function StudentSchedulePage() {
                                                                     {getPeriodLabel(period)}
                                                                 </div>
                                                                 <div className="font-heading font-bold text-slate-800 dark:text-white text-lg">
-                                                                    {course.reportName || course.name}
+                                                                    {course.subject?.reportName || course.reportName || course.name}
                                                                 </div>
                                                                 <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
                                                                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />

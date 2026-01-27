@@ -278,7 +278,7 @@ export async function getStudentReportCard(studentId: string, classId: string) {
 
             return {
                 id: course.id,
-                name: course.reportName || course.name, // Use report name if available
+                name: course.subject?.reportName || course.reportName || course.name, // Use report name if available
                 code: course.subject?.code || "",
                 teacher: course.teacher.name,
                 grade: Math.round(finalGrade),
@@ -370,6 +370,7 @@ export async function getStudentGradesForTeacher(studentId: string, termId?: str
             where: whereClause,
             include: {
                 teacher: true,
+                subject: true,
                 assignments: {
                     where: { deletedAt: { isSet: false } },
                     include: {
@@ -428,7 +429,7 @@ export async function getStudentGradesForTeacher(studentId: string, termId?: str
 
             return {
                 courseId: course.id,
-                courseName: course.reportName || course.name,
+                courseName: course.subject?.reportName || course.reportName || course.name,
                 teacherName: course.teacher.name,
                 grade: Math.round(totalScore * 10) / 10,
                 attendancePercentage: Math.round(attendancePercentage * 100),

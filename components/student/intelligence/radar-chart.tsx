@@ -24,6 +24,7 @@ const DOMAIN_LABELS: Record<AcademicDomain, string> = {
     LANGUAGE_COMMUNICATION: "Language and Communication",
     ARTS_CREATIVITY: "Arts and Creativity",
     PHYSICAL_EDUCATION: "Physical Education",
+    SPIRITUALITY_ETHICS: "Spirituality & Ethics",
 }
 
 export default function LearningRadarChart({ data }: LearningProfileRadarChartProps) {

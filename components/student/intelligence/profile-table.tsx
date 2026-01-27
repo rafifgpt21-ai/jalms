@@ -24,6 +24,7 @@ const DOMAIN_LABELS: Record<AcademicDomain, string> = {
     LANGUAGE_COMMUNICATION: "Language and Communication",
     ARTS_CREATIVITY: "Arts and Creativity",
     PHYSICAL_EDUCATION: "Physical Education",
+    SPIRITUALITY_ETHICS: "Spirituality & Ethics",
 }
 
 const DOMAIN_DESCRIPTIONS: Record<AcademicDomain, string> = {
@@ -32,6 +33,7 @@ const DOMAIN_DESCRIPTIONS: Record<AcademicDomain, string> = {
     LANGUAGE_COMMUNICATION: "Fokus: Kemampuan artikulasi, literasi, dan ekspresi ide.",
     ARTS_CREATIVITY: "Fokus: Imajinasi, kreativitas, dan motorik halus.",
     PHYSICAL_EDUCATION: "Fokus: Koordinasi fisik, ketahanan, dan sportivitas.",
+    SPIRITUALITY_ETHICS: "Fokus: Pengembangan spiritual, etika, dan nilai-nilai moral.",
 }
 
 export function LearningProfileTable({ data }: LearningProfileTableProps) {

@@ -42,6 +42,10 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { getAvailableClassesForDropdown } from "@/lib/actions/class.actions"
+import { enrollClassToCourse } from "@/lib/actions/enrollment.actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { createCourse, updateCourse } from "@/lib/actions/course.actions"
@@ -49,9 +53,18 @@ import { toast } from "sonner"
 import { Plus, Check, ChevronsUpDown } from "lucide-react"
 import { Subject } from "@prisma/client"
 
+// Simple debounce hook
+function useDebounceValue<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value)
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedValue(value), delay)
+        return () => clearTimeout(timer)
+    }, [value, delay])
+    return debouncedValue
+}
+
 const formSchema = z.object({
     name: z.string().min(1, "Course name is required"),
-    reportName: z.string().optional(),
     teacherId: z.string().min(1, "Teacher is required"),
     termId: z.string().min(1, "Semester is required"),
     subjectId: z.string().optional(),
@@ -77,13 +90,37 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
     const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen
     const setOpen = onOpenChange || setInternalOpen
 
+    // Add Class specific states
+    const [activeSemesterOnly, setActiveSemesterOnly] = useState(true)
+    const [selectedClassId, setSelectedClassId] = useState("")
+    const [classSearchQuery, setClassSearchQuery] = useState("")
+    const [classes, setClasses] = useState<{ id: string; name: string; term: { name: string; type: string; academicYear: { name: string } } }[]>([])
+    const [isClassLoading, setIsClassLoading] = useState(false)
+    const [classOpen, setClassOpen] = useState(false)
+
+    const debouncedClassSearch = useDebounceValue(classSearchQuery, 300)
+
+    useEffect(() => {
+        if (!isOpen || initialData) return
+
+        async function fetchClasses() {
+            setIsClassLoading(true)
+            const result = await getAvailableClassesForDropdown(debouncedClassSearch, activeSemesterOnly)
+            if (result.classes) {
+                setClasses(result.classes as any)
+            }
+            setIsClassLoading(false)
+        }
+
+        fetchClasses()
+    }, [debouncedClassSearch, activeSemesterOnly, isOpen, initialData])
+
     const activeTerm = terms.find(t => t.isActive)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
-            reportName: "",
             teacherId: "",
             termId: "",
             subjectId: "",
@@ -94,7 +131,6 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
         if (initialData) {
             form.reset({
                 name: initialData.name,
-                reportName: initialData.reportName || "",
                 teacherId: initialData.teacherId,
                 termId: initialData.termId,
                 subjectId: initialData.subjectId || "",
@@ -102,7 +138,6 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
         } else {
             form.reset({
                 name: "",
-                reportName: "",
                 teacherId: "",
                 termId: activeTerm?.id || "",
                 subjectId: "",
@@ -123,9 +158,29 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
             if (result.error) {
                 toast.error(result.error)
             } else {
-                toast.success(initialData ? "Course updated" : "Course created")
+                // If creating course and class is selected, enroll students
+                if (!initialData && selectedClassId && (result as any).course) {
+                    toast.info("Course created. Enrolling students...")
+                    const enrollResult = await enrollClassToCourse((result as any).course.id, selectedClassId)
+
+                    if (enrollResult.error) {
+                        toast.error(`Course created but enrollment failed: ${enrollResult.error}`)
+                    } else if (enrollResult.message) {
+                        toast.info(`Course created: ${enrollResult.message}`)
+                    } else {
+                        toast.success(`Course created and ${enrollResult.count} students enrolled`)
+                    }
+                } else {
+                    toast.success(initialData ? "Course updated" : "Course created")
+                }
+
                 setOpen(false)
-                if (!initialData) form.reset()
+                if (!initialData) {
+                    form.reset()
+                    setSelectedClassId("")
+                    setClassSearchQuery("")
+                    setActiveSemesterOnly(true)
+                }
             }
         } catch (error) {
             toast.error("Something went wrong")
@@ -161,19 +216,6 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
                                     <FormLabel>Course Name</FormLabel>
                                     <FormControl>
                                         <Input placeholder="e.g. Mathematics 101" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="reportName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Report Name (Optional)</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. Math (for student reports)" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -367,9 +409,85 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
                                 </FormItem>
                             )}
                         />
+
+                        {!initialData && (
+                            <div className="space-y-4 pt-2 border-t">
+                                <h4 className="font-medium text-sm">Add Students by Class (Optional)</h4>
+                                <DialogDescription className="text-xs">
+                                    Select a class to bulk enroll all its students into this course immediately.
+                                </DialogDescription>
+
+                                <div className="flex items-center space-x-2">
+                                    <Switch
+                                        id="active-semester"
+                                        checked={activeSemesterOnly}
+                                        onCheckedChange={setActiveSemesterOnly}
+                                    />
+                                    <Label htmlFor="active-semester">Show only active semester classes</Label>
+                                </div>
+
+                                <div className="flex flex-col space-y-2">
+                                    <Label>Select Class</Label>
+                                    <Popover open={classOpen} onOpenChange={setClassOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                className="w-full justify-between"
+                                            >
+                                                {selectedClassId
+                                                    ? classes.find((c) => c.id === selectedClassId)?.name || "Select class..."
+                                                    : "Select class..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[400px] p-0">
+                                            <Command shouldFilter={false}>
+                                                <CommandInput
+                                                    placeholder="Search class..."
+                                                    value={classSearchQuery}
+                                                    onValueChange={setClassSearchQuery}
+                                                />
+                                                <CommandList>
+                                                    {isClassLoading && <div className="py-6 text-center text-sm text-muted-foreground">Loading...</div>}
+                                                    {!isClassLoading && classes.length === 0 && (
+                                                        <CommandEmpty>No class found.</CommandEmpty>
+                                                    )}
+                                                    {!isClassLoading && classes.map((c) => (
+                                                        <CommandItem
+                                                            key={c.id}
+                                                            value={c.id}
+                                                            onSelect={(currentValue) => {
+                                                                setSelectedClassId(currentValue === selectedClassId ? "" : currentValue)
+                                                                setClassOpen(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    selectedClassId === c.id
+                                                                        ? "opacity-100"
+                                                                        : "opacity-0"
+                                                                )}
+                                                            />
+                                                            <div className="flex flex-col">
+                                                                <span>{c.name}</span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {c.term.academicYear.name} - {c.term.type}
+                                                                </span>
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </div>
+                        )}
                         <DialogFooter>
                             <Button type="submit" disabled={isLoading}>
-                                {isLoading ? "Saving..." : (initialData ? "Save Changes" : "Create Course")}
+                                {isLoading ? "Saving..." : (initialData ? "Save Changes" : (selectedClassId ? "Create & Enroll" : "Create Course"))}
                             </Button>
                         </DialogFooter>
                     </form>

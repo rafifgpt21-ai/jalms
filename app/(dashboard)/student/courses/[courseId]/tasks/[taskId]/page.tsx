@@ -64,7 +64,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                             <Badge variant="outline" className="bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800">
-                                {assignment.course.reportName || assignment.course.name}
+                                {assignment.course.subject?.reportName || assignment.course.reportName || assignment.course.name}
                             </Badge>
                             <span>•</span>
                             {/* @ts-ignore */}

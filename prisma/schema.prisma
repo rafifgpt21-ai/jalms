@@ -123,6 +123,7 @@ enum AcademicDomain {
   LANGUAGE_COMMUNICATION
   ARTS_CREATIVITY
   PHYSICAL_EDUCATION
+  SPIRITUALITY_ETHICS
 }
 
 model Subject {
@@ -130,6 +131,7 @@ model Subject {
   name        String // "Biology"
   code        String // "BIO"
   description String?
+  reportName  String? // Name to show in student reports if this subject is used
   
   academicDomains AcademicDomain[]
 

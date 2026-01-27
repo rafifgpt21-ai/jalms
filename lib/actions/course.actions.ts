@@ -71,7 +71,7 @@ export async function getCourse(id: string) {
 
 export async function createCourse(data: { name: string; reportName?: string; teacherId: string; termId: string; subjectId?: string }) {
     try {
-        await prisma.course.create({
+        const course = await prisma.course.create({
             data: {
                 name: data.name,
                 reportName: data.reportName,
@@ -82,7 +82,7 @@ export async function createCourse(data: { name: string; reportName?: string; te
         })
 
         revalidatePath("/admin/courses")
-        return { success: true }
+        return { success: true, course }
     } catch (error) {
         console.error("Error creating course:", error)
         return { error: "Failed to create course" }

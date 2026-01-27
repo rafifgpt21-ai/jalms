@@ -80,7 +80,7 @@ export function StudentUpNextCard({ schedule }: { schedule: any[] }) {
 
                     {nextClass ? (
                         <div className="mt-4">
-                            <h2 className="text-3xl font-heading font-bold mb-1">{nextClass.course.reportName || nextClass.course.name}</h2>
+                            <h2 className="text-3xl font-heading font-bold mb-1">{nextClass.course.subject?.reportName || nextClass.course.reportName || nextClass.course.name}</h2>
                             <p className="text-indigo-100 text-lg flex items-center gap-2">
                                 with {nextClass.course.teacher.name}
                                 <span className="w-1.5 h-1.5 rounded-full bg-white/50" />
@@ -133,7 +133,7 @@ export function StudentScheduleCard({ schedule }: { schedule: any[] }) {
                             <div className="h-10 w-px bg-slate-200 dark:bg-slate-700" />
                             <div className="flex-1">
                                 <h4 className="font-bold text-slate-800 dark:text-slate-200 text-lg group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">
-                                    {slot.course.reportName || slot.course.name}
+                                    {slot.course.subject?.reportName || slot.course.reportName || slot.course.name}
                                 </h4>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                     {slot.course.teacher.name}
@@ -190,7 +190,7 @@ export function StudentDeadlinesWidget({ upcomingDeadlines }: { upcomingDeadline
                                             {isSubmitted && <CheckCircle className="w-4 h-4 text-green-500" />}
                                         </div>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                                            {assignment.course.reportName || assignment.course.name}
+                                            {assignment.course.subject?.reportName || assignment.course.reportName || assignment.course.name}
                                         </p>
                                     </div>
                                     <div className="text-right">

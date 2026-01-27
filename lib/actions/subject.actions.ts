@@ -26,6 +26,7 @@ export async function createSubject(data: {
     name: string;
     code: string;
     description?: string;
+    reportName?: string;
     academicDomains: AcademicDomain[]
 }) {
     try {
@@ -34,6 +35,7 @@ export async function createSubject(data: {
                 name: data.name,
                 code: data.code,
                 description: data.description,
+                reportName: data.reportName,
                 academicDomains: data.academicDomains
             }
         })
@@ -52,6 +54,7 @@ export async function updateSubject(
         name: string;
         code: string;
         description?: string;
+        reportName?: string;
         academicDomains: AcademicDomain[]
     }
 ) {
@@ -62,6 +65,7 @@ export async function updateSubject(
                 name: data.name,
                 code: data.code,
                 description: data.description,
+                reportName: data.reportName,
                 academicDomains: data.academicDomains
             }
         })

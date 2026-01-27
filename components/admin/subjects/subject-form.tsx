@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useTransition, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -38,12 +38,14 @@ const DOMAIN_LABELS: Record<AcademicDomain, string> = {
     LANGUAGE_COMMUNICATION: "Language and Communication",
     ARTS_CREATIVITY: "Arts and Creativity",
     PHYSICAL_EDUCATION: "Physical Education",
+    SPIRITUALITY_ETHICS: "Spirituality & Ethics",
 }
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
     code: z.string().min(1, "Code is required"),
     description: z.string().optional(),
+    reportName: z.string().optional(),
     academicDomains: z.array(z.nativeEnum(AcademicDomain)).default([]),
 })
 
@@ -63,9 +65,22 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
             name: initialData?.name || "",
             code: initialData?.code || "",
             description: initialData?.description || "",
+            reportName: initialData?.reportName || "",
             academicDomains: initialData?.academicDomains || [],
         },
     })
+
+    useEffect(() => {
+        if (open) {
+            form.reset({
+                name: initialData?.name || "",
+                code: initialData?.code || "",
+                description: initialData?.description || "",
+                reportName: initialData?.reportName || "",
+                academicDomains: initialData?.academicDomains || [],
+            })
+        }
+    }, [initialData, open, form])
 
     function onSubmit(values: z.infer<typeof formSchema>) {
         startTransition(async () => {
@@ -73,7 +88,8 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
                 if (isEditMode && initialData) {
                     const result = await updateSubject(initialData.id, {
                         ...values,
-                        description: values.description || undefined
+                        description: values.description || undefined,
+                        reportName: values.reportName || undefined
                     })
                     if (result.error) {
                         toast.error(result.error)
@@ -85,7 +101,8 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
                 } else {
                     const result = await createSubject({
                         ...values,
-                        description: values.description || undefined
+                        description: values.description || undefined,
+                        reportName: values.reportName || undefined
                     })
                     if (result.error) {
                         toast.error(result.error)
@@ -140,6 +157,23 @@ export function SubjectForm({ open, onOpenChange, initialData }: SubjectFormProp
                                 )}
                             />
                         </div>
+
+                        <FormField
+                            control={form.control}
+                            name="reportName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Report Name (Optional)</FormLabel>
+                                    <FormDescription className="text-xs">
+                                        This name will be used on student reports and dashboards.
+                                    </FormDescription>
+                                    <FormControl>
+                                        <Input placeholder="e.g. Mathematics" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <FormField
                             control={form.control}
