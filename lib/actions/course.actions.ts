@@ -89,6 +89,60 @@ export async function createCourse(data: { name: string; reportName?: string; te
     }
 }
 
+export async function createBulkCourses(data: {
+    name: string;
+    teacherId: string;
+    termId: string;
+    subjectId?: string;
+    classIds: string[];
+    autoEnroll: boolean;
+}) {
+    try {
+        const { name, teacherId, termId, subjectId, classIds, autoEnroll } = data
+
+        // Fetch class names
+        const classes = await prisma.class.findMany({
+            where: { id: { in: classIds } },
+            select: { id: true, name: true }
+        })
+
+        const createdCourses = []
+        let enrolledCount = 0
+
+        for (const cls of classes) {
+            // Create course with appended class name
+            const courseName = `${name} ${cls.name}`
+
+            const course = await prisma.course.create({
+                data: {
+                    name: courseName,
+                    teacherId,
+                    termId,
+                    subjectId: subjectId || null,
+                    classId: cls.id // Link to class
+                }
+            })
+
+            createdCourses.push(course)
+
+            // Auto-enroll if requested
+            if (autoEnroll) {
+                const { enrollClassToCourse } = await import("@/lib/actions/enrollment.actions")
+                const result = await enrollClassToCourse(course.id, cls.id)
+                if (result.success && result.count) {
+                    enrolledCount += result.count
+                }
+            }
+        }
+
+        revalidatePath("/admin/courses")
+        return { success: true, count: createdCourses.length, enrolledCount }
+    } catch (error) {
+        console.error("Error creating bulk courses:", error)
+        return { error: "Failed to create courses" }
+    }
+}
+
 export async function updateCourse(id: string, data: { name: string; reportName?: string; teacherId: string; termId: string; subjectId?: string }) {
     try {
         await prisma.course.update({

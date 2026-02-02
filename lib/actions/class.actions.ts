@@ -154,7 +154,7 @@ export async function getActiveTerms(includeTermId?: string) {
     }
 }
 
-export async function getAvailableClassesForDropdown(search: string = "", activeSemesterOnly: boolean = true) {
+export async function getAvailableClassesForDropdown(search: string = "", activeSemesterOnly: boolean = true, limit: number = 10) {
     try {
         const where: any = {
             deletedAt: { isSet: false }
@@ -176,7 +176,7 @@ export async function getAvailableClassesForDropdown(search: string = "", active
 
         const classes = await prisma.class.findMany({
             where,
-            take: 10,
+            take: limit === -1 ? undefined : limit, // -1 means no limit
             orderBy: { name: "asc" },
             include: {
                 term: {

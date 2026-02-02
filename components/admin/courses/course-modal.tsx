@@ -48,10 +48,11 @@ import { getAvailableClassesForDropdown } from "@/lib/actions/class.actions"
 import { enrollClassToCourse } from "@/lib/actions/enrollment.actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { createCourse, updateCourse } from "@/lib/actions/course.actions"
+import { createCourse, updateCourse, createBulkCourses } from "@/lib/actions/course.actions"
 import { toast } from "sonner"
 import { Plus, Check, ChevronsUpDown } from "lucide-react"
 import { Subject } from "@prisma/client"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Simple debounce hook
 function useDebounceValue<T>(value: T, delay: number): T {
@@ -98,6 +99,11 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
     const [isClassLoading, setIsClassLoading] = useState(false)
     const [classOpen, setClassOpen] = useState(false)
 
+    // Advance Mode States
+    const [isAdvanceMode, setIsAdvanceMode] = useState(false)
+    const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
+    const [autoEnroll, setAutoEnroll] = useState(true)
+
     const debouncedClassSearch = useDebounceValue(classSearchQuery, 300)
 
     useEffect(() => {
@@ -105,7 +111,11 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
 
         async function fetchClasses() {
             setIsClassLoading(true)
-            const result = await getAvailableClassesForDropdown(debouncedClassSearch, activeSemesterOnly)
+            // If in advance mode, fetch ALL classes (limit: -1) but still respect activeSemester filter
+            // Ideally we might want filter by termId selected in form too? 
+            // For now let's stick to global active semester filter or fetch larger list
+            const limit = isAdvanceMode ? 100 : 10 // Fetch more for checklist
+            const result = await getAvailableClassesForDropdown(debouncedClassSearch, activeSemesterOnly, limit)
             if (result.classes) {
                 setClasses(result.classes as any)
             }
@@ -113,7 +123,7 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
         }
 
         fetchClasses()
-    }, [debouncedClassSearch, activeSemesterOnly, isOpen, initialData])
+    }, [debouncedClassSearch, activeSemesterOnly, isOpen, initialData, isAdvanceMode])
 
     const activeTerm = terms.find(t => t.isActive)
 
@@ -135,6 +145,7 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
                 termId: initialData.termId,
                 subjectId: initialData.subjectId || "",
             })
+            setIsAdvanceMode(false)
         } else {
             form.reset({
                 name: "",
@@ -142,12 +153,47 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
                 termId: activeTerm?.id || "",
                 subjectId: "",
             })
+            // Reset advance mode states
+            setIsAdvanceMode(false)
+            setSelectedClassIds([])
+            setAutoEnroll(true)
         }
     }, [initialData, terms, activeTerm, form])
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true)
         try {
+            if (isAdvanceMode && !initialData) {
+                if (selectedClassIds.length === 0) {
+                    toast.error("Please select at least one class")
+                    setIsLoading(false)
+                    return
+                }
+
+                const result = await createBulkCourses({
+                    name: values.name,
+                    teacherId: values.teacherId,
+                    termId: values.termId,
+                    subjectId: values.subjectId,
+                    classIds: selectedClassIds,
+                    autoEnroll
+                })
+
+                if (result.error) {
+                    toast.error(result.error)
+                } else {
+                    toast.success(`Created ${result.count} courses${result.enrolledCount ? ` and enrolled ${result.enrolledCount} students` : ''}`)
+                    setOpen(false)
+                    form.reset()
+                    setSelectedClassIds([])
+                    setAutoEnroll(true)
+                    setIsAdvanceMode(false)
+                }
+
+                setIsLoading(false)
+                return
+            }
+
             let result
             if (initialData) {
                 result = await updateCourse(initialData.id, values)
@@ -158,7 +204,7 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
             if (result.error) {
                 toast.error(result.error)
             } else {
-                // If creating course and class is selected, enroll students
+                // If creating course and class is selected (Simple Mode), enroll students
                 if (!initialData && selectedClassId && (result as any).course) {
                     toast.info("Course created. Enrolling students...")
                     const enrollResult = await enrollClassToCourse((result as any).course.id, selectedClassId)
@@ -189,6 +235,14 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
         }
     }
 
+    const toggleClassSelection = (classId: string) => {
+        setSelectedClassIds(prev =>
+            prev.includes(classId)
+                ? prev.filter(id => id !== classId)
+                : [...prev, classId]
+        )
+    }
+
     return (
         <Dialog open={isOpen} onOpenChange={setOpen}>
             {showTrigger && !initialData && (
@@ -199,24 +253,37 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
                     </Button>
                 </DialogTrigger>
             )}
-            <DialogContent className="sm:max-w-[425px] overflow-visible">
+            <DialogContent className="sm:max-w-[500px] overflow-visible max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{initialData ? "Edit Course" : "Add Course"}</DialogTitle>
                     <DialogDescription>
                         {initialData ? "Update course details." : "Create a new course."}
                     </DialogDescription>
                 </DialogHeader>
+
+                {!initialData && (
+                    <div className="flex items-center space-x-2 pb-4 border-b">
+                        <Switch
+                            id="advance-mode"
+                            checked={isAdvanceMode}
+                            onCheckedChange={setIsAdvanceMode}
+                        />
+                        <Label htmlFor="advance-mode" className="font-semibold">Advance Mode (Bulk Creation)</Label>
+                    </div>
+                )}
+
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                         <FormField
                             control={form.control}
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Course Name</FormLabel>
+                                    <FormLabel>Course Name {isAdvanceMode && "(Base Name)"}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Mathematics 101" {...field} />
+                                        <Input placeholder={isAdvanceMode ? "e.g. Biology" : "e.g. Mathematics 101"} {...field} />
                                     </FormControl>
+                                    {isAdvanceMode && <span className="text-xs text-muted-foreground">Will become "Biology [Class Name]"</span>}
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -410,7 +477,53 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
                             )}
                         />
 
-                        {!initialData && (
+                        {/* Advance Mode Class Selection */}
+                        {isAdvanceMode && (
+                            <div className="space-y-4 pt-2 border-t">
+                                <h4 className="font-medium text-sm">Select Classes for Bulk Creation</h4>
+
+                                <div className="flex items-center space-x-2">
+                                    <Switch
+                                        id="auto-enroll"
+                                        checked={autoEnroll}
+                                        onCheckedChange={setAutoEnroll}
+                                    />
+                                    <Label htmlFor="auto-enroll">Auto-enroll students from selected classes</Label>
+                                </div>
+
+                                <div className="border rounded-md p-2 max-h-[200px] overflow-y-auto space-y-1">
+                                    {isClassLoading ? (
+                                        <div className="text-center py-2 text-sm text-muted-foreground">Loading classes...</div>
+                                    ) : classes.length === 0 ? (
+                                        <div className="text-center py-2 text-sm text-muted-foreground">No classes found</div>
+                                    ) : (
+                                        classes.map(cls => (
+                                            <div key={cls.id} className="flex items-center space-x-2 p-2 hover:bg-slate-50 rounded">
+                                                <Checkbox
+                                                    id={`class-${cls.id}`}
+                                                    checked={selectedClassIds.includes(cls.id)}
+                                                    onCheckedChange={() => toggleClassSelection(cls.id)}
+                                                />
+                                                <div className="grid gap-1.5 leading-none">
+                                                    <label
+                                                        htmlFor={`class-${cls.id}`}
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                    >
+                                                        {cls.name}
+                                                    </label>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {cls.term.academicYear.name} - {cls.term.type}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Simple Mode Class Selection */}
+                        {!initialData && !isAdvanceMode && (
                             <div className="space-y-4 pt-2 border-t">
                                 <h4 className="font-medium text-sm">Add Students by Class (Optional)</h4>
                                 <DialogDescription className="text-xs">
@@ -487,7 +600,14 @@ export function CourseModal({ teachers, terms, subjects, initialData, open: cont
                         )}
                         <DialogFooter>
                             <Button type="submit" disabled={isLoading}>
-                                {isLoading ? "Saving..." : (initialData ? "Save Changes" : (selectedClassId ? "Create & Enroll" : "Create Course"))}
+                                {isLoading ? "Saving..." : (
+                                    initialData
+                                        ? "Save Changes"
+                                        : (isAdvanceMode
+                                            ? `Create ${selectedClassIds.length} Courses`
+                                            : (selectedClassId ? "Create & Enroll" : "Create Course")
+                                        )
+                                )}
                             </Button>
                         </DialogFooter>
                     </form>
