@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { read, utils, writeFile, write } from "xlsx"
+// import { read, utils, writeFile, write } from "xlsx" // Lazy loaded
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -14,7 +14,8 @@ export default function ImportUsersPage() {
     const [uploadStatus, setUploadStatus] = useState<any>(null)
     const router = useRouter()
 
-    const generateTemplate = () => {
+    const generateTemplate = async () => {
+        const { utils, write } = await import("xlsx")
         const wb = utils.book_new()
 
         // Sheet 1: Template
@@ -80,9 +81,11 @@ export default function ImportUsersPage() {
         URL.revokeObjectURL(url)
     }
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
+
+        const { read, utils } = await import("xlsx")
 
         const reader = new FileReader()
         reader.onload = (evt) => {

@@ -95,19 +95,58 @@ export function ManageScheduleModal({ teacherId, teacherName }: ManageScheduleMo
     async function handleAssign(courseId: string | null) {
         if (!selectedSlot) return
 
-        setUpdating(true)
+        // OPTIMISTIC UPDATE
         const dbDay = selectedSlot.day === 6 ? 0 : selectedSlot.day + 1
+        const period = selectedSlot.period
+        const previousCourses = [...courses]
 
-        const result = await updateSchedule(teacherId, dbDay, selectedSlot.period, courseId)
+        // Update local state immediately
+        setCourses(prev => {
+            return prev.map(course => {
+                // Remove existing assignment for this slot from ANY course
+                const cleanSchedules = course.schedules.filter(s =>
+                    !(s.dayOfWeek === dbDay && s.period === period && !s.deletedAt)
+                )
 
-        if (result.success) {
-            toast.success(courseId ? "Schedule assigned" : "Schedule cleared")
-            await fetchSchedule()
-            setSelectedSlot(null)
-        } else {
-            toast.error(result.error)
+                // If this is the course we are assigning, add the new schedule
+                if (courseId && course.id === courseId) {
+                    // Create a temporary schedule object
+                    const newSchedule: any = {
+                        id: "temp-" + Date.now(),
+                        dayOfWeek: dbDay,
+                        period: period,
+                        courseId: courseId,
+                        deletedAt: null
+                    }
+                    cleanSchedules.push(newSchedule)
+                }
+
+                return { ...course, schedules: cleanSchedules }
+            })
+        })
+
+        setSelectedSlot(null) // Close popover immediately
+        setUpdating(true)
+
+        try {
+            const result = await updateSchedule(teacherId, dbDay, period, courseId)
+
+            if (result.success) {
+                toast.success(courseId ? "Schedule assigned" : "Schedule cleared")
+                // We don't need to fetchSchedule() here if successful, 
+                // but we might want to do it in background to ensure sync eventually.
+                // For now, trust the optimistic update.
+            } else {
+                toast.error(result.error)
+                // Revert on error
+                setCourses(previousCourses)
+            }
+        } catch (err) {
+            toast.error("Failed to update schedule")
+            setCourses(previousCourses)
+        } finally {
+            setUpdating(false)
         }
-        setUpdating(false)
     }
 
     return (
