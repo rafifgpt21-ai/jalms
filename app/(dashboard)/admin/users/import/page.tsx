@@ -15,64 +15,57 @@ export default function ImportUsersPage() {
     const router = useRouter()
 
     const generateTemplate = async () => {
-        const { utils, write } = await import("xlsx")
-        const wb = utils.book_new()
+        const ExcelJS = await import("exceljs")
+        const wb = new ExcelJS.Workbook()
 
         // Sheet 1: Template
-        const templateData = [
-            { Name: "John Doe", Email: "john@example.com", Roles: "STUDENT", Password: "password123", NIP: "", NIS: "12345", NISN: "0012345678" },
-            { Name: "Jane Smith", Email: "jane@example.com", Roles: "SUBJECT_TEACHER", Password: "password123", NIP: "19870101", NIS: "", NISN: "" },
-            { Name: "", Email: "", Roles: "", Password: "", NIP: "", NIS: "", NISN: "" } // Empty row for user input
-        ]
-        const wsTemplate = utils.json_to_sheet(templateData)
-
-        // Set column widths
-        wsTemplate["!cols"] = [
-            { wch: 20 }, // Name
-            { wch: 25 }, // Email
-            { wch: 35 }, // Roles
-            { wch: 15 }, // Password
-            { wch: 15 }, // NIP
-            { wch: 15 }, // NIS
-            { wch: 15 }  // NISN
+        const wsTemplate = wb.addWorksheet("Template")
+        wsTemplate.columns = [
+            { header: "Name", key: "name", width: 20 },
+            { header: "Email", key: "email", width: 25 },
+            { header: "Roles", key: "roles", width: 35 },
+            { header: "Password", key: "password", width: 15 },
+            { header: "NIP", key: "nip", width: 15 },
+            { header: "NIS", key: "nis", width: 15 },
+            { header: "NISN", key: "nisn", width: 15 }
         ]
 
-        utils.book_append_sheet(wb, wsTemplate, "Template")
+        wsTemplate.addRow({ name: "John Doe", email: "john@example.com", roles: "STUDENT", password: "password123", nip: "", nis: "12345", nisn: "0012345678" })
+        wsTemplate.addRow({ name: "Jane Smith", email: "jane@example.com", roles: "SUBJECT_TEACHER", password: "password123", nip: "19870101", nis: "", nisn: "" })
+        wsTemplate.addRow({ name: "", email: "", roles: "", password: "", nip: "", nis: "", nisn: "" }) // Empty row for user input
 
         // Sheet 2: Guide
-        const guideData = [
-            ["Column", "Description", "Required"],
-            ["Name", "Full name of the user", "Yes"],
-            ["Email", "Unique email address", "Yes"],
-            ["Roles", "Comma-separated roles", "No (Default: STUDENT)"],
-            ["Password", "Initial password", "Yes"],
-            ["NIP", "Teacher Official ID", "Yes (for Teachers)"],
-            ["NIS", "Student School ID", "Yes (for Students)"],
-            ["NISN", "Student National ID", "Yes/Optional (for Students)"],
-            [],
-            ["Duplicate Name Policy", "Users with names that exactly match an existing user will be SKIPPED."],
-            [],
-            ["Multiple Roles", "Description"],
-            ["Format", "You can assign multiple roles by separating them with commas."],
-            ["Example", "SUBJECT_TEACHER, HOMEROOM_TEACHER"],
-            [],
-            ["Valid Roles", "Description"],
-            ["ADMIN", "Administrator with full access"],
-            ["SUBJECT_TEACHER", "Teacher assigned to subjects"],
-            ["HOMEROOM_TEACHER", "Teacher assigned to a class"],
-            ["STUDENT", "Student"],
-            ["PARENT", "Parent account"]
+        const wsGuide = wb.addWorksheet("Guide")
+        wsGuide.columns = [
+            { header: "Column", key: "col1", width: 20 },
+            { header: "Description", key: "col2", width: 40 },
+            { header: "Required", key: "col3", width: 25 }
         ]
-        const wsGuide = utils.aoa_to_sheet(guideData)
 
-        // Set column widths for guide
-        wsGuide["!cols"] = [{ wch: 20 }, { wch: 40 }, { wch: 25 }]
-
-        utils.book_append_sheet(wb, wsGuide, "Guide")
+        wsGuide.addRow({ col1: "Name", col2: "Full name of the user", col3: "Yes" })
+        wsGuide.addRow({ col1: "Email", col2: "Unique email address", col3: "Yes" })
+        wsGuide.addRow({ col1: "Roles", col2: "Comma-separated roles", col3: "No (Default: STUDENT)" })
+        wsGuide.addRow({ col1: "Password", col2: "Initial password", col3: "Yes" })
+        wsGuide.addRow({ col1: "NIP", col2: "Teacher Official ID", col3: "Yes (for Teachers)" })
+        wsGuide.addRow({ col1: "NIS", col2: "Student School ID", col3: "Yes (for Students)" })
+        wsGuide.addRow({ col1: "NISN", col2: "Student National ID", col3: "Yes/Optional (for Students)" })
+        wsGuide.addRow([])
+        wsGuide.addRow({ col1: "Duplicate Name Policy", col2: "Users with names that exactly match an existing user will be SKIPPED.", col3: "" })
+        wsGuide.addRow([])
+        wsGuide.addRow({ col1: "Multiple Roles", col2: "Description", col3: "" })
+        wsGuide.addRow({ col1: "Format", col2: "You can assign multiple roles by separating them with commas.", col3: "" })
+        wsGuide.addRow({ col1: "Example", col2: "SUBJECT_TEACHER, HOMEROOM_TEACHER", col3: "" })
+        wsGuide.addRow([])
+        wsGuide.addRow({ col1: "Valid Roles", col2: "Description", col3: "" })
+        wsGuide.addRow({ col1: "ADMIN", col2: "Administrator with full access", col3: "" })
+        wsGuide.addRow({ col1: "SUBJECT_TEACHER", col2: "Teacher assigned to subjects", col3: "" })
+        wsGuide.addRow({ col1: "HOMEROOM_TEACHER", col2: "Teacher assigned to a class", col3: "" })
+        wsGuide.addRow({ col1: "STUDENT", col2: "Student", col3: "" })
+        wsGuide.addRow({ col1: "PARENT", col2: "Parent account", col3: "" })
 
         // Download file
-        const wbout = write(wb, { bookType: 'xlsx', type: 'array' })
-        const blob = new Blob([wbout], { type: 'application/octet-stream' })
+        const buffer = await wb.xlsx.writeBuffer()
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
         const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
@@ -85,15 +78,33 @@ export default function ImportUsersPage() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        const { read, utils } = await import("xlsx")
+        const ExcelJS = await import("exceljs")
 
         const reader = new FileReader()
-        reader.onload = (evt) => {
-            const bstr = evt.target?.result
-            const wb = read(bstr, { type: "binary" })
-            const wsname = wb.SheetNames[0] // Assume data is in the first sheet
-            const ws = wb.Sheets[wsname]
-            const jsonData = utils.sheet_to_json(ws)
+        reader.onload = async (evt) => {
+            const buffer = evt.target?.result
+            if (!buffer) return
+
+            const wb = new ExcelJS.Workbook()
+            await wb.xlsx.load(buffer as ArrayBuffer)
+            const ws = wb.worksheets[0] // Assume data is in the first sheet
+
+            const jsonData: any[] = []
+
+            const headers: any = {}
+            ws.getRow(1).eachCell((cell, colNumber) => {
+                headers[colNumber] = typeof cell.value === "string" ? cell.value : cell.text
+            })
+
+            ws.eachRow((row, rowNumber) => {
+                if (rowNumber === 1) return // Skip header
+
+                const rowData: any = {}
+                row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                    rowData[headers[colNumber]] = cell.value
+                })
+                jsonData.push(rowData)
+            })
 
             // Map keys to match API expectations (lowercase, specific names)
             const mappedData = jsonData.map((row: any) => ({
@@ -101,7 +112,6 @@ export default function ImportUsersPage() {
                 email: row.Email || row.email,
                 roles: row.Roles || row.roles,
                 password: row.Password || row.password,
-                // officialId: row.ID || row.id || row.officialId // Old ID logic
                 nip: row.NIP || row.nip,
                 nis: row.NIS || row.nis,
                 nisn: row.NISN || row.nisn || row.nisn
@@ -109,7 +119,7 @@ export default function ImportUsersPage() {
 
             setData(mappedData)
         }
-        reader.readAsBinaryString(file)
+        reader.readAsArrayBuffer(file)
     }
 
     const processImport = async () => {
