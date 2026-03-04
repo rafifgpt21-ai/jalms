@@ -2,6 +2,7 @@
 
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
+import { getGradingScaleDefaults, getPrincipalName } from "@/lib/actions/system-config.actions"
 import { revalidatePath } from "next/cache"
 
 export async function getHomeroomClasses() {
@@ -207,14 +208,62 @@ export async function getStudentReportCard(studentId: string, classId: string) {
 
         if (!classData) return { error: "Class not found" }
 
-        const student = await prisma.user.findUnique({
-            where: { id: studentId }
+        // 1. Check for existing published report card
+        const existingReport = await prisma.reportCard.findFirst({
+            where: {
+                studentId,
+                classId,
+                termId: classData.termId,
+                published: true
+            }
         })
+
+        if (existingReport) {
+            return {
+                student: await prisma.user.findUnique({ where: { id: studentId } }),
+                classData,
+                courses: existingReport.courseGrades,
+                extracurriculars: existingReport.extracurriculars,
+                achievements: existingReport.achievements,
+                development: existingReport.development,
+                attendance: existingReport.attendance,
+                homeroomTeacherNote: existingReport.homeroomTeacherNote,
+                principalName: existingReport.principalName,
+                generatedAt: existingReport.updatedAt,
+                isSnapshot: true
+            }
+        }
+
+        // 2. Generate on the fly
+        const student = await prisma.user.findUnique({
+            where: { id: studentId },
+            include: {
+                attendances: { // Overall daily attendance
+                    where: {
+                        course: {
+                            termId: classData.termId,
+                            deletedAt: { isSet: false }
+                        },
+                        deletedAt: { isSet: false }
+                    }
+                }
+            }
+        })
+
+        // ... (rest of getStudentReportCard is fine, just fix the query above in the file)
+
+        // Append at end (actually I will replace the end of file or append)
+        // Since I can't easily append without range, I will use "view_file" to find the last closing brace or just replace getStudentReportCard and ADD upsertReportCard after it.
 
         if (!student) return { error: "Student not found" }
 
-        // Compile Grade Data
-        // Fetch courses where this student is enrolled for the class term
+        // Fetch System Grading Scale
+        const sysConfig = await prisma.systemConfig.findUnique({
+            where: { id: "grading_scale" }
+        })
+        const gradingScale: any[] = (sysConfig?.value as any[]) || []
+
+        // Fetch courses
         const rawCourses = await prisma.course.findMany({
             where: {
                 studentIds: { has: studentId },
@@ -225,7 +274,7 @@ export async function getStudentReportCard(studentId: string, classId: string) {
                 subject: true,
                 teacher: true,
                 assignments: {
-                    where: { deletedAt: { isSet: false } },
+                    where: { deletedAt: { isSet: false } }, // Fetch ALL assignments to calc max points accurately
                     include: {
                         submissions: { where: { studentId, deletedAt: { isSet: false } } }
                     }
@@ -251,7 +300,8 @@ export async function getStudentReportCard(studentId: string, classId: string) {
             let extraCreditPoints = 0
 
             course.assignments.forEach(assignment => {
-                const submission = assignment.submissions[0] // Only one per student
+                // Ensure we only count logic if user is targeted? Assuming all assignments apply.
+                const submission = assignment.submissions[0]
                 let actualPoints = 0
 
                 if (submission && submission.grade !== null) {
@@ -275,27 +325,313 @@ export async function getStudentReportCard(studentId: string, classId: string) {
             if (denominator > 0) {
                 finalGrade = Math.min((numerator / denominator) * 100, 100)
             }
+            finalGrade = Math.round(finalGrade)
+
+            // Determine Letter and Competency
+            let letterGrade = "E"
+            let competencyDesc = ""
+
+            // Find matching range in system scale
+            // If scale is empty, fallback?
+            if (gradingScale.length > 0) {
+                const match = gradingScale.find(s => finalGrade >= s.min && finalGrade <= s.max)
+                if (match) letterGrade = match.grade
+            } else {
+                // Hardcoded fallback if needed
+                if (finalGrade >= 90) letterGrade = "A"
+                else if (finalGrade >= 80) letterGrade = "B"
+                else if (finalGrade >= 70) letterGrade = "C"
+                else letterGrade = "D"
+            }
+
+            // Get Course Specific Override
+            const competencyRules = course.competencyRules as any[]
+            if (competencyRules && Array.isArray(competencyRules)) {
+                const rule = competencyRules.find((r: any) => r.grade === letterGrade)
+                if (rule && rule.description) {
+                    competencyDesc = rule.description
+                }
+            }
 
             return {
                 id: course.id,
-                name: course.subject?.reportName || course.reportName || course.name, // Use report name if available
+                name: course.subject?.reportName || course.reportName || course.name,
                 code: course.subject?.code || "",
                 teacher: course.teacher.name,
-                grade: Math.round(finalGrade),
+                grade: finalGrade,
+                letter: letterGrade,
+                competency: competencyDesc,
                 attendance: Math.round(attendancePercentage * 100)
             }
         })
+
+        // Calculate Attendance Stats (Group by Day)
+        const attendanceMap = new Map<string, string>() // date -> status
+
+        student.attendances.forEach((att: any) => {
+            const dateKey = new Date(att.date).toISOString().split('T')[0]
+            const currentStatus = attendanceMap.get(dateKey)
+
+            let statusPriority = 0 // 0=Present/Late, 1=Excused(Izin), 2=Excused(Sakit), 3=Skipped(Alpha)
+            let newStatusPriority = 0
+
+            if (currentStatus === 'ALPHA') statusPriority = 3
+            else if (currentStatus === 'SAKIT') statusPriority = 2
+            else if (currentStatus === 'IZIN') statusPriority = 1
+
+            if (att.status === 'ABSENT') {
+                newStatusPriority = 3
+            } else if (att.status === 'EXCUSED') {
+                if (att.excuseReason && att.excuseReason.toLowerCase().includes('sakit')) {
+                    newStatusPriority = 2
+                } else {
+                    newStatusPriority = 1
+                }
+            }
+
+            if (newStatusPriority > statusPriority) {
+                if (newStatusPriority === 3) attendanceMap.set(dateKey, 'ALPHA')
+                else if (newStatusPriority === 2) attendanceMap.set(dateKey, 'SAKIT')
+                else if (newStatusPriority === 1) attendanceMap.set(dateKey, 'IZIN')
+            }
+        })
+
+        const calculatedAttendance = { sick: 0, excused: 0, alpha: 0 }
+        attendanceMap.forEach((status) => {
+            if (status === 'ALPHA') calculatedAttendance.alpha++
+            else if (status === 'SAKIT') calculatedAttendance.sick++
+            else if (status === 'IZIN') calculatedAttendance.excused++
+        })
+
+        // Fetch non-academic fields if a DRAFT report exists (but not published)
+        const draftReport = await prisma.reportCard.findFirst({
+            where: {
+                studentId,
+                classId,
+                termId: classData.termId,
+                published: false
+            }
+        })
+
+        let attendanceData = calculatedAttendance
+        if (draftReport && draftReport.attendance) {
+            const dAtt = draftReport.attendance as any
+            // If draft has explicit non-zero values, use them.
+            // Otherwise, if draft is all zeros, prefer the calculated values (if they exist).
+            if (dAtt.sick > 0 || dAtt.excused > 0 || dAtt.alpha > 0) {
+                attendanceData = dAtt
+            } else {
+                // Draft is zeros. Check if calculated has non-zeros.
+                if (calculatedAttendance.sick > 0 || calculatedAttendance.excused > 0 || calculatedAttendance.alpha > 0) {
+                    attendanceData = calculatedAttendance
+                } else {
+                    attendanceData = dAtt // Both are zero, doesn't matter
+                }
+            }
+        }
+
+
+        // Get global principal name for default
+        const globalPrincipalName = await getPrincipalName()
 
         return {
             student,
             classData,
             courses,
-            generatedAt: new Date()
+            // If draft exists, use its manual entries. Else empty defaults.
+            extracurriculars: draftReport?.extracurriculars || [],
+            achievements: draftReport?.achievements || [],
+            development: draftReport?.development || [],
+            attendance: attendanceData,
+            homeroomTeacherNote: draftReport?.homeroomTeacherNote || "",
+            principalName: draftReport?.principalName || globalPrincipalName || "",
+            generatedAt: new Date(),
+            isSnapshot: false,
+            gradingScale,
+            calculatedAttendance // Pass this to the frontend
         }
 
     } catch (error) {
         console.error("Error generating report card:", error)
         return { error: "Failed to generate report" }
+    }
+}
+
+export async function upsertReportCard(
+    classId: string,
+    studentId: string,
+    data: {
+        extracurriculars: any[]
+        achievements: any[]
+        development: any[]
+        attendance: any
+        homeroomTeacherNote: string
+        principalName: string
+        published: boolean
+    }
+) {
+    try {
+        const user = await getUser()
+        if (!user) return { error: "Unauthorized" }
+
+        // Get class and check perm
+        const classData = await prisma.class.findUnique({
+            where: { id: classId },
+            include: { term: true }
+        })
+
+        if (!classData) return { error: "Class not found" }
+        if (classData.homeroomTeacherId !== user.id && !user.roles.includes("ADMIN")) {
+            return { error: "Unauthorized" }
+        }
+
+        // Fetch System Grading Scale
+        const sysConfig = await prisma.systemConfig.findUnique({
+            where: { id: "grading_scale" }
+        })
+        const gradingScale: any[] = (sysConfig?.value as any[]) || []
+
+        // Fetch courses and calc grades
+        const rawCourses = await prisma.course.findMany({
+            where: {
+                studentIds: { has: studentId },
+                termId: classData.termId,
+                deletedAt: { isSet: false }
+            },
+            include: {
+                subject: true,
+                teacher: true,
+                assignments: {
+                    where: { deletedAt: { isSet: false } },
+                    include: {
+                        submissions: { where: { studentId, deletedAt: { isSet: false } } }
+                    }
+                },
+                attendances: {
+                    where: { studentId, deletedAt: { isSet: false } }
+                }
+            }
+        })
+
+        const courseGrades = rawCourses.map(course => {
+            const studentAttendance = course.attendances
+            const totalSessions = studentAttendance.filter(a => a.status !== "SKIPPED").length
+            const attendedCount = studentAttendance.filter(a =>
+                a.status === "PRESENT" || a.status === "EXCUSED"
+            ).length
+
+            const attendancePercentage = totalSessions > 0 ? (attendedCount / totalSessions) : 1
+            const attendancePool = course.attendancePoolScore || 0
+
+            let studentPoints = 0
+            let maxPointsPossible = 0
+            let extraCreditPoints = 0
+
+            course.assignments.forEach(assignment => {
+                const submission = assignment.submissions[0]
+                let actualPoints = 0
+
+                if (submission && submission.grade !== null) {
+                    let points = Number((submission.grade / 100) * assignment.maxPoints)
+                    if (assignment.dueDate && submission.submittedAt > assignment.dueDate && assignment.latePenalty > 0) {
+                        points -= points * (assignment.latePenalty / 100)
+                    }
+                    actualPoints = Math.round(points * 100) / 100
+                }
+
+                if (!assignment.isExtraCredit) maxPointsPossible += assignment.maxPoints
+                if (assignment.isExtraCredit) extraCreditPoints += actualPoints
+                else studentPoints += actualPoints
+            })
+
+            const attendanceScore = attendancePercentage * attendancePool
+            const numerator = studentPoints + extraCreditPoints + attendanceScore
+            const denominator = maxPointsPossible + attendancePool
+
+            let finalGrade = 100
+            if (denominator > 0) {
+                finalGrade = Math.min((numerator / denominator) * 100, 100)
+            }
+            finalGrade = Math.round(finalGrade)
+
+            // Determine Letter and Competency
+            let letterGrade = "E"
+            let competencyDesc = ""
+
+            if (gradingScale.length > 0) {
+                const match = gradingScale.find(s => finalGrade >= s.min && finalGrade <= s.max)
+                if (match) letterGrade = match.grade
+            } else {
+                if (finalGrade >= 90) letterGrade = "A"
+                else if (finalGrade >= 80) letterGrade = "B"
+                else if (finalGrade >= 70) letterGrade = "C"
+                else letterGrade = "D"
+            }
+
+            const competencyRules = course.competencyRules as any[]
+            if (competencyRules && Array.isArray(competencyRules)) {
+                const rule = competencyRules.find((r: any) => r.grade === letterGrade)
+                if (rule && rule.description) {
+                    competencyDesc = rule.description
+                }
+            }
+
+            return {
+                id: course.id,
+                name: course.subject?.reportName || course.reportName || course.name,
+                code: course.subject?.code || "",
+                teacher: course.teacher.name,
+                grade: finalGrade,
+                letter: letterGrade,
+                competency: competencyDesc,
+                attendance: Math.round(attendancePercentage * 100)
+            }
+        })
+
+        const existing = await prisma.reportCard.findFirst({
+            where: {
+                studentId, classId, termId: classData.termId
+            }
+        })
+
+        if (existing) {
+            await prisma.reportCard.update({
+                where: { id: existing.id },
+                data: {
+                    courseGrades,
+                    extracurriculars: data.extracurriculars,
+                    achievements: data.achievements,
+                    development: data.development,
+                    attendance: data.attendance,
+                    homeroomTeacherNote: data.homeroomTeacherNote,
+                    principalName: data.principalName,
+                    published: data.published
+                }
+            })
+        } else {
+            await prisma.reportCard.create({
+                data: {
+                    studentId,
+                    classId,
+                    termId: classData.termId,
+                    courseGrades,
+                    extracurriculars: data.extracurriculars,
+                    achievements: data.achievements,
+                    development: data.development,
+                    attendance: data.attendance,
+                    homeroomTeacherNote: data.homeroomTeacherNote,
+                    principalName: data.principalName,
+                    published: data.published
+                }
+            })
+        }
+
+        revalidatePath(`/homeroom/${classId}/students/${studentId}/report`)
+        return { success: true }
+
+    } catch (error) {
+        console.error("Error upserting report card:", error)
+        return { error: "Failed to save report card" }
     }
 }
 

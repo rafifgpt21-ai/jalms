@@ -66,6 +66,8 @@ model User {
   conversations   Conversation[] @relation(fields: [conversationIds], references: [id])
   conversationIds String[]       @db.ObjectId
   messages        Message[]
+
+  reportCards ReportCard[]
 }
 
 model AcademicYear {
@@ -97,6 +99,7 @@ model Term {
 
   courses Course[]
   classes Class[]
+  reportCards ReportCard[]
 
   deletedAt DateTime?
 }
@@ -112,6 +115,8 @@ model Class {
 
   students Enrollment[]
   courses  Course[]
+
+  reportCards ReportCard[]
 
   deletedAt DateTime?
 }
@@ -173,6 +178,8 @@ model Course {
   schedules           Schedule[]
   materials           Material[] // Keep this for backward compatibility or direct access if needed, but assignments are preferred
   materialAssignments MaterialAssignment[]
+
+  competencyRules Json? // List of { grade: "A", min: 90, max: 100, description: "..." }
 }
 
 model Material {
@@ -383,4 +390,38 @@ model QuizChoice {
 
   questionId String       @db.ObjectId
   question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model ReportCard {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  studentId String   @db.ObjectId
+  student   User     @relation(fields: [studentId], references: [id])
+
+  classId   String   @db.ObjectId
+  class     Class    @relation(fields: [classId], references: [id])
+
+  termId    String   @db.ObjectId
+  term      Term     @relation(fields: [termId], references: [id])
+
+  // Snapshots
+  courseGrades    Json[] // { subject: string, score: number, grade: string, competency: string }
+  extracurriculars Json[] // { activity: string, predicate: string, note: string }
+  achievements    Json[] // { name: string, note: string }
+  development     Json[] // { activity: string, note: string }
+  attendance      Json   // { sick: number, excused: number, alpha: number }
+  
+  homeroomTeacherNote String?
+  principalName       String?
+
+  date      DateTime @default(now())
+  published Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SystemConfig {
+  id    String @id @map("_id") // key like "grading_scale"
+  value Json
 }

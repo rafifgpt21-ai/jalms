@@ -177,3 +177,63 @@ export async function deleteCourse(id: string) {
         return { error: "Failed to delete course" }
     }
 }
+
+// Competency Rules Logic
+
+export async function getCourseCompetencySettings(courseId: string) {
+    try {
+        const user = await import("@/lib/actions/user.actions").then(m => m.getUser())
+        if (!user) return { error: "Unauthorized" }
+
+        const course = await prisma.course.findUnique({
+            where: { id: courseId },
+            select: { id: true, competencyRules: true, teacherId: true }
+        })
+
+        if (!course) return { error: "Course not found" }
+        // Allow admin or the teacher
+        if (course.teacherId !== user.id && !user.roles.includes("ADMIN")) {
+            return { error: "Unauthorized" }
+        }
+
+        // Also fetch system defaults
+        const sysConfig = await prisma.systemConfig.findUnique({
+            where: { id: "grading_scale" }
+        })
+
+        return {
+            competencyRules: course.competencyRules,
+            systemDefaults: sysConfig?.value
+        }
+    } catch (error) {
+        console.error("Error fetching competency settings:", error)
+        return { error: "Failed to fetch settings" }
+    }
+}
+
+export async function updateCourseCompetencySettings(courseId: string, rules: any[]) {
+    try {
+        const user = await import("@/lib/actions/user.actions").then(m => m.getUser())
+        if (!user) return { error: "Unauthorized" }
+
+        const course = await prisma.course.findUnique({
+            where: { id: courseId },
+            select: { teacherId: true }
+        })
+
+        if (!course) return { error: "Course not found" }
+        if (course.teacherId !== user.id && !user.roles.includes("ADMIN")) {
+            return { error: "Unauthorized" }
+        }
+
+        await prisma.course.update({
+            where: { id: courseId },
+            data: { competencyRules: rules }
+        })
+
+        return { success: true }
+    } catch (error) {
+        console.error("Error updating competency settings:", error)
+        return { error: "Failed to update settings" }
+    }
+}

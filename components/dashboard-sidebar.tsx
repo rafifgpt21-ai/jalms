@@ -29,7 +29,8 @@ import {
     Table,
     FileQuestion,
     ChevronsUpDown,
-    Check
+    Check,
+    Settings
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -233,6 +234,7 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                     <SidebarNavItem href="/admin/courses" icon={BookOpen} label="Courses" active={pathname.startsWith("/admin/courses")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                     <SidebarNavItem href="/admin/semesters" icon={CalendarRange} label="Semesters" active={pathname.startsWith("/admin/semesters")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                     <SidebarNavItem href="/admin/schedule" icon={Calendar} label="Schedule Manager" active={pathname === "/admin/schedule" || pathname.startsWith("/admin/schedule/") && !pathname.includes("overview")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                    <SidebarNavItem href="/admin/grading" icon={PieChart} label="Grading Scale" active={pathname.startsWith("/admin/grading")} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
 
                     <SidebarNavItem href="/admin/socials" icon={MessageSquare} label="Socials Monitoring" active={pathname.startsWith("/admin/socials")} hasBadge={hasUnreadMessages} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                 </div>
@@ -437,6 +439,7 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                             <SidebarNavItem href={`/teacher/courses/${selectedCourseId}/tasks-summary`} icon={Table} label="Tasks Summary" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/tasks-summary`)} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                             <SidebarNavItem href={`/teacher/courses/${selectedCourseId}/attendance`} icon={Clock} label="Attendance" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/attendance`)} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                             <SidebarNavItem href={`/teacher/courses/${selectedCourseId}/gradebook`} icon={GraduationCap} label="Gradebook" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/gradebook`)} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
+                            <SidebarNavItem href={`/teacher/courses/${selectedCourseId}/settings`} icon={Settings} label="Settings" active={pathname.startsWith(`/teacher/courses/${selectedCourseId}/settings`)} isCollapsed={isCollapsed} navigatingTo={navigatingTo} setNavigatingTo={setNavigatingTo} onNavigate={onNavigate} />
                         </div>
                     )}
                 </div>
