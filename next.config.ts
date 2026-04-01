@@ -15,6 +15,7 @@ const getLocalIps = () => {
 };
 
 const nextConfig: NextConfig & { allowedDevOrigins?: string[] } = {
+  reactStrictMode: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
