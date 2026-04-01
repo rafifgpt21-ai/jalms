@@ -109,8 +109,9 @@ export function GradebookView({ data }: GradebookViewProps) {
                             ) : (
                                 filteredStudents.map((student) => {
                                     // Calculate total points earned
-                                    const totalPointsEarned = Object.values(student.scores as Record<string, number | null>)
+                                    const rawTotalPoints = Object.values(student.scores as Record<string, number | null>)
                                         .reduce((sum: number, score) => sum + (score || 0), 0);
+                                    const totalPointsEarned = Math.round(rawTotalPoints);
 
                                     return (
                                         <TableRow key={student.studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 border-slate-100 dark:border-slate-800 group transition-colors">

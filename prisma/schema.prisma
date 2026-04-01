@@ -180,6 +180,9 @@ model Course {
   materialAssignments MaterialAssignment[]
 
   competencyRules Json? // List of { grade: "A", min: 90, max: 100, description: "..." }
+
+  @@index([termId])
+  @@index([studentIds])
 }
 
 model Material {
@@ -288,6 +291,8 @@ model Submission {
   submittedAt   DateTime @default(now())
 
   deletedAt DateTime?
+
+  @@index([studentId, assignmentId])
 }
 
 model Attendance {
@@ -308,6 +313,9 @@ model Attendance {
   // Added NoAction to avoid cycles or complexity with MongoDB, though Prisma handles it well.
 
   deletedAt DateTime?
+
+  @@index([studentId, date])
+  @@index([courseId])
 }
 
 model Conversation {
@@ -419,6 +427,8 @@ model ReportCard {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([studentId, classId, termId])
 }
 
 model SystemConfig {

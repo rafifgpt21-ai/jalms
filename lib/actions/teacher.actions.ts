@@ -401,8 +401,8 @@ export async function getCourseGradebook(courseId: string) {
                         actualPoints -= penaltyAmount
                     }
 
-                    // Round to 2 decimals
-                    actualPoints = Math.round(actualPoints * 100) / 100
+                    // Round to integer
+                    actualPoints = Math.round(actualPoints);
                 }
 
                 scores[assignment.id] = actualPoints
@@ -442,8 +442,8 @@ export async function getCourseGradebook(courseId: string) {
                 studentName: student.name,
                 studentImage: student.image,
                 attendancePercentage: totalSessions > 0 ? (attendedCount / totalSessions) * 100 : 100,
-                totalScore: Math.round(totalScore * 10) / 10,
-                earnedPoints: Math.round(numerator * 10) / 10,
+                totalScore: Math.round(totalScore),
+                earnedPoints: Math.round(numerator),
                 scores,
                 breakdown: {
                     studentPoints,

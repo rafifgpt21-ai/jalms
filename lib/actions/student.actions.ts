@@ -334,9 +334,9 @@ export async function getStudentGrades(termId?: string) {
                     }
 
                     if (assignment.isExtraCredit) {
-                        extraCreditPoints += actualPoints
+                        extraCreditPoints += Math.round(actualPoints)
                     } else {
-                        studentPoints += actualPoints
+                        studentPoints += Math.round(actualPoints)
                     }
                 }
             })
@@ -363,7 +363,7 @@ export async function getStudentGrades(termId?: string) {
                 courseId: course.id,
                 courseName: course.subject?.reportName || course.reportName || course.name,
                 teacherName: course.teacher.name,
-                grade: Math.round(totalScore * 10) / 10,
+                grade: Math.round(totalScore),
                 attendancePercentage: Math.round(attendancePercentage * 100),
                 breakdown: {
                     studentPoints,
@@ -437,8 +437,8 @@ export async function getStudentGradeHistory() {
                     if (isLate && assignment.latePenalty > 0) {
                         actualPoints -= actualPoints * (assignment.latePenalty / 100)
                     }
-                    if (assignment.isExtraCredit) extraCreditPoints += actualPoints
-                    else studentPoints += actualPoints
+                    if (assignment.isExtraCredit) extraCreditPoints += Math.round(actualPoints)
+                    else studentPoints += Math.round(actualPoints)
                 }
             })
 
@@ -461,7 +461,7 @@ export async function getStudentGradeHistory() {
             return {
                 termId: term.id,
                 name: name,
-                average: Math.round(average * 10) / 10
+                average: Math.round(average)
             }
         })
 
@@ -723,7 +723,7 @@ export async function submitQuizAttempt(assignmentId: string, answers: Record<st
                 ? (studentTotalPoints / totalMaxPoints) * 100
                 : 0 // or 100?
 
-            const roundedScore = Math.round(finalScorePercentage * 10) / 10 // 1 decimal
+            const roundedScore = Math.round(finalScorePercentage) // integer
 
             // 3. Save Submission
             const existing = await tx.submission.findFirst({

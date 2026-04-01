@@ -1,11 +1,8 @@
 import { getStudentReportCard } from "@/lib/actions/homeroom.actions"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { ReportCardForm } from "@/components/homeroom/report-card-form"
+import { ReportPreviewBridge } from "@/components/homeroom/report-preview-bridge"
 
-export const dynamic = 'force-dynamic'
+export const dynamicApi = 'force-dynamic'
 
 interface PageProps {
     params: Promise<{
@@ -14,9 +11,8 @@ interface PageProps {
     }>
 }
 
-export default async function ReportCardPage(props: PageProps) {
+export default async function ReportPreviewPage(props: PageProps) {
     const params = await props.params;
-
     const { classId, studentId } = params;
 
     const {
@@ -30,9 +26,6 @@ export default async function ReportCardPage(props: PageProps) {
         homeroomTeacherNote,
         principalName,
         isSnapshot,
-        gradingScale,
-        generatedAt,
-        calculatedAttendance,
         error
     } = await getStudentReportCard(studentId, classId)
 
@@ -41,19 +34,9 @@ export default async function ReportCardPage(props: PageProps) {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 pb-20 p-4 sm:p-6 lg:p-8">
-            <MobileHeaderSetter title={`Report: ${student.name}`} />
-
-            <div className="flex items-center gap-2 text-sm text-slate-500 mb-2 overflow-x-auto whitespace-nowrap pb-2">
-                <Link href={`/homeroom/${classId}`} className="hover:text-primary transition-colors flex items-center">
-                    <ArrowLeft className="w-3 h-3 mr-1" />
-                    Class {classData.name}
-                </Link>
-                <span className="text-slate-300">/</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">{student.name}</span>
-            </div>
-
-            <ReportCardForm
+        <>
+            <MobileHeaderSetter title={`Preview: ${student.name}`} />
+            <ReportPreviewBridge
                 student={student}
                 classData={classData}
                 courses={courses}
@@ -63,10 +46,9 @@ export default async function ReportCardPage(props: PageProps) {
                 attendance={attendance || { sick: 0, excused: 0, alpha: 0 }}
                 homeroomTeacherNote={homeroomTeacherNote || ""}
                 principalName={principalName || ""}
-                isSnapshot={isSnapshot || false}
-                gradingScale={gradingScale || []}
-                calculatedAttendance={calculatedAttendance}
+                classId={classId}
+                studentId={studentId}
             />
-        </div>
+        </>
     )
 }
