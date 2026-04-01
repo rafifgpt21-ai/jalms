@@ -76,48 +76,50 @@ export default async function TasksSummaryPage({
                 <CardHeader>
                     <CardTitle>Student Progress</CardTitle>
                 </CardHeader>
-                <CardContent className="overflow-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="hover:bg-transparent border-white/10">
-                                <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white/10 dark:bg-slate-900/10 backdrop-blur-xl z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r border-white/10">Student</TableHead>
-                                {assignments?.map((assignment) => (
-                                    <TableHead key={assignment.id} className="text-center min-w-[100px]">
-                                        <div className="flex flex-col items-center gap-1">
-                                            <span className="whitespace-nowrap font-medium max-w-[150px] truncate" title={assignment.title}>
-                                                {assignment.title}
-                                            </span>
-                                            {assignment.dueDate && (
-                                                <span className="text-[10px] text-muted-foreground font-normal">
-                                                    {new Date(assignment.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                <CardContent className="overflow-auto pb-6">
+                    <div className="rounded-xl border border-white/20 dark:border-white/10 overflow-hidden bg-white/10 dark:bg-slate-950/20 backdrop-blur-sm">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent border-white/10 bg-white/30 dark:bg-slate-800/40">
+                                    <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white/40 dark:bg-slate-900/60 z-30 backdrop-blur-xl border-r border-white/10">Student</TableHead>
+                                    {assignments?.map((assignment) => (
+                                        <TableHead key={assignment.id} className="text-center min-w-[100px] border-r border-white/5 last:border-r-0">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="whitespace-nowrap font-medium max-w-[150px] truncate" title={assignment.title}>
+                                                    {assignment.title}
                                                 </span>
-                                            )}
-                                        </div>
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {students?.map((student) => (
-                                <TableRow key={student.studentId} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-light-white/10 transition-colors">
-                                    <TableCell className="font-medium sticky left-0 bg-white/10 dark:bg-slate-900/10 backdrop-blur-xl z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r border-white/10 group-hover:bg-white/20 dark:group-hover:bg-slate-800/20 transition-colors">
-                                        <div className="flex items-center gap-2">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={student.studentAvatar || undefined} />
-                                                <AvatarFallback>{student.studentName.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="truncate max-w-[150px]" title={student.studentName}>{student.studentName}</span>
-                                        </div>
-                                    </TableCell>
-                                    {student.tasks.map((task) => (
-                                        <TableCell key={task.assignmentId} className="text-center p-2">
-                                            {getStatusIcon(task.status, task.grade)}
-                                        </TableCell>
+                                                {assignment.dueDate && (
+                                                    <span className="text-[10px] text-muted-foreground font-normal">
+                                                        {new Date(assignment.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableHead>
                                     ))}
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {students?.map((student) => (
+                                    <TableRow key={student.studentId} className="hover:bg-white/20 dark:hover:bg-white/5 border-b border-white/5 transition-colors group">
+                                        <TableCell className="font-medium sticky left-0 bg-white/40 dark:bg-slate-900/60 z-10 backdrop-blur-xl border-r border-white/10 transition-colors group-hover:bg-white/50 dark:group-hover:bg-slate-800/80">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src={student.studentAvatar || undefined} />
+                                                    <AvatarFallback>{student.studentName.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="truncate max-w-[150px]" title={student.studentName}>{student.studentName}</span>
+                                            </div>
+                                        </TableCell>
+                                        {student.tasks.map((task) => (
+                                            <TableCell key={task.assignmentId} className="text-center p-2 border-r border-white/5 last:border-r-0">
+                                                {getStatusIcon(task.status, task.grade)}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

@@ -27,17 +27,17 @@ export function CourseCompetencySettings({ courseId }: { courseId: string }) {
         } else {
             console.log("Settings loaded:", res)
             // If checking defaults
-            if (res.systemDefaults) {
-                setDefaults(res.systemDefaults)
+            if (res.systemDefaults && Array.isArray(res.systemDefaults)) {
+                setDefaults(res.systemDefaults as any[])
             }
 
             // If course has rules, use them. Else use defaults.
             if (res.competencyRules && Array.isArray(res.competencyRules) && res.competencyRules.length > 0) {
-                setRules(res.competencyRules)
-            } else if (res.systemDefaults) {
+                setRules(res.competencyRules as any[])
+            } else if (res.systemDefaults && Array.isArray(res.systemDefaults)) {
                 // Initialize with defaults but empty descriptions if logic prefers
                 // User said "defaults will be set by admin", so likely pre-fill
-                setRules(res.systemDefaults.map((d: any) => ({ ...d, description: "" })))
+                setRules((res.systemDefaults as any[]).map((d: any) => ({ ...d, description: "" })))
             }
         }
         setLoading(false)

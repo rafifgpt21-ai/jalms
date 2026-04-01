@@ -83,19 +83,17 @@ export default async function StudentSchedulePage() {
                                         return (
                                             <div
                                                 key={`${dayIdx}-${period}`}
-                                                className={`group relative p-2 min-h-[70px] rounded-2xl flex flex-col justify-center items-center text-center transition-all duration-300 ${course
-                                                    ? "bg-white/80 dark:bg-slate-800/60 border border-indigo-100 dark:border-indigo-500/20 shadow-md shadow-indigo-500/5 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer"
+                                                className={`relative p-3 min-h-[70px] rounded-2xl flex flex-col justify-center items-center text-center ${course
+                                                    ? "bg-white/80 dark:bg-slate-800/60 border border-indigo-100 dark:border-indigo-500/20 shadow-md shadow-indigo-500/5"
                                                     : "bg-slate-50/30 dark:bg-slate-900/20 border border-dashed border-slate-200 dark:border-slate-800"
                                                     }`}
                                             >
                                                 {course ? (
                                                     <>
-                                                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 rounded-l-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                                                         <div className="font-heading font-bold text-indigo-900 dark:text-indigo-100 line-clamp-2 px-1 text-sm sm:text-base">
                                                             {course.subject?.reportName || course.reportName || course.name}
                                                         </div>
                                                         <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                                                             {course.teacher.name}
                                                         </div>
                                                     </>
@@ -131,7 +129,6 @@ export default async function StudentSchedulePage() {
 
                                                 return (
                                                     <div key={period} className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-indigo-100 dark:border-indigo-500/20 p-4 shadow-sm">
-                                                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500" />
                                                         <div className="flex justify-between items-start gap-4">
                                                             <div>
                                                                 <div className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">
@@ -141,7 +138,6 @@ export default async function StudentSchedulePage() {
                                                                     {course.subject?.reportName || course.reportName || course.name}
                                                                 </div>
                                                                 <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                                                                     {course.teacher.name}
                                                                 </div>
                                                             </div>

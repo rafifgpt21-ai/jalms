@@ -1,5 +1,5 @@
 
-import { PrismaClient, Role, SemesterType, AcademicDomain, AttendanceStatus, AssignmentType } from "@prisma/client"
+import { PrismaClient, Role, SemesterType, AcademicDomain, AttendanceStatus, AssignmentType, QuizGradingType } from "@prisma/client"
 import * as bcrypt from "bcryptjs"
 import { faker } from "@faker-js/faker"
 
@@ -38,6 +38,13 @@ const CONFIG = {
             isActive: true
         }
     ]
+}
+
+const generateAvatarConfig = () => {
+    const styles = ["adventurer", "avataaars", "bottts", "lorelei", "notionists", "open-peeps", "pixel-art"]
+    const style = faker.helpers.arrayElement(styles)
+    const seed = faker.string.alphanumeric(10)
+    return { style, seed }
 }
 
 async function main() {
@@ -113,6 +120,7 @@ async function main() {
             create: {
                 name: sub.name,
                 code: sub.code,
+                reportName: sub.name,
                 description: faker.lorem.sentence(),
                 academicDomains: sub.domains
             }
@@ -121,10 +129,11 @@ async function main() {
             if (existing) return existing
             return prisma.subject.create({
                 data: {
-                    name: sub.name,
-                    code: sub.code,
-                    description: faker.lorem.sentence(),
-                    academicDomains: sub.domains
+                name: sub.name,
+                code: sub.code,
+                reportName: sub.name,
+                description: faker.lorem.sentence(),
+                academicDomains: sub.domains
                 }
             })
         })
@@ -151,6 +160,8 @@ async function main() {
                 password: commonPassword,
                 roles: [Role.SUBJECT_TEACHER],
                 image: faker.image.avatar(),
+                nip: faker.string.numeric(18),
+                avatarConfig: generateAvatarConfig(),
                 isActive: true
             }
         })
@@ -184,7 +195,9 @@ async function main() {
                     password: commonPassword,
                     roles: [Role.STUDENT],
                     image: faker.image.avatar(),
-                    officialId: faker.string.numeric(8),
+                    nis: faker.string.numeric(8),
+                    nisn: faker.string.numeric(10),
+                    avatarConfig: generateAvatarConfig(),
                     isActive: true
                 }
             })
@@ -299,7 +312,14 @@ async function main() {
                             classId: cls.id,
                             termId: currentTerm.id,
                             teacherId: teacher.id,
-                            studentIds: section.students.map(s => s.id)
+                            studentIds: section.students.map(s => s.id),
+                            attendancePoolScore: faker.number.int({ min: 10, max: 20 }),
+                            competencyRules: [
+                                { grade: "A", min: 90, max: 100, description: "Exceptional mastery of concepts." },
+                                { grade: "B", min: 80, max: 89, description: "Strong understanding and application." },
+                                { grade: "C", min: 70, max: 79, description: "Solid grasp of core principles." },
+                                { grade: "D", min: 60, max: 69, description: "Basic competency with some gaps." }
+                            ]
                         }
                     })
 
@@ -342,7 +362,10 @@ async function main() {
                                 type: AssignmentType.SUBMISSION,
                                 courseId: course.id,
                                 maxPoints: maxPoints,
-                                academicDomains: subject.academicDomains
+                                academicDomains: subject.academicDomains,
+                                isExtraCredit: faker.number.int({ min: 1, max: 10 }) > 8,
+                                latePenalty: 10,
+                                showGradeAfterSubmission: true
                             }
                         })
 
@@ -358,7 +381,8 @@ async function main() {
                                     grade: grade,
                                     feedback: grade < 75 ? "Good effort, keep improving." : "Excellent work!",
                                     submittedAt: faker.date.between({ from: assignment.dueDate, to: new Date(assignment.dueDate.getTime() + 86400000) }),
-                                    link: "https://docs.google.com/document/d/..."
+                                    link: "https://docs.google.com/document/d/...",
+                                    attachmentUrl: faker.internet.url()
                                 }
                             })
                         }
@@ -415,7 +439,8 @@ async function main() {
                                     status: status,
                                     courseId: course.id,
                                     studentId: student.id,
-                                    period: 1
+                                    period: 1,
+                                    topic: faker.helpers.arrayElement(["Morning Review", "Core Concepts", "Advanced Discussion", "Group Work", "Practical Session"])
                                 }
                             })
                         }
@@ -436,10 +461,135 @@ async function main() {
                         })
                     }
 
+                    // F. QUIZZES
+                    if (faker.number.int({ min: 1, max: 10 }) > 7) {
+                        const quiz = await prisma.quiz.create({
+                            data: {
+                                title: `${subject.name} Mastery Quiz`,
+                                description: `Evaluate your understanding of ${subject.name} core concepts.`,
+                                teacherId: teacher.id,
+                                questions: {
+                                    create: [
+                                        {
+                                            text: `What is the primary focus of ${subject.name}?`,
+                                            points: 5,
+                                            order: 1,
+                                            gradingType: QuizGradingType.ALL_OR_NOTHING,
+                                            choices: {
+                                                create: [
+                                                    { text: "Option A (Correct)", isCorrect: true, order: 1 },
+                                                    { text: "Option B", isCorrect: false, order: 2 },
+                                                    { text: "Option C", isCorrect: false, order: 3 },
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        })
+
+                        await prisma.assignment.create({
+                            data: {
+                                title: `${subject.name} Quiz`,
+                                dueDate: faker.date.between({ from: currentTerm.startDate, to: currentTerm.endDate }),
+                                type: AssignmentType.QUIZ,
+                                courseId: course.id,
+                                quizId: quiz.id,
+                                academicDomains: subject.academicDomains
+                            }
+                        })
+                    }
+
                 } // End Courses
             } // End Sections
         } // End Grades
+
+        // G. REPORT CARDS (For completed semesters or active term)
+        if (tIndex <= 2) { // Seed for all terms including current
+            console.log(`   -> Generating Report Cards for Term ${tIndex + 1}...`)
+            const enrollmentMap = termEnrollmentPlan[tIndex as keyof typeof termEnrollmentPlan]
+            for (const [gradeLevel, students] of Object.entries(enrollmentMap)) {
+                for (const student of students.slice(0, 5)) { // Just a few per grade to keep it fast
+                    const studentClasses = await prisma.enrollment.findMany({
+                        where: { studentId: student.id, class: { termId: currentTerm.id } },
+                        include: { class: true }
+                    })
+                    
+                    if (studentClasses.length > 0) {
+                        const cls = studentClasses[0].class
+                        await prisma.reportCard.create({
+                            data: {
+                                studentId: student.id,
+                                classId: cls.id,
+                                termId: currentTerm.id,
+                                courseGrades: [
+                                    { subject: "Mathematics", score: 85, grade: "B", competency: "Strong understanding." },
+                                    { subject: "English", score: 92, grade: "A", competency: "Excellent writing skills." }
+                                ],
+                                extracurriculars: [
+                                    { activity: "Basketball", predicate: "A", note: "Team captain and high effort." }
+                                ],
+                                attendance: { sick: 1, excused: 2, alpha: 0 },
+                                homeroomTeacherNote: "A diligent student with great potential.",
+                                principalName: "Dr. Awesome"
+                            }
+                        })
+                    }
+                }
+            }
+        }
     } // End Terms
+
+    // ----------------------------------------------------------------------
+    // 5. ADDITIONAL DATA (CONFIG, CONVERSATIONS)
+    // ----------------------------------------------------------------------
+    console.log("🛠️ 5. Creating System Config & Conversations...")
+
+    // -- System Config
+    await prisma.systemConfig.upsert({
+        where: { id: "grading_scale" },
+        update: {},
+        create: {
+            id: "grading_scale",
+            value: [
+                { grade: "A", min: 90, max: 100 },
+                { grade: "B", min: 80, max: 89 },
+                { grade: "C", min: 70, max: 79 },
+                { grade: "D", min: 0, max: 69 }
+            ]
+        }
+    })
+
+    await prisma.systemConfig.upsert({
+        where: { id: "school_info" },
+        update: {},
+        create: {
+            id: "school_info",
+            value: {
+                name: "Antigravity Academy",
+                address: "123 Code Lane, Silicon Valley",
+                principals: ["Dr. Jane Doe", "Prof. John Smith"]
+            }
+        }
+    })
+
+    // -- Conversations
+    const someTeacher = teachers[0]
+    const someStudent = cohortA[0]
+
+    await prisma.conversation.create({
+        data: {
+            participantIds: [someTeacher.id, someStudent.id],
+            initiatorId: someTeacher.id,
+            messages: {
+                create: [
+                    { content: "Hello! How is your project going?", senderId: someTeacher.id },
+                    { content: "It's going well, thank you! I just finished the first draft.", senderId: someStudent.id },
+                    { content: "Great to hear. Keep it up!", senderId: someTeacher.id }
+                ]
+            }
+        }
+    })
 
     console.log(`
 🎉 ORGANIC POPULATION COMPLETE!

@@ -35,7 +35,7 @@ export async function getGradingScaleDefaults() {
             }
         }
 
-        return { scale: config.value as GradingScale[] }
+        return { scale: config.value as unknown as GradingScale[] }
 
     } catch (error) {
         console.error("Error fetching grading scale:", error)
@@ -50,8 +50,8 @@ export async function updateGradingScaleDefaults(scale: GradingScale[]) {
 
         await prisma.systemConfig.upsert({
             where: { id: GRADING_SCALE_KEY },
-            update: { value: scale },
-            create: { id: GRADING_SCALE_KEY, value: scale }
+            update: { value: scale as any },
+            create: { id: GRADING_SCALE_KEY, value: scale as any }
         })
 
         revalidatePath("/admin/grading")
