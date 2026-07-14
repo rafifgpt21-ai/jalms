@@ -194,7 +194,7 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                                 )}
                             </div>
 
-                            <div className={`flex items-center justify-between p-4 rounded-2xl border ${statusVariant === 'default' ? 'bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-900' : statusVariant === 'destructive' ? 'bg-red-50 border-red-100 text-red-700 dark:bg-red-900/20 dark:border-red-900' : isSubmitted ? 'bg-indigo-50 border-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:border-indigo-900' : 'bg-slate-50 border-slate-100 text-slate-700 dark:bg-slate-800/50 dark:border-slate-800'}`}>
+                            <div className={`flex items-center justify-between p-4 rounded-2xl border ${statusVariant === 'default' ? 'bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300' : statusVariant === 'destructive' ? 'bg-red-50 border-red-100 text-red-700 dark:bg-red-950/60 dark:border-red-800 dark:text-red-300' : isSubmitted ? 'bg-blue-50 border-blue-100 text-blue-700 dark:bg-blue-950/60 dark:border-blue-800 dark:text-blue-300' : 'bg-slate-50 border-slate-100 text-slate-700 dark:bg-slate-800/70 dark:border-slate-700 dark:text-slate-300'}`}>
                                 <div className="flex items-center gap-3">
                                     {isGraded ? <CheckCircle className="w-5 h-5" /> :
                                         isSubmitted ? <CheckCircle className="w-5 h-5" /> :

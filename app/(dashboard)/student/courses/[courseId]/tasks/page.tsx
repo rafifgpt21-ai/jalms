@@ -2,7 +2,8 @@ import { getCourseAssignments } from "@/lib/actions/teacher.actions"
 import { getUser } from "@/lib/actions/user.actions"
 import { db as prisma } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge, statusTone } from "@/components/ui/status-badge"
+import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { format } from "date-fns"
 import { CheckCircle, Clock, AlertCircle, FileText } from "lucide-react"
@@ -59,11 +60,7 @@ export default async function StudentCourseTasksPage({ params }: { params: Promi
                         <Card className="hover:border-blue-500 transition-colors cursor-pointer">
                             <CardContent className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className={`p-2 rounded-full ${task.status === 'Graded' ? 'bg-green-100 text-green-600' :
-                                        task.status === 'Submitted' ? 'bg-blue-100 text-blue-600' :
-                                            task.status === 'Missing' ? 'bg-red-100 text-red-600' :
-                                                'bg-gray-100 text-gray-600'
-                                        }`}>
+                                    <div className={cn("rounded-full border p-2", statusTone(task.status))}>
                                         {task.status === 'Graded' || task.status === 'Submitted' ? <CheckCircle className="h-5 w-5" /> :
                                             task.status === 'Missing' ? <AlertCircle className="h-5 w-5" /> :
                                                 <FileText className="h-5 w-5" />}
@@ -84,20 +81,11 @@ export default async function StudentCourseTasksPage({ params }: { params: Promi
                                 <div className="flex items-center gap-4">
                                     {task.status === 'Graded' && (
                                         <div className="text-right">
-                                            <div className="text-lg font-bold text-green-600">{task.submission?.grade} / {task.maxPoints}</div>
-                                            <div className="text-xs text-gray-500">Score</div>
+                                            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{task.submission?.grade} / {task.maxPoints}</div>
+                                            <div className="text-xs text-muted-foreground">Score</div>
                                         </div>
                                     )}
-                                    <Badge variant={
-                                        task.status === 'Graded' ? 'default' :
-                                            task.status === 'Submitted' ? 'secondary' :
-                                                task.status === 'Missing' ? 'destructive' : 'outline'
-                                    } className={
-                                        task.status === 'Graded' ? 'bg-green-600' :
-                                            task.status === 'Submitted' ? 'bg-blue-600 text-white' : ''
-                                    }>
-                                        {task.status}
-                                    </Badge>
+                                    <StatusBadge status={task.status} label={task.status} />
                                 </div>
                             </CardContent>
                         </Card>

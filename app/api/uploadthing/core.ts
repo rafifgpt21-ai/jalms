@@ -1,11 +1,32 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { z } from "zod";
 
 const f = createUploadthing();
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
+    courseIcon: f({ image: { maxFileSize: "2MB", maxFileCount: 1 } })
+        .input(z.object({ courseId: z.string() }))
+        .middleware(async ({ input }) => {
+            const session = await auth();
+            if (!session?.user?.id) throw new UploadThingError("Unauthorized");
+            const user = await db.user.findUnique({ where: { id: session.user.id }, select: { roles: true } });
+            const course = await db.course.findUnique({ where: { id: input.courseId }, select: { teacherId: true } });
+            if (!course || (course.teacherId !== session.user.id && !user?.roles.includes("ADMIN"))) {
+                throw new UploadThingError("You cannot change this course icon");
+            }
+            return { userId: session.user.id, courseId: input.courseId };
+        })
+        .onUploadComplete(async ({ metadata, file }) => ({
+            uploadedBy: metadata.userId,
+            courseId: metadata.courseId,
+            url: file.url,
+            key: file.key,
+        })),
+
     // Define as many FileRoutes as you like, each with a unique routeSlug
     courseUpload: f({
         image: { maxFileSize: "4MB", maxFileCount: 1 },

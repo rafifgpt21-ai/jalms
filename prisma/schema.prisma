@@ -13,7 +13,6 @@ enum Role {
   HOMEROOM_TEACHER
   STUDENT
   PARENT
-
 }
 
 enum AttendanceStatus {
@@ -22,6 +21,76 @@ enum AttendanceStatus {
   EXCUSED
   SKIPPED
   PENDING
+}
+
+enum ClassColor {
+  RED
+  ORANGE
+  AMBER
+  EMERALD
+  TEAL
+  CYAN
+  BLUE
+  INDIGO
+  VIOLET
+  PURPLE
+  PINK
+  ROSE
+}
+
+enum UiDensity {
+  COMPACT
+  COMFORTABLE
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum CourseRoleContext {
+  TEACHER
+  STUDENT
+}
+
+enum CourseEnrollmentMode {
+  MANUAL
+  CLASS_SEEDED
+  CLASS_SYNC
+}
+
+enum CourseEnrollmentSource {
+  LEGACY
+  MANUAL
+  CLASS_SEED
+  CLASS_SYNC
+  IMPORT
+  ROLLOVER
+}
+
+enum ClassEnrollmentSource {
+  LEGACY
+  MANUAL
+  IMPORT
+  COPY
+  ROLLOVER
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum RolloverStatus {
+  DRAFT
+  VALIDATING
+  READY
+  RUNNING
+  COMPLETED
+  PARTIAL
+  FAILED
 }
 
 model User {
@@ -41,11 +110,9 @@ model User {
   nip  String? // For teachers
   nis  String? // For students
   nisn String? // For students
-  
+
   officialId     String? // Deprecated in favor of specific IDs above
   creationSource String  @default("manual") // "manual" or "excel_import"
-
-
 
   // Relations
   taughtCourses     Course[]     @relation("SubjectTeacher")
@@ -68,6 +135,11 @@ model User {
   messages        Message[]
 
   reportCards ReportCard[]
+
+  courseEnrollments     CourseEnrollment[]
+  courseNavigationState CourseNavigationState[]
+  courseAnnouncements   CourseAnnouncement[]     @relation("CourseAnnouncementAuthor")
+  workspacePreference   UserWorkspacePreference?
 }
 
 model AcademicYear {
@@ -97,8 +169,8 @@ model Term {
   academicYearId String       @db.ObjectId
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
 
-  courses Course[]
-  classes Class[]
+  courses     Course[]
+  classes     Class[]
   reportCards ReportCard[]
 
   deletedAt DateTime?
@@ -118,9 +190,13 @@ model Class {
 
   reportCards ReportCard[]
 
+  // Nullable during the compatibility migration. New and edited classes always set it.
+  color     ClassColor?
+  createdAt DateTime?   @default(now())
+  updatedAt DateTime?   @updatedAt
+
   deletedAt DateTime?
 }
-
 
 enum AcademicDomain {
   SCIENCE_TECHNOLOGY
@@ -132,15 +208,18 @@ enum AcademicDomain {
 }
 
 model Subject {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
   name        String // "Biology"
-  code        String // "BIO"
+  code        String  @unique // Exactly three uppercase letters, e.g. "BIO"
   description String?
   reportName  String? // Name to show in student reports if this subject is used
-  
+
   academicDomains AcademicDomain[]
 
   courses Course[]
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
 
   deletedAt DateTime?
 }
@@ -168,6 +247,8 @@ model Course {
   students   User[]   @relation("CourseStudents", fields: [studentIds], references: [id])
   studentIds String[] @db.ObjectId
 
+  courseEnrollments CourseEnrollment[]
+
   assignments Assignment[]
   attendances Attendance[]
 
@@ -181,7 +262,23 @@ model Course {
 
   competencyRules Json? // List of { grade: "A", min: 90, max: 100, description: "..." }
 
+  iconImageUrl String?
+  iconImageKey String?
+
+  // Nullable while legacy courses are backfilled; null resolves as MANUAL.
+  enrollmentMode          CourseEnrollmentMode?
+  lastEnrollmentSyncAt    DateTime?
+  lastEnrollmentSyncError String?
+
+  navigationStates CourseNavigationState[]
+  announcements    CourseAnnouncement[]
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
   @@index([termId])
+  @@index([subjectId])
+  @@index([classId])
   @@index([studentIds])
 }
 
@@ -200,7 +297,7 @@ model Material {
   // Optional link to Course (deprecated or for specific single-use)
   courseId String? @db.ObjectId
   course   Course? @relation(fields: [courseId], references: [id])
-  
+
   materialType String? @default("FILE") // Start optional, "FILE", "LINK", "HYBRID"
 
   assignments MaterialAssignment[]
@@ -242,6 +339,33 @@ model Enrollment {
   class   Class  @relation(fields: [classId], references: [id])
 
   deletedAt DateTime?
+
+  source      ClassEnrollmentSource? @default(MANUAL)
+  createdById String?                @db.ObjectId
+  createdAt   DateTime?              @default(now())
+  updatedAt   DateTime?              @updatedAt
+
+  @@unique([studentId, classId])
+  @@index([classId])
+}
+
+model CourseEnrollment {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  courseId  String @db.ObjectId
+  course    Course @relation(fields: [courseId], references: [id])
+  studentId String @db.ObjectId
+  student   User   @relation(fields: [studentId], references: [id])
+
+  source        CourseEnrollmentSource
+  sourceClassId String?                @db.ObjectId
+  createdById   String?                @db.ObjectId
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  deletedAt     DateTime?
+
+  @@unique([courseId, studentId])
+  @@index([studentId])
+  @@index([sourceClassId])
 }
 
 enum AssignmentType {
@@ -259,7 +383,7 @@ model Assignment {
   maxPoints     Int            @default(100)
   isExtraCredit Boolean        @default(false)
   latePenalty   Int            @default(0) // Percentage 0-100
-  
+
   academicDomains AcademicDomain[]
 
   courseId String @db.ObjectId
@@ -272,7 +396,107 @@ model Assignment {
 
   showGradeAfterSubmission Boolean @default(true)
 
+  status ContentStatus? @default(PUBLISHED)
+
   deletedAt DateTime?
+}
+
+model UserWorkspacePreference {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  density                 UiDensity       @default(COMPACT)
+  theme                   ThemePreference @default(SYSTEM)
+  channelSidebarCollapsed Boolean         @default(false)
+  teachingCourseOrder     String[]        @db.ObjectId
+  enrolledCourseOrder     String[]        @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CourseNavigationState {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String @db.ObjectId
+  user     User   @relation(fields: [userId], references: [id])
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
+
+  roleContext            CourseRoleContext
+  lastSectionKey         String            @default("overview")
+  lastSeenAnnouncementAt DateTime?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  @@unique([userId, courseId, roleContext])
+  @@index([courseId])
+}
+
+model CourseAnnouncement {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
+  authorId String @db.ObjectId
+  author   User   @relation("CourseAnnouncementAuthor", fields: [authorId], references: [id])
+
+  title       String
+  body        String
+  isPinned    Boolean       @default(false)
+  status      ContentStatus @default(PUBLISHED)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  @@index([courseId, publishedAt])
+  @@index([authorId])
+}
+
+model AcademicRollover {
+  id           String                 @id @default(auto()) @map("_id") @db.ObjectId
+  sourceTermId String                 @db.ObjectId
+  targetTermId String                 @db.ObjectId
+  actorId      String                 @db.ObjectId
+  status       RolloverStatus         @default(DRAFT)
+  options      Json
+  mappings     Json
+  summary      Json?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  items        AcademicRolloverItem[]
+
+  @@index([actorId, createdAt])
+}
+
+model AcademicRolloverItem {
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  rolloverId String           @db.ObjectId
+  rollover   AcademicRollover @relation(fields: [rolloverId], references: [id])
+  entityType String
+  sourceId   String?          @db.ObjectId
+  targetId   String?          @db.ObjectId
+  status     String
+  error      String?
+  result     Json?
+  updatedAt  DateTime         @updatedAt
+
+  @@index([rolloverId, status])
+}
+
+model ManagementAuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  actorId    String   @db.ObjectId
+  entityType String
+  entityId   String   @db.ObjectId
+  action     String
+  before     Json?
+  after      Json?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId, createdAt])
 }
 
 model Submission {
@@ -366,59 +590,59 @@ model Quiz {
 
   randomizeChoices Boolean @default(false)
 
-  deletedAt   DateTime?
+  deletedAt DateTime?
 }
 
 model QuizQuestion {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  
-  text      String
-  imageUrl  String?
-  audioUrl  String?
-  audioLimit Int      @default(0) // 0 = unlimited
-  order     Int      @default(0)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  text       String
+  imageUrl   String?
+  audioUrl   String?
+  audioLimit Int     @default(0) // 0 = unlimited
+  order      Int     @default(0)
 
   points      Int             @default(1)
   gradingType QuizGradingType @default(ALL_OR_NOTHING)
   explanation String?
 
-  quizId    String   @db.ObjectId
-  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId String @db.ObjectId
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
-  choices   QuizChoice[]
+  choices QuizChoice[]
 }
 
 model QuizChoice {
-  id         String       @id @default(auto()) @map("_id") @db.ObjectId
-  
-  text       String
-  imageUrl   String?
-  isCorrect  Boolean      @default(false)
-  order      Int          @default(0)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  text      String
+  imageUrl  String?
+  isCorrect Boolean @default(false)
+  order     Int     @default(0)
 
   questionId String       @db.ObjectId
   question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model ReportCard {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  
-  studentId String   @db.ObjectId
-  student   User     @relation(fields: [studentId], references: [id])
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  classId   String   @db.ObjectId
-  class     Class    @relation(fields: [classId], references: [id])
+  studentId String @db.ObjectId
+  student   User   @relation(fields: [studentId], references: [id])
 
-  termId    String   @db.ObjectId
-  term      Term     @relation(fields: [termId], references: [id])
+  classId String @db.ObjectId
+  class   Class  @relation(fields: [classId], references: [id])
+
+  termId String @db.ObjectId
+  term   Term   @relation(fields: [termId], references: [id])
 
   // Snapshots
-  courseGrades    Json[] // { subject: string, score: number, grade: string, competency: string }
+  courseGrades     Json[] // { subject: string, score: number, grade: string, competency: string }
   extracurriculars Json[] // { activity: string, predicate: string, note: string }
-  achievements    Json[] // { name: string, note: string }
-  development     Json[] // { activity: string, note: string }
-  attendance      Json   // { sick: number, excused: number, alpha: number }
-  
+  achievements     Json[] // { name: string, note: string }
+  development      Json[] // { activity: string, note: string }
+  attendance       Json // { sick: number, excused: number, alpha: number }
+
   homeroomTeacherNote String?
   principalName       String?
 

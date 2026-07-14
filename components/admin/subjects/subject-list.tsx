@@ -29,7 +29,7 @@ import { deleteSubject } from "@/lib/actions/subject.actions"
 import { SubjectForm } from "./subject-form"
 
 interface SubjectListProps {
-    subjects: Subject[]
+    subjects: (Subject & { _count: { courses: number } })[]
 }
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -111,9 +111,10 @@ export function SubjectList({ subjects }: SubjectListProps) {
                         ) : (
                             filteredSubjects.map((subject) => (
                                 <TableRow key={subject.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
-                                    <TableCell className="font-mono text-xs text-slate-700 dark:text-slate-200 font-medium">{subject.code}</TableCell>
+                                    <TableCell><span className="inline-flex size-9 items-center justify-center rounded-lg bg-indigo-600 font-mono text-[11px] font-bold text-white">{subject.code}</span></TableCell>
                                     <TableCell className="font-medium text-slate-700 dark:text-slate-200">
                                         <div>{subject.name}</div>
+                                        <div className="text-xs text-muted-foreground">{subject._count.courses} linked courses</div>
                                         <div className="text-xs text-slate-400 dark:text-slate-500 md:hidden mt-1">
                                             {subject.academicDomains.length} tags
                                         </div>

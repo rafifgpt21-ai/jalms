@@ -3,6 +3,7 @@ import { getDailySchedule } from "@/lib/actions/attendance.actions"
 import { DateNavigator } from "@/components/teacher/attendance/date-navigator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react"
@@ -57,9 +58,9 @@ export default async function AttendancePage({
                     {schedules.map((schedule) => (
                         <Card key={schedule.id} className={
                             schedule.isSkipped
-                                ? "border-gray-200 bg-gray-50 opacity-75"
+                                ? "border-gray-200 bg-gray-50 opacity-75 dark:border-slate-700 dark:bg-slate-900/60"
                                 : schedule.isAttendanceTaken
-                                    ? "border-green-200 bg-green-50/30"
+                                    ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/70 dark:bg-emerald-950/20"
                                     : ""
                         }>
                             <CardHeader className="pb-2">
@@ -69,20 +70,20 @@ export default async function AttendancePage({
                                     </Badge>
                                     <div className="flex items-center gap-1">
                                         {schedule.isSkipped ? (
-                                            <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                                            <StatusBadge status="SKIPPED" label="Skipped">
                                                 <XCircle className="w-3 h-3 mr-1" />
                                                 Skipped
-                                            </Badge>
+                                            </StatusBadge>
                                         ) : schedule.isAttendanceTaken ? (
-                                            <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
+                                            <StatusBadge status="TAKEN" label="Taken">
                                                 <CheckCircle className="w-3 h-3 mr-1" />
                                                 Taken
-                                            </Badge>
+                                            </StatusBadge>
                                         ) : (
-                                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                                            <StatusBadge status="PENDING" label="Pending">
                                                 <Clock className="w-3 h-3 mr-1" />
                                                 Pending
-                                            </Badge>
+                                            </StatusBadge>
                                         )}
                                         <SkipSessionButton
                                             courseId={schedule.course.id}

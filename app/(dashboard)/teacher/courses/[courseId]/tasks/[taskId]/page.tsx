@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getAssignmentDetails, updateSubmissionScore } from "@/lib/actions/teacher.actions"
 import { SubmissionGradeDialog } from "@/components/teacher/tasks/submission-grade-dialog"
@@ -256,24 +257,18 @@ export default function TaskWorkspacePage() {
                                                 {(assignment.type === "SUBMISSION" || assignment.type === "QUIZ") && (
                                                     <div className="flex items-center gap-2">
                                                         {scores[student.id] !== undefined ? (
-                                                            <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
-                                                                Graded
-                                                            </Badge>
+                                                            <StatusBadge status="GRADED" label="Graded" />
                                                         ) : (
-                                                            <Badge variant={submission ? "secondary" : "outline"} className={submission ? "bg-blue-100 text-blue-800 hover:bg-blue-100" : ""}>
-                                                                {submission ? "Submitted" : "Missing"}
-                                                            </Badge>
+                                                            <StatusBadge status={submission ? "SUBMITTED" : "MISSING"} label={submission ? "Submitted" : "Missing"} />
                                                         )}
                                                         {isLate && (
-                                                            <Badge variant="destructive">LATE</Badge>
+                                                            <StatusBadge status="LATE" label="Late" />
                                                         )}
                                                     </div>
                                                 )}
                                                 {assignment.type === "NON_SUBMISSION" && (
                                                     scores[student.id] !== undefined ? (
-                                                        <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
-                                                            Graded
-                                                        </Badge>
+                                                        <StatusBadge status="GRADED" label="Graded" />
                                                     ) : (
                                                         <Badge variant="outline">No Submission Required</Badge>
                                                     )
@@ -392,24 +387,18 @@ export default function TaskWorkspacePage() {
                                             {(assignment.type === "SUBMISSION" || assignment.type === "QUIZ") && (
                                                 <div className="flex items-center gap-2">
                                                     {scores[student.id] !== undefined ? (
-                                                        <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
-                                                            Graded
-                                                        </Badge>
+                                                        <StatusBadge status="GRADED" label="Graded" />
                                                     ) : (
-                                                        <Badge variant={submission ? "secondary" : "outline"} className={submission ? "bg-blue-100 text-blue-800 hover:bg-blue-100" : ""}>
-                                                            {submission ? "Submitted" : "Missing"}
-                                                        </Badge>
+                                                        <StatusBadge status={submission ? "SUBMITTED" : "MISSING"} label={submission ? "Submitted" : "Missing"} />
                                                     )}
                                                     {isLate && (
-                                                        <Badge variant="destructive">LATE</Badge>
+                                                        <StatusBadge status="LATE" label="Late" />
                                                     )}
                                                 </div>
                                             )}
                                             {assignment.type === "NON_SUBMISSION" && (
                                                 scores[student.id] !== undefined ? (
-                                                    <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
-                                                        Graded
-                                                    </Badge>
+                                                    <StatusBadge status="GRADED" label="Graded" />
                                                 ) : (
                                                     <Badge variant="outline">No Submission Required</Badge>
                                                 )

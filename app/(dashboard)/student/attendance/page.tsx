@@ -3,6 +3,7 @@ import { db as prisma } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function StudentAttendancePage() {
@@ -137,14 +138,12 @@ export default async function StudentAttendancePage() {
                                     return (
                                         <TableRow key={course.id}>
                                             <TableCell className="font-medium">{course.name}</TableCell>
-                                            <TableCell className="text-green-600 font-bold">{present}</TableCell>
-                                            <TableCell className="text-red-600 font-bold">{absent}</TableCell>
-                                            <TableCell className="text-yellow-600 font-bold">{excused}</TableCell>
+                                            <TableCell className="font-bold text-emerald-600 dark:text-emerald-400">{present}</TableCell>
+                                            <TableCell className="font-bold text-red-600 dark:text-red-400">{absent}</TableCell>
+                                            <TableCell className="font-bold text-amber-600 dark:text-amber-400">{excused}</TableCell>
                                             <TableCell>{total > 0 ? `${rate}%` : "-"}</TableCell>
                                             <TableCell>
-                                                <Badge variant={statusVariant}>
-                                                    {statusText}
-                                                </Badge>
+                                                <StatusBadge status={statusText} label={statusText} />
                                             </TableCell>
                                         </TableRow>
                                     )

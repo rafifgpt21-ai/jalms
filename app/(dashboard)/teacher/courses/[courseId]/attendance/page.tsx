@@ -14,7 +14,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 export default async function CourseAttendanceStatsPage({
     params,
@@ -109,19 +109,13 @@ export default async function CourseAttendanceStatsPage({
                                 <TableRow key={stat.student.id}>
                                     <TableCell className="font-medium">{stat.student.name}</TableCell>
                                     <TableCell className="text-center">
-                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                            {stat.presentCount}
-                                        </Badge>
+                                        <StatusBadge status="PRESENT" label={String(stat.presentCount)} />
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                                            {stat.absentCount}
-                                        </Badge>
+                                        <StatusBadge status="ABSENT" label={String(stat.absentCount)} />
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                            {stat.excusedCount}
-                                        </Badge>
+                                        <StatusBadge status="EXCUSED" label={String(stat.excusedCount)} />
                                     </TableCell>
                                     <TableCell className="text-center text-muted-foreground">
                                         {stat.skippedCount}

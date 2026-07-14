@@ -1,30 +1,16 @@
+import { notFound } from "next/navigation"
 import { CourseCompetencySettings } from "@/components/teacher/course-competency-settings"
-import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { CourseIdentitySettings } from "@/components/teacher/course-identity-settings"
+import { WorkspaceHeader, WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
+import { getCourseWorkspace } from "@/lib/actions/course-workspace.actions"
 
-interface PageProps {
-    params: Promise<{
-        courseId: string
-    }>
-}
-
-export default async function CourseSettingsPage(props: PageProps) {
-    const params = await props.params;
-    const { courseId } = params
-
-    return (
-        <div className="space-y-6 container mx-auto p-6 pb-20">
-            <MobileHeaderSetter title="Course Settings" />
-
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight">Course Settings</h1>
-                <p className="text-muted-foreground">
-                    Manage grading criteria and competency descriptions.
-                </p>
-            </div>
-
-            <div className="max-w-4xl">
-                <CourseCompetencySettings courseId={courseId} />
-            </div>
-        </div>
-    )
+export default async function CourseSettingsPage({ params }: { params: Promise<{ courseId: string }> }) {
+  const { courseId } = await params
+  const result = await getCourseWorkspace(courseId, "teacher")
+  if (!result.course) notFound()
+  return <WorkspacePage>
+    <WorkspaceHeader><h1 className="text-xl font-semibold">Course settings</h1><p className="text-sm text-muted-foreground">Identity, relationships, enrollment, and grading behavior.</p></WorkspaceHeader>
+    <WorkspacePanel className="p-4"><CourseIdentitySettings course={result.course} /></WorkspacePanel>
+    <div className="max-w-4xl"><CourseCompetencySettings courseId={courseId} /></div>
+  </WorkspacePage>
 }

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { updateSubmissionScore } from "@/lib/actions/teacher.actions"
 import { cn } from "@/lib/utils"
@@ -80,7 +81,7 @@ export function SubmissionGradeDialog({
                 <DialogHeader>
                     <div className="flex items-center justify-between mr-8">
                         <DialogTitle className="text-xl">{student.name}'s Submission</DialogTitle>
-                        {isLate && <Badge variant="destructive">LATE</Badge>}
+                        {isLate && <StatusBadge status="LATE" label="Late" />}
                     </div>
                     <DialogDescription>
                         Submitted on {submittedAt ? format(submittedAt, "PPP p") : "Unknown date"}

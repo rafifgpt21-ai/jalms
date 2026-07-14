@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Role } from "@prisma/client"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -78,9 +79,7 @@ export const columns: ColumnDef<UserColumn>[] = [
         cell: ({ row }) => {
             const isActive = row.getValue("isActive") as boolean
             return (
-                <Badge variant={isActive ? "default" : "destructive"}>
-                    {isActive ? "Active" : "Archived"}
-                </Badge>
+                <StatusBadge status={isActive ? "ACTIVE" : "ARCHIVED"} label={isActive ? "Active" : "Archived"} />
             )
         },
     },

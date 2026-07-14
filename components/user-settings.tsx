@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { LogOut, Settings, User, KeyRound, Pencil, Mail } from "lucide-react"
+import { LogOut, Settings, User, KeyRound, Pencil, Mail, Palette } from "lucide-react"
 import { signOut } from "next-auth/react"
 
 import {
@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { NicknameDialog } from "@/components/user/nickname-dialog"
 import { ChangeEmailDialog } from "@/components/user/change-email-dialog"
+import { AppearanceDialog } from "@/components/user/appearance-dialog"
 
 interface UserSettingsProps {
     email?: string | null
@@ -44,6 +45,7 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
     const [showAvatarDialog, setShowAvatarDialog] = useState(false)
     const [showNicknameDialog, setShowNicknameDialog] = useState(false)
     const [showEmailDialog, setShowEmailDialog] = useState(false)
+    const [showAppearanceDialog, setShowAppearanceDialog] = useState(false)
 
     return (
         <>
@@ -96,6 +98,10 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
                     <DropdownMenuItem onClick={() => setShowAvatarDialog(true)}>
                         <User className="mr-2 h-4 w-4" />
                         <span>Customize Avatar</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowAppearanceDialog(true)}>
+                        <Palette className="mr-2 h-4 w-4" />
+                        <span>Appearance</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowNicknameDialog(true)}>
                         <Pencil className="mr-2 h-4 w-4" />
@@ -159,6 +165,8 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
                 onOpenChange={setShowEmailDialog}
                 currentEmail={email}
             />
+
+            <AppearanceDialog open={showAppearanceDialog} onOpenChange={setShowAppearanceDialog} />
 
             <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
                 <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">

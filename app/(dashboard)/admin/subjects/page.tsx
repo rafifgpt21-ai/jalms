@@ -1,6 +1,6 @@
 import { getSubjects } from "@/lib/actions/subject.actions"
 import { SubjectList } from "@/components/admin/subjects/subject-list"
-import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspaceHeader, WorkspacePage } from "@/components/workspace/workspace-page"
 
 export const dynamic = "force-dynamic"
 
@@ -8,10 +8,9 @@ export default async function SubjectsPage() {
     const { subjects } = await getSubjects()
 
     return (
-        <div className="space-y-6">
-            <MobileHeaderSetter title="Subject Manager" />
-
+        <WorkspacePage>
+            <WorkspaceHeader><h1 className="text-xl font-semibold">Subjects</h1><p className="text-sm text-muted-foreground">Three-letter subject identities shared across courses.</p></WorkspaceHeader>
             <SubjectList subjects={subjects} />
-        </div>
+        </WorkspacePage>
     )
 }

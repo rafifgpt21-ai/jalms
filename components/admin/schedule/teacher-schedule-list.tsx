@@ -10,6 +10,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format } from "date-fns"
 import Link from "next/link"
@@ -73,7 +74,7 @@ export function TeacherScheduleList({ teachers }: TeacherScheduleListProps) {
                                         <TableCell className="font-medium">{course.name}</TableCell>
                                         <TableCell>
                                             {course.term.academicYear.name} - {course.term.type}
-                                            {course.term.isActive && <Badge className="ml-2 text-xs" variant="secondary">Active</Badge>}
+                                            {course.term.isActive && <StatusBadge status="ACTIVE" label="Active" className="ml-2 text-xs" />}
                                         </TableCell>
                                         <TableCell>{course._count.students}</TableCell>
                                     </TableRow>

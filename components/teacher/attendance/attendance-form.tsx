@@ -111,9 +111,9 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
     const getStatusColor = (status: AttendanceStatus | null, current: AttendanceStatus) => {
         if (status === current) {
             switch (current) {
-                case "PRESENT": return "bg-green-100/80 text-green-700 border-green-200 hover:bg-green-200/80"
-                case "ABSENT": return "bg-red-100/80 text-red-700 border-red-200 hover:bg-red-200/80"
-                case "EXCUSED": return "bg-blue-100/80 text-blue-700 border-blue-200 hover:bg-blue-200/80"
+                case "PRESENT": return "bg-emerald-100/80 text-emerald-700 border-emerald-200 hover:bg-emerald-200/80 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 dark:hover:bg-emerald-900/60"
+                case "ABSENT": return "bg-red-100/80 text-red-700 border-red-200 hover:bg-red-200/80 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/60"
+                case "EXCUSED": return "bg-amber-100/80 text-amber-800 border-amber-200 hover:bg-amber-200/80 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 dark:hover:bg-amber-900/60"
             }
         }
         return "bg-white/40 hover:bg-white/60 text-slate-600 dark:text-slate-400 border-white/20 hover:border-white/40"

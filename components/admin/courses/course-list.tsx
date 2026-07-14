@@ -2,7 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 
-import { Course, User, Term, AcademicYear, Subject } from "@prisma/client"
+import { Course, User, Term, AcademicYear, Subject, Class } from "@prisma/client"
+import { CourseIdentityBadge } from "@/components/course/course-identity-badge"
 import {
     Table,
     TableBody,
@@ -26,6 +27,7 @@ import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -44,6 +46,7 @@ interface CourseListProps {
         teacher: User;
         term: Term & { academicYear: AcademicYear };
         subject: Subject | null;
+        class: Class | null;
         _count: { students: number };
     })[]
     teachers: { id: string; name: string }[]
@@ -57,6 +60,9 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [filterValue, setFilterValue] = useState("")
+    const [subjectFilter, setSubjectFilter] = useState("all")
+    const [classFilter, setClassFilter] = useState("all")
+    const [teacherFilter, setTeacherFilter] = useState("all")
 
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -72,9 +78,15 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
         router.push(`?${params.toString()}`)
     }
 
-    const filteredCourses = courses.filter(course =>
-        course.name.toLowerCase().includes(filterValue.toLowerCase())
-    )
+    const filteredCourses = courses.filter(course => {
+        const query = filterValue.toLowerCase()
+        const matchesSearch = !query || [course.name, course.subject?.name, course.subject?.code, course.class?.name, course.teacher.name].some(value => value?.toLowerCase().includes(query))
+        return matchesSearch &&
+            (subjectFilter === "all" || (subjectFilter === "unlinked" ? !course.subjectId : course.subjectId === subjectFilter)) &&
+            (classFilter === "all" || (classFilter === "unlinked" ? !course.classId : course.classId === classFilter)) &&
+            (teacherFilter === "all" || course.teacherId === teacherFilter)
+    })
+    const classes = Array.from(new Map(courses.flatMap(course => course.class ? [[course.class.id, course.class] as const] : [])).values())
 
     const handleSearch = () => {
         setFilterValue(searchQuery)
@@ -104,12 +116,12 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+            <div className="flex flex-wrap items-center justify-between gap-3 w-full">
                 <div className="shrink-0">
                     <CourseModal teachers={teachers} terms={terms} subjects={subjects} />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center space-x-2 whitespace-nowrap">
                         <Switch
                             id="show-all"
@@ -124,14 +136,20 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
                             <Input
                                 placeholder="Search courses..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => { setSearchQuery(e.target.value); setFilterValue(e.target.value) }}
                                 onKeyDown={handleKeyDown}
                                 className="pl-9 w-full sm:w-[300px] bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-white/10 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-slate-900/80 transition-all rounded-xl"
                             />
                         </div>
-                        <Button onClick={handleSearch} variant="secondary" className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 hover:bg-white/80 dark:hover:bg-slate-800/80 rounded-xl">Search</Button>
                     </div>
                 </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background/70 p-2">
+                <Select value={subjectFilter} onValueChange={setSubjectFilter}><SelectTrigger className="h-8 w-[170px]"><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent><SelectItem value="all">All subjects</SelectItem><SelectItem value="unlinked">No subject</SelectItem>{subjects.map(subject => <SelectItem key={subject.id} value={subject.id}>{subject.code} · {subject.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={classFilter} onValueChange={setClassFilter}><SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Class" /></SelectTrigger><SelectContent><SelectItem value="all">All classes</SelectItem><SelectItem value="unlinked">No linked class</SelectItem>{classes.map(cls => <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={teacherFilter} onValueChange={setTeacherFilter}><SelectTrigger className="h-8 w-[170px]"><SelectValue placeholder="Teacher" /></SelectTrigger><SelectContent><SelectItem value="all">All teachers</SelectItem>{teachers.map(teacher => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select>
+                <span className="ml-auto px-2 text-xs text-muted-foreground">{filteredCourses.length} of {courses.length} courses</span>
             </div>
 
             <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
@@ -139,7 +157,7 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
                     <TableHeader className="bg-white/20 dark:bg-white/5 border-b border-white/10">
                         <TableRow className="hover:bg-transparent border-white/10">
                             <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Course Name</TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Subject</TableHead>
+                            <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Subject / Class</TableHead>
                             <TableHead className="max-md:hidden text-slate-700 dark:text-slate-200 font-medium">Teacher</TableHead>
                             <TableHead className="max-lg:hidden text-slate-700 dark:text-slate-200 font-medium">Semester</TableHead>
                             <TableHead className="max-sm:hidden text-slate-700 dark:text-slate-200 font-medium">Students</TableHead>
@@ -157,10 +175,14 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
                             filteredCourses.map((course) => (
                                 <TableRow key={course.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
                                     <TableCell className="font-medium text-slate-700 dark:text-slate-200">
-                                        {course.name}
+                                        <div className="flex items-center gap-3">
+                                            <CourseIdentityBadge course={{ ...course, roleContext: "teacher" }} className="size-9 rounded-lg" />
+                                            <div><div>{course.name}</div><div className="text-xs font-normal text-muted-foreground">{course.enrollmentMode?.replace("_", " ").toLowerCase() || "manual"}</div></div>
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-slate-500 dark:text-slate-400 text-sm">
-                                        {course.subject?.name || "-"}
+                                        <div>{course.subject ? `${course.subject.code} · ${course.subject.name}` : "No subject"}</div>
+                                        <div className="text-xs text-muted-foreground">{course.class?.name || "No linked class"}</div>
                                     </TableCell>
                                     <TableCell className="max-md:hidden text-slate-600 dark:text-slate-300">{course.teacher.name}</TableCell>
                                     <TableCell className="max-lg:hidden text-slate-600 dark:text-slate-300">

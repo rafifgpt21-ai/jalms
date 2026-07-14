@@ -26,6 +26,8 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { CLASS_COLOR_STYLES } from "@/lib/course-identity"
+import { cn } from "@/lib/utils"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -41,7 +43,7 @@ interface ClassListProps {
     classes: (Class & {
         term: Term & { academicYear: AcademicYear };
         homeroomTeacher: User | null;
-        _count: { students: number };
+        _count: { students: number; courses: number };
     })[]
     teachers: { id: string; name: string }[]
     terms: (Term & { academicYear: AcademicYear })[]
@@ -130,7 +132,10 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                         ) : (
                             filteredClasses.map((cls) => (
                                 <TableRow key={cls.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
-                                    <TableCell className="font-medium text-slate-700 dark:text-slate-200">{cls.name}</TableCell>
+                                    <TableCell className="font-medium text-slate-700 dark:text-slate-200">
+                                        <div className="flex items-center gap-2"><span className={cn("size-3 rounded-full", cls.color ? CLASS_COLOR_STYLES[cls.color].swatch : "bg-slate-400")} />{cls.name}</div>
+                                        <div className="mt-1 text-xs text-muted-foreground">{cls._count.courses} linked courses</div>
+                                    </TableCell>
                                     <TableCell className="max-lg:hidden text-slate-600 dark:text-slate-300">
                                         {cls.term.academicYear.name} - {cls.term.type === "ODD" ? "Odd" : "Even"}
                                     </TableCell>

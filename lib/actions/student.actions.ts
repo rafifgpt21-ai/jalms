@@ -17,14 +17,18 @@ export async function getStudentCourses() {
 
         const courses = await prisma.course.findMany({
             where: {
-                studentIds: { has: user.id },
+                OR: [
+                    { studentIds: { has: user.id } },
+                    { courseEnrollments: { some: { studentId: user.id, OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }] } } }
+                ],
                 deletedAt: { isSet: false },
                 term: { isActive: true }
             },
             include: {
                 teacher: true,
                 term: true,
-                subject: true,
+                    subject: true,
+                    class: true,
                 _count: {
                     select: { assignments: true }
                 }

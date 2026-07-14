@@ -3,6 +3,7 @@
 import { AcademicYear, Term } from "@prisma/client"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
 import {
     Table,
@@ -115,9 +116,9 @@ export function SemesterList({ terms }: SemesterListProps) {
                                 <TableCell className="max-lg:hidden">{format(new Date((term as any).endDate), "PPP")}</TableCell>
                                 <TableCell>
                                     {(term as any).isActive ? (
-                                        <Badge className="bg-green-600 hover:bg-green-700">Active</Badge>
+                                        <StatusBadge status="ACTIVE" label="Active" />
                                     ) : (
-                                        <Badge variant="secondary">Inactive</Badge>
+                                        <StatusBadge status="INACTIVE" label="Inactive" />
                                     )}
                                 </TableCell>
                                 <TableCell className="text-right">

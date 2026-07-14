@@ -3,6 +3,7 @@
 import { AcademicYear } from "@prisma/client"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -95,7 +96,7 @@ export function AcademicYearList({ years }: AcademicYearListProps) {
                             </CardDescription>
                         </div>
                         {year.isActive ? (
-                            <Badge className="bg-blue-600 hover:bg-blue-700">Active</Badge>
+                            <StatusBadge status="ACTIVE" label="Active" />
                         ) : (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
