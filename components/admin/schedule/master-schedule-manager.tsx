@@ -397,8 +397,8 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
 
             {/* Header Controls */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
-                <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto">
-                    <div className="flex items-center border rounded-lg p-1 bg-muted whitespace-nowrap">
+                <div className="flex w-full items-center gap-3 overflow-x-auto md:w-auto">
+                    <div className="hidden items-center whitespace-nowrap rounded-lg border bg-muted p-1 md:flex">
                         <Button
                             variant={viewMode === "day" ? "secondary" : "ghost"}
                             size="sm"
@@ -417,17 +417,15 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                         </Button>
                     </div>
 
-                    {viewMode === "day" && (
-                        <Tabs value={selectedDay} onValueChange={setSelectedDay} className="w-full md:w-auto">
-                            <TabsList className="grid grid-cols-4 md:grid-cols-7 h-auto p-1">
+                    <Tabs value={selectedDay} onValueChange={setSelectedDay} className={cn("w-full md:w-auto", viewMode !== "day" && "md:hidden")}>
+                            <TabsList className="grid h-auto grid-cols-4 p-1 sm:grid-cols-7">
                                 {UI_DAYS.map(day => (
-                                    <TabsTrigger key={day} value={day} className="text-xs md:text-sm px-2 py-1.5">
+                                    <TabsTrigger key={day} value={day} className="px-2 py-1.5 text-xs md:text-sm">
                                         {day.slice(0, 3)}
                                     </TabsTrigger>
                                 ))}
                             </TabsList>
-                        </Tabs>
-                    )}
+                    </Tabs>
                 </div>
 
                 <div className="relative w-full md:w-64 min-w-[200px]">
@@ -441,8 +439,52 @@ export function MasterScheduleManager({ teachers }: MasterScheduleManagerProps) 
                 </div>
             </div>
 
-            {/* Main Grid */}
-            <div className="bg-background border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+            {/* Mobile schedule cards */}
+            <div className="grid gap-3 md:hidden">
+                {filteredTeachers.length === 0 ? (
+                    <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">No teachers found.</div>
+                ) : filteredTeachers.map((teacher) => (
+                    <section key={teacher.id} className="admin-mobile-schedule-card overflow-hidden">
+                        <div className="flex items-center gap-3 border-b p-3">
+                            <Avatar className="size-9">
+                                <AvatarImage src={teacher.image || ""} />
+                                <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                                <h3 className="truncate text-sm font-semibold">{teacher.name}</h3>
+                                <p className="truncate text-xs text-muted-foreground">{teacher.nickname || teacher.email}</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 p-2">
+                            {PERIODS.map((period) => {
+                                const assignedCourse = assignmentMap[teacher.id]?.[DB_DAY_MAPPING[selectedDay]]?.[period] || null
+                                return (
+                                    <button
+                                        key={period}
+                                        type="button"
+                                        disabled={isUpdating}
+                                        onClick={() => handleCellClick(teacher, period, selectedDay, assignedCourse)}
+                                        className={cn(
+                                            "flex min-h-14 min-w-0 flex-col justify-center rounded-lg border px-3 py-2 text-left transition-colors disabled:opacity-50",
+                                            assignedCourse
+                                                ? "border-indigo-200 bg-indigo-50 text-indigo-950 dark:border-indigo-800 dark:bg-indigo-950/35 dark:text-indigo-100"
+                                                : "border-dashed bg-muted/25 hover:bg-muted/60"
+                                        )}
+                                    >
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{getPeriodLabel(period)}</span>
+                                        <span className={cn("mt-0.5 truncate text-xs", assignedCourse ? "font-semibold" : "text-muted-foreground")}>
+                                            {assignedCourse?.name || "Free slot"}
+                                        </span>
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </section>
+                ))}
+            </div>
+
+            {/* Tablet and desktop grid */}
+            <div className="hidden min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm md:flex">
                 <div className="overflow-auto w-full max-w-[100vw] h-full">
                     <table className="relative min-w-full w-auto caption-bottom text-sm">
                         <TableHeader className="sticky top-0 bg-background z-20 shadow-sm border-b border-border">

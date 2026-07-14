@@ -10,7 +10,7 @@ export function CourseOverview({ course, roleContext }: { course: any; roleConte
   const upcoming = course.assignments.filter((assignment: any) => new Date(assignment.dueDate) >= new Date()).slice(0, 4)
   return (
     <WorkspacePage>
-      <WorkspaceHeader className="flex flex-wrap items-center justify-between gap-3">
+      <WorkspaceHeader className="workspace-context-header flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <CourseIdentityBadge course={{ ...course, roleContext }} className="size-14" />
           <div className="min-w-0">

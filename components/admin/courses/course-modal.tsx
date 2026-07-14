@@ -613,7 +613,7 @@ export function CourseModal({
                     classes.map((cls) => (
                       <div
                         key={cls.id}
-                        className="flex items-center space-x-2 p-2 hover:bg-slate-50 rounded"
+                        className="flex items-center space-x-2 rounded p-2 hover:bg-muted"
                       >
                         <Checkbox
                           id={`class-${cls.id}`}

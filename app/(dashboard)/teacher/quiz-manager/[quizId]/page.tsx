@@ -25,12 +25,7 @@ export default async function QuizEditorPage(props: QuizEditorPageProps) {
 
     return (
         <div className="md:p-8 max-w-3xl md:mx-auto pb-20">
-            <MobileHeaderSetter title={`Edit: ${quiz.title}`} backLink="/teacher/quiz-manager" />
-
-            <div className="mb-8 space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">{quiz.title}</h1>
-                <p className="text-muted-foreground">{quiz.description || "Add questions to your quiz."}</p>
-            </div>
+            <MobileHeaderSetter title={`Edit: ${quiz.title}`} subtitle={quiz.description || "Add questions to your quiz."} backLink="/teacher/quiz-manager" />
 
             <QuizEditorClient quiz={quiz} />
         </div>

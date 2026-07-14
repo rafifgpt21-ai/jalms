@@ -131,7 +131,7 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
 
             {/* Mobile View */}
             <div className="md:hidden space-y-4">
-                <div className="flex items-center justify-between bg-white p-2 rounded-lg border shadow-sm">
+                <div className="flex items-center justify-between rounded-lg border bg-card p-2 shadow-sm">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -155,7 +155,7 @@ export function ScheduleGrid({ teacherId, initialCourses }: ScheduleGridProps) {
                         const assignedCourse = courseId ? getCourseDetails(courseId) : null
 
                         return (
-                            <div key={period} className="bg-white p-3 rounded-lg border shadow-sm flex items-center gap-4">
+                            <div key={period} className="flex items-center gap-4 rounded-lg border bg-card p-3 shadow-sm">
                                 <div className="font-bold text-sm text-gray-500 w-16 text-center">{getPeriodLabel(period)}</div>
                                 <div className="flex-1">
                                     <ScheduleSlot

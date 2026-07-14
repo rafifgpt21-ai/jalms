@@ -4,6 +4,7 @@ import { getMessages } from "@/app/actions/chat";
 import { db } from "@/lib/db";
 import { AdminChatView } from "@/components/admin/socials/admin-chat-view";
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
 
 interface AdminChatPageProps {
     params: {
@@ -40,13 +41,13 @@ export default async function AdminChatPage({ params }: AdminChatPageProps) {
     const messages = await getMessages(conversationId);
 
     return (
-        <div className="h-full">
+        <WorkspacePage className="h-full">
             <MobileHeaderSetter title="Conversation Details" backLink="/admin/socials" />
             <AdminChatView
                 conversationId={conversationId}
                 initialMessages={messages}
                 participants={conversation.participants}
             />
-        </div>
+        </WorkspacePage>
     );
 }

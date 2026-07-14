@@ -15,7 +15,7 @@ export async function AttendancePulseCard() {
     const stats = attendance || { percentage: 0, totalRecords: 0, presentCount: 0, absentCount: 0 }
 
     return (
-        <div className="md:col-span-8 group relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-xl transition-all hover:shadow-2xl">
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-card shadow-sm transition-all hover:shadow-md dark:border-slate-800 xl:col-span-8">
             <div className="absolute inset-0 bg-linear-to-br from-indigo-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             <div className="p-8 h-full flex flex-col justify-between relative z-10">
@@ -76,7 +76,7 @@ export async function TotalUsersCard() {
     const { totalUsers } = await getTotalUsersCount()
 
     return (
-        <div className="md:col-span-4 flex flex-col gap-6">
+        <div className="flex flex-col gap-3 xl:col-span-4">
             <div className="flex-1 rounded-3xl border border-slate-200 dark:border-slate-800 bg-linear-to-br from-indigo-600 to-violet-700 p-8 text-white shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-white/20 transition-all duration-500" />
                 <div className="relative z-10 flex flex-col justify-between h-full">
@@ -105,7 +105,7 @@ export async function RecentLoginList() {
     const { lastLoggedInUsers } = await getLastLoggedInUsers()
 
     return (
-        <div className="md:col-span-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-card shadow-sm dark:border-slate-800 xl:col-span-12">
             <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-slate-400" />
@@ -117,19 +117,19 @@ export async function RecentLoginList() {
             </div>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {lastLoggedInUsers?.map((user) => (
-                    <div key={user.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                        <div className="flex items-center gap-4">
+                    <div key={user.id} className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                             <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-slate-900">
                                 <AvatarImage src={user.image || undefined} alt={user.name} />
                                 <AvatarFallback className="bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold">{user.name[0]}</AvatarFallback>
                             </Avatar>
-                            <div>
-                                <p className="font-medium text-slate-900 dark:text-slate-100">{user.name}</p>
-                                <p className="text-xs text-slate-500">{user.email}</p>
+                            <div className="min-w-0">
+                                <p className="truncate font-medium text-slate-900 dark:text-slate-100">{user.name}</p>
+                                <p className="truncate text-xs text-slate-500">{user.email}</p>
                             </div>
                         </div>
                         <div className="flex flex-col md:flex-row items-end md:items-center gap-3 md:gap-6">
-                            <div className="text-xs font-medium text-slate-400 tabular-nums">
+                            <div className="shrink-0 text-right text-[11px] font-medium text-slate-400 tabular-nums sm:text-xs">
                                 {user.lastLoginAt ? format(new Date(user.lastLoginAt), "MMM d, h:mm a") : "Never"}
                             </div>
                         </div>

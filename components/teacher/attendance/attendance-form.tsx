@@ -177,7 +177,7 @@ export function AttendanceForm({ courseId, date, period, initialStudents, initia
             </div>
 
             {students.length === 0 ? (
-                <div className="text-center py-12 border rounded-lg bg-gray-50">
+                <div className="rounded-lg border bg-muted/40 py-12 text-center">
                     <p className="text-muted-foreground">No students found for this class.</p>
                 </div>
             ) : null}

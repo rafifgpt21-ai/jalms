@@ -54,7 +54,7 @@ export function AttendanceScoreDialog({ courseId, currentScore }: AttendanceScor
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="h-11 w-full gap-2 sm:h-7 sm:w-auto">
                     <Settings className="h-4 w-4" />
                     Edit Attendance Score
                 </Button>

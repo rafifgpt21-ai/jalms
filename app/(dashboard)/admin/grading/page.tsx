@@ -1,21 +1,15 @@
 import { GradingScaleForm } from "@/components/admin/grading/grading-scale-form"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
 
 export default function GradingPage() {
     return (
-        <div className="space-y-6">
-            <MobileHeaderSetter title="Grading Settings" />
-
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight">Grading Settings</h1>
-                <p className="text-muted-foreground">
-                    Configure global grading standards and defaults.
-                </p>
-            </div>
+        <WorkspacePage>
+            <MobileHeaderSetter title="Grading Settings" subtitle="Configure global grading standards and defaults." />
 
             <div className="max-w-3xl">
                 <GradingScaleForm />
             </div>
-        </div>
+        </WorkspacePage>
     )
 }

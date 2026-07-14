@@ -13,6 +13,10 @@ export function WorkspaceToolbar({ className, ...props }: React.ComponentProps<"
   return <div className={cn("workspace-toolbar", className)} {...props} />
 }
 
+export function WorkspaceActions({ className, ...props }: React.ComponentProps<"div">) {
+  return <div className={cn("workspace-actions", className)} {...props} />
+}
+
 export function WorkspacePanel({ className, ...props }: React.ComponentProps<"section">) {
   return <section className={cn("workspace-panel", className)} {...props} />
 }

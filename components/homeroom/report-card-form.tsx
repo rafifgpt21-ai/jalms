@@ -176,7 +176,7 @@ export function ReportCardForm({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                    <Button variant="outline" size="lg" asChild className="flex-1 md:flex-initial rounded-xl hover:bg-slate-50 active:scale-95 transition-all">
+                    <Button variant="outline" size="lg" asChild className="flex-1 rounded-xl md:flex-initial">
                         <Link href={`/homeroom/${classId}/students/${studentId}/report/preview`}>
                             <Eye className="w-4 h-4 mr-2" />
                             Preview & Print
@@ -252,7 +252,7 @@ export function ReportCardForm({
                 <div className="grid grid-cols-1 gap-6">
                     {/* Extracurriculars */}
                     <motion.div variants={itemVariants}>
-                        <Card className="rounded-2xl shadow-sm border-slate-200/60 transition-shadow hover:shadow-md">
+                        <Card className="rounded-2xl border-border shadow-sm transition-shadow hover:shadow-md">
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div>
                                     <CardTitle className="text-base font-semibold">Ekstrakurikuler</CardTitle>
@@ -276,16 +276,16 @@ export function ReportCardForm({
                                                 <div className="flex flex-col sm:flex-row gap-3">
                                                     <div className="flex-1">
                                                         <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Kegiatan</label>
-                                                        <Input placeholder="e.g. Pramuka" value={ex.activity} onChange={(e) => updateExtra(i, "activity", e.target.value)} className="bg-white border-none shadow-sm focus-visible:ring-primary/20" />
+                                                        <Input placeholder="e.g. Pramuka" value={ex.activity} onChange={(e) => updateExtra(i, "activity", e.target.value)} className="border-none bg-background shadow-sm focus-visible:ring-primary/20" />
                                                     </div>
                                                     <div className="w-full sm:w-32">
                                                         <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Predikat</label>
-                                                        <Input placeholder="A / B / C" value={ex.predicate} onChange={(e) => updateExtra(i, "predicate", e.target.value)} className="bg-white border-none shadow-sm focus-visible:ring-primary/20 text-center font-bold" />
+                                                        <Input placeholder="A / B / C" value={ex.predicate} onChange={(e) => updateExtra(i, "predicate", e.target.value)} className="border-none bg-background text-center font-bold shadow-sm focus-visible:ring-primary/20" />
                                                     </div>
                                                 </div>
                                                 <div>
                                                     <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Keterangan Capaian</label>
-                                                    <Input placeholder="Tulis catatan perkembangan siswa..." value={ex.note} onChange={(e) => updateExtra(i, "note", e.target.value)} className="bg-white border-none shadow-sm focus-visible:ring-primary/20" />
+                                                    <Input placeholder="Tulis catatan perkembangan siswa..." value={ex.note} onChange={(e) => updateExtra(i, "note", e.target.value)} className="border-none bg-background shadow-sm focus-visible:ring-primary/20" />
                                                 </div>
                                             </div>
                                             <Button size="icon" variant="ghost" className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg shrink-0 mt-6" onClick={() => removeExtra(i)}>
@@ -307,7 +307,7 @@ export function ReportCardForm({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                          {/* Achievements */}
                         <motion.div variants={itemVariants}>
-                            <Card className="rounded-2xl shadow-sm h-full flex flex-col border-slate-200/60">
+                            <Card className="flex h-full flex-col rounded-2xl border-border shadow-sm">
                                 <CardHeader className="flex flex-row items-center justify-between shrink-0">
                                     <div>
                                         <CardTitle className="text-base">Prestasi</CardTitle>
@@ -331,7 +331,7 @@ export function ReportCardForm({
 
                         {/* Development */}
                         <motion.div variants={itemVariants}>
-                            <Card className="rounded-2xl shadow-sm h-full flex flex-col border-slate-200/60">
+                            <Card className="flex h-full flex-col rounded-2xl border-border shadow-sm">
                                 <CardHeader className="flex flex-row items-center justify-between shrink-0">
                                     <div>
                                         <CardTitle className="text-base">Pengembangan Diri</CardTitle>
@@ -356,7 +356,7 @@ export function ReportCardForm({
 
                     {/* Teacher Note */}
                     <motion.div variants={itemVariants}>
-                        <Card className="rounded-2xl shadow-sm border-slate-200/60 overflow-hidden group">
+                        <Card className="group overflow-hidden rounded-2xl border-border shadow-sm">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-base font-semibold">Catatan Wali Kelas</CardTitle>
                                 <CardDescription>Catatan khusus untuk perkembangan siswa keseluruhan</CardDescription>
@@ -374,7 +374,7 @@ export function ReportCardForm({
 
                     {/* Administration / Signature */}
                     <motion.div variants={itemVariants}>
-                        <Card className="rounded-2xl shadow-sm border-slate-200/60">
+                        <Card className="rounded-2xl border-border shadow-sm">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-base font-semibold">Lain-lain</CardTitle>
                                 <CardDescription>Data administratif penunjang rapor</CardDescription>
@@ -387,7 +387,7 @@ export function ReportCardForm({
                                             placeholder="Masukkan nama kepala sekolah..."
                                             value={principalNameInput}
                                             onChange={(e) => setPrincipalNameInput(e.target.value)}
-                                            className="bg-white border-none shadow-sm rounded-xl focus-visible:ring-primary/20 h-11"
+                                            className="h-11 rounded-xl border-none bg-background shadow-sm focus-visible:ring-primary/20"
                                         />
                                         <Button
                                             variant="secondary"

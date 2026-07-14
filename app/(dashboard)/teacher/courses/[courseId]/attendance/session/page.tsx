@@ -1,13 +1,10 @@
 import { auth } from "@/auth"
 import { getCourseAttendance } from "@/lib/actions/attendance.actions"
 import { AttendanceForm } from "@/components/teacher/attendance/attendance-form"
-import { Badge } from "@/components/ui/badge"
 import { getPeriodLabel } from "@/lib/helpers/period-label"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
 import { format } from "date-fns"
 import { notFound } from "next/navigation"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function CourseAttendanceSessionPage({
     params,
@@ -35,25 +32,10 @@ export default async function CourseAttendanceSessionPage({
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-bold tracking-tight">Attendance Session</h1>
-                    <Badge variant="outline">{getPeriodLabel(period)}</Badge>
-                </div>
-                <div className="flex items-center gap-4">
-                    <Link href={`/teacher/attendance?date=${format(date, "yyyy-MM-dd")}`}>
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">{course.name}</h1>
-                        <p className="text-muted-foreground">
-                            {course.class?.name} • {format(date, "EEEE, MMMM d, yyyy")}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <MobileHeaderSetter
+                title={`${course.name} attendance`}
+                subtitle={`${getPeriodLabel(period)} · ${course.class?.name || "Course"} · ${format(date, "MMM d, yyyy")}`}
+            />
 
             <AttendanceForm
                 courseId={courseId}

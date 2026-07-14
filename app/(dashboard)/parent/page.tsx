@@ -1,7 +1,9 @@
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+
 export default function ParentDashboard() {
     return (
-        <div>
-            <h1 className="text-2xl font-bold mb-4">Parent Dashboard</h1>
+        <div className="space-y-4">
+            <MobileHeaderSetter title="Parent Dashboard" subtitle="View your child's progress." />
             <p>View your Child's Progress.</p>
         </div>
     )

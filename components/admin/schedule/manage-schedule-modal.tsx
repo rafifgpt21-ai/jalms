@@ -171,7 +171,7 @@ export function ManageScheduleModal({ teacherId, teacherName }: ManageScheduleMo
                         {/* Header Row */}
                         <div className="font-bold text-center p-2">Period</div>
                         {DAYS.map(day => (
-                            <div key={day} className="font-bold text-center p-2 bg-gray-100 rounded">
+                            <div key={day} className="rounded bg-muted p-2 text-center font-bold">
                                 {day}
                             </div>
                         ))}
@@ -179,7 +179,7 @@ export function ManageScheduleModal({ teacherId, teacherName }: ManageScheduleMo
                         {/* Grid */}
                         {PERIODS.map(period => (
                             <Fragment key={period}>
-                                <div className="font-bold flex items-center justify-center bg-gray-50 rounded">
+                                <div className="flex items-center justify-center rounded bg-muted/50 font-bold">
                                     {getPeriodLabel(period)} {/* Using getPeriodLabel for display */}
                                 </div>
                                 {DAYS.map((day, dayIndex) => {
@@ -189,8 +189,8 @@ export function ManageScheduleModal({ teacherId, teacherName }: ManageScheduleMo
                                             <PopoverTrigger asChild>
                                                 <div
                                                     className={cn(
-                                                        "h-24 p-2 border rounded cursor-pointer hover:bg-gray-50 transition-colors flex flex-col justify-center items-center text-center text-xs relative group",
-                                                        assignedCourse ? "bg-blue-50 border-blue-200" : "border-dashed"
+                                                        "group relative flex h-24 cursor-pointer flex-col items-center justify-center rounded border p-2 text-center text-xs transition-colors hover:bg-muted/60",
+                                                        assignedCourse ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40" : "border-dashed"
                                                     )}
                                                     onClick={() => setSelectedSlot({ day: dayIndex, period })}
                                                 >

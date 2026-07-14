@@ -1,11 +1,13 @@
 import { Pin } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { AnnouncementComposer } from "@/components/course/announcement-composer"
-import { WorkspaceHeader, WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspaceActions, WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
 
 export function AnnouncementsView({ courseId, announcements, canPost }: { courseId: string; announcements: any[]; canPost: boolean }) {
   return <WorkspacePage>
-    <WorkspaceHeader className="flex items-center justify-between gap-3"><div><h1 className="text-xl font-semibold">Announcements</h1><p className="text-sm text-muted-foreground">Course-wide updates in one focused feed.</p></div>{canPost && <AnnouncementComposer courseId={courseId} />}</WorkspaceHeader>
+    <MobileHeaderSetter title="Announcements" subtitle="Course-wide updates in one focused feed." />
+    {canPost && <WorkspaceActions><AnnouncementComposer courseId={courseId} /></WorkspaceActions>}
     <div className="mx-auto w-full max-w-4xl space-y-2">
       {announcements.map(item => <WorkspacePanel key={item.id} className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2"><div className="flex items-center gap-2"><h2 className="font-semibold">{item.title}</h2>{item.isPinned && <Pin className="size-3.5 text-indigo-500" />}</div><StatusBadge status={item.status} /></div>

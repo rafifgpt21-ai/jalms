@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { SocialsTable } from "@/components/admin/socials/socials-table";
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
 
 export default async function AdminSocialsPage() {
     const session = await auth();
@@ -13,14 +14,10 @@ export default async function AdminSocialsPage() {
     const conversations = await getAllConversations();
 
     return (
-        <div className="space-y-6">
-            <MobileHeaderSetter title="Socials Monitoring" />
-            <h1 className="text-2xl font-bold">Socials Monitoring</h1>
-            <p className="text-muted-foreground">
-                Monitor all conversations within the platform.
-            </p>
+        <WorkspacePage>
+            <MobileHeaderSetter title="Socials Monitoring" subtitle="Monitor all conversations within the platform." />
 
             <SocialsTable conversations={conversations} />
-        </div>
+        </WorkspacePage>
     );
 }

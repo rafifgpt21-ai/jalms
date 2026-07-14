@@ -75,30 +75,30 @@ export function SubjectList({ subjects }: SubjectListProps) {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-                <Button onClick={handleCreate}>
+            <div className="admin-toolbar">
+                <Button onClick={handleCreate} className="max-sm:w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Subject
                 </Button>
-                <div className="relative flex-1 max-w-sm">
+                <div className="relative w-full flex-1 sm:max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
                     <Input
                         placeholder="Search subjects..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-white/10 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-slate-900/80 transition-all rounded-xl"
+                        className="pl-9"
                     />
                 </div>
             </div>
 
-            <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+            <div className="overflow-hidden">
                 <Table>
-                    <TableHeader className="bg-white/20 dark:bg-white/5 border-b border-white/10">
-                        <TableRow className="hover:bg-transparent border-white/10">
-                            <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Code</TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Name</TableHead>
-                            <TableHead className="hidden md:table-cell text-slate-700 dark:text-slate-200 font-medium">Domains</TableHead>
-                            <TableHead className="text-right text-slate-700 dark:text-slate-200 font-medium">Actions</TableHead>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead>Code</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead className="hidden md:table-cell">Domains</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -110,7 +110,7 @@ export function SubjectList({ subjects }: SubjectListProps) {
                             </TableRow>
                         ) : (
                             filteredSubjects.map((subject) => (
-                                <TableRow key={subject.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
+                                <TableRow key={subject.id}>
                                     <TableCell><span className="inline-flex size-9 items-center justify-center rounded-lg bg-indigo-600 font-mono text-[11px] font-bold text-white">{subject.code}</span></TableCell>
                                     <TableCell className="font-medium text-slate-700 dark:text-slate-200">
                                         <div>{subject.name}</div>

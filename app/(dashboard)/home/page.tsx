@@ -34,7 +34,7 @@ export default async function HomePage() {
 
   return (
     <WorkspacePage className="p-0">
-      <WorkspaceHeader>
+      <WorkspaceHeader className="workspace-context-header">
         <div>
           <h1 className="text-xl font-semibold">Welcome back, {session.user.nickname || session.user.name?.split(" ")[0]}</h1>
           <p className="text-sm text-muted-foreground">Continue with the work that needs your attention.</p>

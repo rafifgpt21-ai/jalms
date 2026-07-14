@@ -13,12 +13,7 @@ export default async function HomeroomDashboard() {
 
     return (
         <div className="space-y-6">
-            <MobileHeaderSetter title="Homeroom Dashboard" />
-
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold font-heading text-slate-900 dark:text-slate-100">Homeroom Dashboard</h1>
-                <p className="text-slate-500 dark:text-slate-400">Manage your class, monitor student performance, and generate reports.</p>
-            </div>
+            <MobileHeaderSetter title="Homeroom Dashboard" subtitle="Manage your class, monitor performance, and generate reports." />
 
             <HomeroomDashboardView classes={classes!} />
         </div>

@@ -16,6 +16,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { cn } from "@/lib/utils"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export function StudentWelcome({ user }: { user: any }) {
     const [currentTime, setCurrentTime] = useState(new Date())
@@ -32,18 +33,10 @@ export function StudentWelcome({ user }: { user: any }) {
         return "Good Evening"
     }
 
-    return (
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 p-1 sm:p-2">
-            <div>
-                <h1 className="font-heading text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
-                    {getGreeting()}, <span className="text-indigo-600 dark:text-indigo-400">{user.name.split(' ')[0]}</span>
-                </h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                    {format(currentTime, "EEEE, MMMM do, yyyy")}
-                </p>
-            </div>
-        </div>
-    )
+    return <MobileHeaderSetter
+        title={`${getGreeting()}, ${user.name.split(' ')[0]}`}
+        subtitle={format(currentTime, "EEEE, MMMM do, yyyy")}
+    />
 }
 
 export function StudentUpNextCard({ schedule }: { schedule: any[] }) {

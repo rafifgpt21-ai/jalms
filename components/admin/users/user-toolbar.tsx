@@ -100,9 +100,9 @@ export function UserToolbar() {
     }
 
     return (
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="admin-toolbar border-0 bg-transparent p-0 shadow-none">
             {/* Search Bar */}
-            <div className="flex flex-1 max-w-md items-center space-x-2 min-w-[200px]">
+            <div className="flex w-full min-w-0 flex-1 items-center gap-2 sm:max-w-md">
                 <div className="relative flex-1">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -110,13 +110,13 @@ export function UserToolbar() {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="pl-9 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                        className="border-input bg-background pl-9 focus:bg-background"
                     />
                 </div>
                 <Button onClick={handleSearch} size="sm">Search</Button>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                 {/* Show All Toggle */}
                 {showAll ? (
                     <Button variant="outline" size="sm" onClick={handleShowAll} className="h-9">

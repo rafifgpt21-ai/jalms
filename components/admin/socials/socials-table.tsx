@@ -20,13 +20,13 @@ interface SocialsTableProps {
 
 export function SocialsTable({ conversations }: SocialsTableProps) {
     return (
-        <div className="border rounded-lg">
+        <div className="overflow-hidden rounded-lg">
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Participants</TableHead>
-                        <TableHead>Last Message</TableHead>
-                        <TableHead>Last Active</TableHead>
+                        <TableHead className="max-md:hidden">Last Message</TableHead>
+                        <TableHead className="max-sm:hidden">Last Active</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -54,13 +54,16 @@ export function SocialsTable({ conversations }: SocialsTableProps) {
                                             {conv.participants.map((p: any) => p.name).join(", ")}
                                         </span>
                                     </div>
+                                    <p className="mt-1 max-w-[220px] truncate text-xs text-muted-foreground md:hidden">
+                                        {conv.messages[0]?.content || "No messages"}
+                                    </p>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="max-md:hidden">
                                     <p className="text-sm text-muted-foreground truncate max-w-[300px]">
                                         {conv.messages[0]?.content || "No messages"}
                                     </p>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="max-sm:hidden">
                                     <span className="text-sm text-muted-foreground">
                                         {formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true })}
                                     </span>
@@ -68,8 +71,8 @@ export function SocialsTable({ conversations }: SocialsTableProps) {
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="sm" asChild>
                                         <Link href={`/admin/socials/${conv.id}`}>
-                                            <Eye className="w-4 h-4 mr-2" />
-                                            View History
+                                            <Eye className="size-4" />
+                                            <span className="max-sm:sr-only">View history</span>
                                         </Link>
                                     </Button>
                                 </TableCell>

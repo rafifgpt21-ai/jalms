@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
+import { AdminShell } from "@/components/admin/admin-shell"
 
 export default async function AdminLayout({
     children,
@@ -26,5 +27,5 @@ export default async function AdminLayout({
         return redirect("/")
     }
 
-    return <>{children}</>
+    return <AdminShell>{children}</AdminShell>
 }

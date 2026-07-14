@@ -116,12 +116,12 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 w-full">
-                <div className="shrink-0">
+            <div className="admin-toolbar">
+                <div className="w-full shrink-0 sm:w-auto [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">
                     <CourseModal teachers={teachers} terms={terms} subjects={subjects} />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                     <div className="flex items-center space-x-2 whitespace-nowrap">
                         <Switch
                             id="show-all"
@@ -138,30 +138,30 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
                                 value={searchQuery}
                                 onChange={(e) => { setSearchQuery(e.target.value); setFilterValue(e.target.value) }}
                                 onKeyDown={handleKeyDown}
-                                className="pl-9 w-full sm:w-[300px] bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-white/10 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-slate-900/80 transition-all rounded-xl"
+                                className="w-full pl-9 sm:w-[300px]"
                             />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-background/70 p-2">
+            <div className="admin-filter-grid">
                 <Select value={subjectFilter} onValueChange={setSubjectFilter}><SelectTrigger className="h-8 w-[170px]"><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent><SelectItem value="all">All subjects</SelectItem><SelectItem value="unlinked">No subject</SelectItem>{subjects.map(subject => <SelectItem key={subject.id} value={subject.id}>{subject.code} · {subject.name}</SelectItem>)}</SelectContent></Select>
                 <Select value={classFilter} onValueChange={setClassFilter}><SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Class" /></SelectTrigger><SelectContent><SelectItem value="all">All classes</SelectItem><SelectItem value="unlinked">No linked class</SelectItem>{classes.map(cls => <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>)}</SelectContent></Select>
                 <Select value={teacherFilter} onValueChange={setTeacherFilter}><SelectTrigger className="h-8 w-[170px]"><SelectValue placeholder="Teacher" /></SelectTrigger><SelectContent><SelectItem value="all">All teachers</SelectItem>{teachers.map(teacher => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select>
-                <span className="ml-auto px-2 text-xs text-muted-foreground">{filteredCourses.length} of {courses.length} courses</span>
+                <span className="admin-filter-summary">Showing {filteredCourses.length} of {courses.length} courses</span>
             </div>
 
-            <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+            <div className="overflow-hidden">
                 <Table>
-                    <TableHeader className="bg-white/20 dark:bg-white/5 border-b border-white/10">
-                        <TableRow className="hover:bg-transparent border-white/10">
-                            <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Course Name</TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-200 font-medium">Subject / Class</TableHead>
-                            <TableHead className="max-md:hidden text-slate-700 dark:text-slate-200 font-medium">Teacher</TableHead>
-                            <TableHead className="max-lg:hidden text-slate-700 dark:text-slate-200 font-medium">Semester</TableHead>
-                            <TableHead className="max-sm:hidden text-slate-700 dark:text-slate-200 font-medium">Students</TableHead>
-                            <TableHead className="text-right text-slate-700 dark:text-slate-200 font-medium">Actions</TableHead>
+                    <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead>Course Name</TableHead>
+                            <TableHead className="max-md:hidden">Subject / Class</TableHead>
+                            <TableHead className="max-md:hidden">Teacher</TableHead>
+                            <TableHead className="max-lg:hidden">Semester</TableHead>
+                            <TableHead className="max-sm:hidden">Students</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -173,14 +173,20 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
                             </TableRow>
                         ) : (
                             filteredCourses.map((course) => (
-                                <TableRow key={course.id} className="hover:bg-white/30 dark:hover:bg-white/5 border-b border-white/10 dark:border-white/5 transition-colors">
+                                <TableRow key={course.id}>
                                     <TableCell className="font-medium text-slate-700 dark:text-slate-200">
                                         <div className="flex items-center gap-3">
                                             <CourseIdentityBadge course={{ ...course, roleContext: "teacher" }} className="size-9 rounded-lg" />
-                                            <div><div>{course.name}</div><div className="text-xs font-normal text-muted-foreground">{course.enrollmentMode?.replace("_", " ").toLowerCase() || "manual"}</div></div>
+                                            <div className="min-w-0">
+                                                <div className="truncate">{course.name}</div>
+                                                <div className="text-xs font-normal text-muted-foreground">{course.enrollmentMode?.replace("_", " ").toLowerCase() || "manual"}</div>
+                                                <div className="mt-0.5 truncate text-xs font-normal text-muted-foreground md:hidden">
+                                                    {course.subject?.code || "No subject"} · {course.class?.name || "No linked class"}
+                                                </div>
+                                            </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-slate-500 dark:text-slate-400 text-sm">
+                                    <TableCell className="max-md:hidden text-slate-500 dark:text-slate-400 text-sm">
                                         <div>{course.subject ? `${course.subject.code} · ${course.subject.name}` : "No subject"}</div>
                                         <div className="text-xs text-muted-foreground">{course.class?.name || "No linked class"}</div>
                                     </TableCell>
@@ -193,17 +199,17 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" asChild className="bg-white/50 dark:bg-slate-800/50 border-white/20 dark:border-white/10 hover:bg-white/80 dark:hover:bg-slate-800/80 rounded-lg h-8">
+                                            <Button variant="outline" size="sm" asChild className="max-sm:px-2.5">
                                                 <a href={`/admin/courses/${course.id}`}>Manage</a>
                                             </Button>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-white/40 dark:hover:bg-white/10 rounded-lg">
+                                                    <Button variant="ghost" size="icon">
                                                         <span className="sr-only">Open menu</span>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 dark:border-white/10">
+                                                <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuItem onClick={() => {
                                                         setEditingCourse(course)

@@ -5,6 +5,8 @@ import { Plus, Calendar, FileText, CheckCircle } from "lucide-react"
 import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspaceActions } from "@/components/workspace/workspace-page"
 
 export default async function CourseTasksPage({ params }: { params: { courseId: string } }) {
     // Await params before using (Next.js 15 requirement, good practice generally if generic)
@@ -21,17 +23,15 @@ export default async function CourseTasksPage({ params }: { params: { courseId: 
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight hidden sm:block text-slate-900 dark:text-slate-100">Tasks</h1>
-                </div>
-                <Link href={`/teacher/courses/${courseId}/tasks/new`}>
-                    <Button>
+            <MobileHeaderSetter title="Tasks" subtitle="Create and manage course assignments." />
+            <WorkspaceActions>
+                <Button asChild>
+                    <Link href={`/teacher/courses/${courseId}/tasks/new`}>
                         <Plus className="mr-2 h-4 w-4" />
                         Create Task
-                    </Button>
-                </Link>
-            </div>
+                    </Link>
+                </Button>
+            </WorkspaceActions>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {assignments.length === 0 ? (

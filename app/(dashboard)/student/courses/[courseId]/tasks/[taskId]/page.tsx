@@ -53,15 +53,13 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
             <MobileHeaderSetter
                 title={assignment.title}
                 subtitle={assignment.course.name}
-                backLink={`/student/courses/${assignment.courseId}/tasks`}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                 {/* Main Content: Instructions & Work (Span 8) */}
                 <div className="lg:col-span-8 space-y-8">
-                    {/* Header Section */}
-                    <div className="space-y-4">
+                    <div>
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                             <Badge variant="outline" className="bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800">
                                 {assignment.course.subject?.reportName || assignment.course.reportName || assignment.course.name}
@@ -70,9 +68,6 @@ export default async function StudentTaskDetailPage({ params }: { params: Promis
                             {/* @ts-ignore */}
                             <span>{assignment.course.teacher?.name}</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-heading font-bold text-slate-900 dark:text-white leading-tight tracking-tight">
-                            {assignment.title}
-                        </h1>
                     </div>
 
                     {/* Left Col Stack */}

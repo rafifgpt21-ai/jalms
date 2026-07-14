@@ -74,9 +74,9 @@ export function AcademicYearList({ years }: AcademicYearListProps) {
 
     if (years.length === 0) {
         return (
-            <div className="text-center py-12 bg-white rounded-lg border border-dashed">
+            <div className="rounded-lg border border-dashed bg-card py-12 text-center">
                 <Calendar className="mx-auto h-12 w-12 text-gray-300" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">No academic years</h3>
+                <h3 className="mt-2 text-sm font-semibold text-foreground">No academic years</h3>
                 <p className="mt-1 text-sm text-gray-500">Get started by creating a new academic year.</p>
             </div>
         )
@@ -123,11 +123,11 @@ export function AcademicYearList({ years }: AcademicYearListProps) {
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground mt-2">
                             <div className="flex flex-col">
-                                <span className="font-semibold text-gray-900">{year._count.terms}</span>
+                                <span className="font-semibold text-foreground">{year._count.terms}</span>
                                 <span>Terms</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-semibold text-gray-900">{year._count.classes}</span>
+                                <span className="font-semibold text-foreground">{year._count.classes}</span>
                                 <span>Classes</span>
                             </div>
                         </div>

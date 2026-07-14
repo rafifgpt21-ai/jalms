@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function PulseSkeleton() {
     return (
-        <div className="md:col-span-8 group relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-xl">
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-card shadow-sm dark:border-slate-800 xl:col-span-8">
             <div className="p-8 h-full flex flex-col justify-between relative z-10">
                 <div className="flex items-start justify-between">
                     <div>
@@ -34,7 +34,7 @@ export function PulseSkeleton() {
 
 export function TotalUsersSkeleton() {
     return (
-        <div className="md:col-span-4 flex flex-col gap-6">
+        <div className="flex flex-col gap-3 xl:col-span-4">
             <div className="flex-1 rounded-3xl border border-slate-200 dark:border-slate-800 bg-linear-to-br from-indigo-600 to-violet-700 p-8 text-white shadow-xl relative overflow-hidden">
                 <div className="relative z-10 flex flex-col justify-between h-full">
                     <div className="flex items-center justify-between mb-4">
@@ -54,7 +54,7 @@ export function TotalUsersSkeleton() {
 
 export function RecentLoginSkeleton() {
     return (
-        <div className="md:col-span-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-card shadow-sm dark:border-slate-800 xl:col-span-12">
             <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Skeleton className="h-5 w-5 rounded-full" />

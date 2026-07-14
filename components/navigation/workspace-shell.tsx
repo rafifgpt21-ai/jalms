@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core"
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { ArrowLeft, ArrowUpDown, Home, MessageSquare, PanelLeftClose, PanelLeftOpen, RotateCcw, School, Settings2, Users } from "lucide-react"
+import { ArrowUpDown, Home, MessageSquare, PanelLeftClose, PanelLeftOpen, RotateCcw, School, Settings2, Users } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { resolveCourseIdentity } from "@/lib/course-identity"
@@ -26,7 +26,7 @@ function CourseMark({ course, className }: { course: NavigationCourse; className
   const [failed, setFailed] = React.useState(false)
   return (
     <span aria-hidden className={cn(
-      "course-code-mark relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] text-[15px] font-extrabold transition-[border-radius,transform] group-hover:rounded-[10px]",
+      "course-code-mark relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl text-sm font-extrabold transition-[border-radius,transform] group-hover:rounded-lg",
       identity.background, identity.foreground,
       identity.imageUrl && !failed && `ring-2 ${identity.ring}`,
       className,
@@ -47,8 +47,8 @@ function SortableCourse({ course, active, reorderEnabled, onSelect }: {
   const sortableId = `${course.roleContext}:${course.id}`
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId, disabled: !reorderEnabled })
   const content = (
-    <span className="group relative flex h-[52px] w-full items-center justify-center">
-      <CourseMark course={course} className={cn(active && "rounded-[10px] ring-2 ring-[var(--workspace-rail-active)]", isDragging && "opacity-60")} />
+    <span className="group relative flex h-12 w-full items-center justify-center">
+      <CourseMark course={course} className={cn(active && "rounded-lg ring-2 ring-[var(--workspace-rail-active)]", isDragging && "opacity-60")} />
     </span>
   )
 
@@ -76,15 +76,15 @@ function RailDestination({ label, href, active, icon: Icon, onSelect }: {
   onSelect?: () => void
 }) {
   const mark = <span className={cn(
-    "flex size-11 items-center justify-center rounded-[14px] transition-all group-hover:rounded-[10px]",
-    active ? "rounded-[10px] bg-indigo-500 text-white" : "bg-[var(--workspace-rail-icon)] text-[var(--workspace-rail-foreground)] group-hover:bg-indigo-500 group-hover:text-white",
-  )}><Icon className="size-5" /></span>
+    "flex size-10 items-center justify-center rounded-xl transition-all group-hover:rounded-lg",
+    active ? "rounded-lg bg-indigo-500 text-white" : "bg-[var(--workspace-rail-icon)] text-[var(--workspace-rail-foreground)] group-hover:bg-indigo-500 group-hover:text-white",
+  )}><Icon className="size-[18px]" /></span>
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         {onSelect
-          ? <button type="button" onClick={onSelect} aria-label={label} className="group flex h-12 w-full items-center justify-center">{mark}</button>
-          : <Link href={href} aria-label={label} className="group flex h-12 w-full items-center justify-center">{mark}</Link>}
+          ? <button type="button" onClick={onSelect} aria-label={label} className="group flex h-11 w-full items-center justify-center">{mark}</button>
+          : <Link href={href} aria-label={label} className="group flex h-11 w-full items-center justify-center">{mark}</Link>}
       </TooltipTrigger>
       <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
@@ -131,7 +131,7 @@ function CourseRail({ user, courses, activeContext, onSelect, reorderEnabled = t
   return (
     <TooltipProvider delayDuration={100}>
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <aside className="flex h-full w-16 shrink-0 flex-col border-r border-[var(--workspace-rail-divider)] bg-[var(--workspace-rail)] text-[var(--workspace-rail-foreground)] md:w-[72px]">
+        <aside className="flex h-full w-14 shrink-0 flex-col border-r border-[var(--workspace-rail-divider)] bg-[var(--workspace-rail)] text-[var(--workspace-rail-foreground)] md:w-16">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
             <RailDestination label="Home" href="/home" icon={Home} active={activeContext.kind === "home"} onSelect={onSelect ? () => select({ kind: "home" }) : undefined} />
             <RailDestination label="Messages" href="/socials" icon={MessageSquare} active={activeContext.kind === "messages"} onSelect={onSelect ? () => select({ kind: "messages" }) : undefined} />
@@ -173,14 +173,14 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
   const groups = groupsForContext(context, roles)
   return (
     <aside className="flex h-full w-full min-w-0 flex-col bg-[var(--workspace-sidebar)] text-foreground">
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
+      <div className="workspace-topbar flex h-14 min-h-14 shrink-0 items-center gap-2 border-b px-4 py-1.5">
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold">{contextLabel(context)}</div>
           {context.kind === "course" && context.course.class?.name && <div className="truncate text-[11px] text-muted-foreground">{context.course.class.name}</div>}
         </div>
         {onCollapse && <Button variant="ghost" size="icon" className="size-8" onClick={onCollapse} aria-label="Collapse sections"><PanelLeftClose className="size-4" /></Button>}
       </div>
-      <nav className="flex-1 space-y-4 overflow-y-auto p-2">
+      <nav className="flex-1 space-y-3 overflow-y-auto p-2">
         {groups.map((group) => (
           <div key={group.id}>
             {group.label && <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</div>}
@@ -192,7 +192,7 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
                   if (context.kind === "course") void rememberCourseSection(context.course.id, context.course.roleContext, section.id)
                   onNavigate?.()
                 }} className={cn(
-                  "flex min-h-9 items-center gap-2 rounded-md px-2.5 text-sm transition-colors",
+                  "flex min-h-8 items-center gap-2 rounded-md px-2.5 text-sm transition-colors",
                   active ? "bg-indigo-500/12 font-medium text-indigo-700 dark:text-indigo-300" : "text-muted-foreground hover:bg-[var(--workspace-row-hover)] hover:text-foreground",
                 )}>
                   <Icon className="size-4" />
@@ -262,18 +262,18 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
   const pageTitle = mobileHeader.title || activeSection?.label || contextLabel(routeContext)
 
   return (
-    <div className="flex h-dvh min-h-0 w-full overflow-hidden bg-[var(--workspace-canvas)]">
+    <div className="workspace-shell flex h-dvh min-h-0 w-full overflow-hidden bg-[var(--workspace-canvas)]">
       <div className="hidden md:flex"><CourseRail user={user} courses={courses} activeContext={routeContext} /></div>
 
-      {!collapsed && <div className="hidden w-72 shrink-0 border-r lg:flex"><SectionSidebar context={routeContext} roles={user.roles} pathname={pathname} onCollapse={toggleCollapsed} /></div>}
+      {!collapsed && <div className="hidden w-60 shrink-0 border-r lg:flex"><SectionSidebar context={routeContext} roles={user.roles} pathname={pathname} onCollapse={toggleCollapsed} /></div>}
 
       {tabletSectionsOpen && <div className="fixed inset-0 z-50 hidden md:flex lg:hidden">
         <button className="absolute inset-0 bg-black/40" onClick={() => setTabletSectionsOpen(false)} aria-label="Close sections" />
-        <div className="relative ml-16 w-72 border-r shadow-2xl"><SectionSidebar context={routeContext} roles={user.roles} pathname={pathname} onNavigate={() => setTabletSectionsOpen(false)} /></div>
+        <div className="relative ml-16 w-60 border-r shadow-xl"><SectionSidebar context={routeContext} roles={user.roles} pathname={pathname} onNavigate={() => setTabletSectionsOpen(false)} /></div>
       </div>}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-[var(--workspace-header)] px-3 md:px-4">
+        <header className="workspace-topbar flex h-14 min-h-14 shrink-0 items-center gap-2 border-b bg-[var(--workspace-header)] px-4 py-1.5">
           <Button variant="ghost" size="icon" className="hidden size-8 md:inline-flex lg:hidden" onClick={() => setTabletSectionsOpen(true)} aria-label="Open sections"><PanelLeftOpen className="size-4" /></Button>
           {collapsed && <Button variant="ghost" size="icon" className="hidden size-8 lg:inline-flex" onClick={toggleCollapsed} aria-label="Show sections"><PanelLeftOpen className="size-4" /></Button>}
           {mobileHeader.leftAction && <div className="md:hidden">{mobileHeader.leftAction}</div>}
@@ -281,13 +281,13 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
             <div className="truncate text-sm font-semibold">{pageTitle}</div>
             {mobileHeader.subtitle && <div className="truncate text-xs text-muted-foreground">{mobileHeader.subtitle}</div>}
           </div>
-          {mobileHeader.rightAction && <div className="flex items-center gap-1">{mobileHeader.rightAction}</div>}
-          <Button variant="outline" size="sm" className="md:hidden" onClick={openMobileNavigator} aria-label="Back to courses and sections">
-            <ArrowLeft className="size-4" /><span className="hidden min-[380px]:inline">Courses</span>
+          {mobileHeader.rightAction && <div className="flex items-center gap-2">{mobileHeader.rightAction}</div>}
+          <Button variant="outline" size="sm" className="md:hidden" onClick={openMobileNavigator} aria-label="Open workspace navigation">
+            <PanelLeftOpen className="size-4" /><span className="hidden min-[380px]:inline">Menu</span>
           </Button>
         </header>
 
-        <main className={cn("min-h-0 flex-1 overflow-y-auto", isSocials ? "p-0" : "p-3 md:p-4")}>
+        <main className={cn("workspace-content min-h-0 flex-1 overflow-y-auto", isSocials && "p-0")}>
           {children}
         </main>
       </div>
@@ -295,7 +295,7 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
       {mobileNavigatorOpen && <div className="fixed inset-0 z-[100] flex bg-background md:hidden">
         <CourseRail user={user} courses={courses} activeContext={browseContext} onSelect={setBrowseContext} reorderEnabled={mobileReorder} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-12 items-center justify-between border-b bg-[var(--workspace-header)] px-2">
+          <div className="workspace-topbar flex h-14 min-h-14 items-center justify-between gap-2 border-b bg-[var(--workspace-header)] px-4 py-1.5">
             <Button variant={mobileReorder ? "secondary" : "ghost"} size="sm" onClick={() => setMobileReorder((value) => !value)}>
               {mobileReorder ? <RotateCcw className="size-4" /> : <ArrowUpDown className="size-4" />}{mobileReorder ? "Done" : "Reorder"}
             </Button>

@@ -72,11 +72,11 @@ export function GradingScaleForm() {
             <CardContent className="space-y-6">
                 <div className="grid gap-4">
                     {scale.map((item, index) => (
-                        <div key={item.grade} className="grid grid-cols-12 gap-4 items-center">
-                            <div className="col-span-2 font-bold text-center text-lg bg-slate-100 dark:bg-slate-800 py-2 rounded-md">
+                        <div key={item.grade} className="grid grid-cols-1 items-center gap-2 rounded-lg border p-3 sm:grid-cols-12 sm:gap-4 sm:border-0 sm:p-0">
+                            <div className="rounded-md bg-slate-100 py-2 text-center text-lg font-bold dark:bg-slate-800 sm:col-span-2">
                                 {item.grade}
                             </div>
-                            <div className="col-span-10 grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2 sm:col-span-10 sm:gap-4">
                                 <div className="space-y-1">
                                     <Label className="text-xs text-muted-foreground">Minimum Score</Label>
                                     <Input
@@ -102,8 +102,8 @@ export function GradingScaleForm() {
                     ))}
                 </div>
 
-                <div className="flex justify-end pt-4 border-t">
-                    <Button onClick={onSave} disabled={saving}>
+                <div className="flex justify-end border-t pt-4">
+                    <Button onClick={onSave} disabled={saving} className="max-sm:w-full">
                         {saving && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
                         {!saving && <Save className="mr-2 h-4 w-4" />}
                         Save Changes

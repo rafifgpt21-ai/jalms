@@ -84,12 +84,12 @@ export function SemesterList({ terms }: SemesterListProps) {
     }
 
     return (
-        <div className="rounded-md border bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-white/20 dark:border-white/10 shadow-sm">
+        <div className="overflow-hidden rounded-lg">
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Academic Year</TableHead>
-                        <TableHead>Semester</TableHead>
+                        <TableHead className="max-sm:hidden">Semester</TableHead>
                         <TableHead className="max-md:hidden">Start Date</TableHead>
                         <TableHead className="max-lg:hidden">End Date</TableHead>
                         <TableHead>Status</TableHead>
@@ -106,8 +106,13 @@ export function SemesterList({ terms }: SemesterListProps) {
                     ) : (
                         terms.map((term) => (
                             <TableRow key={term.id}>
-                                <TableCell className="font-medium">{term.academicYear.name}</TableCell>
-                                <TableCell>
+                                <TableCell className="font-medium">
+                                    {term.academicYear.name}
+                                    <div className="mt-1 text-xs font-normal text-muted-foreground sm:hidden">
+                                        {(term as any).type === "ODD" ? "Odd semester" : "Even semester"}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="max-sm:hidden">
                                     <Badge variant="outline">
                                         {(term as any).type === "ODD" ? "Odd Semester" : "Even Semester"}
                                     </Badge>

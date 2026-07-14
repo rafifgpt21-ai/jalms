@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import dynamicLoader from "next/dynamic"
 import { Skeleton } from "@/components/ui/skeleton"
+import { WorkspaceActions } from "@/components/workspace/workspace-page"
 
 const GradeHistoryChart = dynamicLoader(
     () => import("@/components/student/grades/grade-history-chart")
@@ -60,20 +61,15 @@ export default async function TeacherStudentGradesPage(props: PageProps) {
 
     return (
         <div className="space-y-6">
-            <MobileHeaderSetter title={`${student.name}'s Grades`} />
-
-            <div className="flex items-center gap-4">
+            <MobileHeaderSetter title={`${student.name}'s Grades`} subtitle={student.email} />
+            <WorkspaceActions>
                 <Button variant="ghost" size="sm" asChild className="-ml-3">
                     <Link href={`/homeroom/${classId}`}>
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Class
                     </Link>
                 </Button>
-                <div>
-                    <h1 className="text-3xl font-bold">{student.name}&apos;s Grades</h1>
-                    <p className="text-muted-foreground">{student.email}</p>
-                </div>
-            </div>
+            </WorkspaceActions>
 
             <GradeHistoryChart history={history} />
 

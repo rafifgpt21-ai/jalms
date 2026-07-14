@@ -5,29 +5,29 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive backdrop-blur-md",
+  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20",
   {
     variants: {
       variant: {
         default:
-          "bg-primary/80 text-primary-foreground border border-white/10 shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 active:scale-[0.98]",
+          "border border-primary bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 dark:border-primary/70 dark:bg-primary/80 dark:hover:bg-primary/95 active:translate-y-px",
         destructive:
-          "bg-destructive/80 text-white border border-white/10 shadow-lg shadow-destructive/20 hover:bg-destructive/90 hover:shadow-destructive/30 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 active:scale-[0.98]",
+          "border border-destructive bg-destructive text-white shadow-xs hover:bg-destructive/90 dark:border-destructive/70 dark:bg-destructive/80 dark:hover:bg-destructive/95 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 active:translate-y-px",
         outline:
-          "border border-input/50 bg-background/20 shadow-sm hover:bg-accent/40 hover:text-accent-foreground dark:bg-white/5 active:scale-[0.98]",
+          "border border-input bg-background text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground active:translate-y-px",
         secondary:
-          "bg-secondary/50 text-secondary-foreground border border-white/5 hover:bg-secondary/70 active:scale-[0.98]",
+          "border border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 active:translate-y-px",
         ghost:
-          "hover:bg-accent/40 hover:text-accent-foreground active:scale-[0.98]",
+          "border border-transparent hover:bg-accent hover:text-accent-foreground active:translate-y-px",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "h-8 px-4 has-[>svg]:px-3.5",
+        sm: "h-7 px-3.5 text-xs has-[>svg]:px-3",
+        lg: "h-9 px-5 has-[>svg]:px-4",
+        icon: "size-8",
+        "icon-sm": "size-7",
+        "icon-lg": "size-9",
       },
     },
     defaultVariants: {
@@ -52,6 +52,8 @@ function Button({
   return (
     <Comp
       data-slot="button"
+      data-variant={variant ?? "default"}
+      data-size={size ?? "default"}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

@@ -51,8 +51,7 @@ export default async function StudentCourseTasksPage({ params }: { params: Promi
 
     return (
         <div className="space-y-6">
-            <MobileHeaderSetter title="Course Tasks" backLink="/student" />
-            <h1 className="text-2xl font-bold">Course Tasks</h1>
+            <MobileHeaderSetter title="Course Tasks" subtitle="Assignments, deadlines, and submission status." />
 
             <div className="grid gap-4">
                 {tasksWithStatus?.map((task) => (

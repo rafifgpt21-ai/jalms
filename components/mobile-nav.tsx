@@ -53,7 +53,7 @@ export function MobileNav({ userRoles }: MobileNavProps) {
             <div className="md:hidden px-4 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex items-center gap-3 sticky top-0 z-50 border-b border-gray-200 dark:border-slate-800 min-h-[56px] shadow-sm">
                 {leftAction}
                 {image && (
-                    <Avatar className="h-8 w-8 border border-gray-200">
+                    <Avatar className="h-8 w-8 border border-border">
                         <AvatarImage src={image} />
                         <AvatarFallback className="text-xs">{typeof title === 'string' ? title.slice(0, 2).toUpperCase() : '?'}</AvatarFallback>
                     </Avatar>

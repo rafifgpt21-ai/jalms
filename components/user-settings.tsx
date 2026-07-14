@@ -53,14 +53,14 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
                 <DropdownMenuTrigger asChild>
                     {triggerVariant === "card" ? (
                         <button className="flex items-center gap-3 w-full p-2 hover:bg-white/10 dark:hover:bg-white/5 border border-transparent hover:border-white/10 rounded-lg transition-all duration-200 text-left outline-none backdrop-blur-sm">
-                            <Avatar className="h-10 w-10 border border-gray-200">
+                            <Avatar className="h-10 w-10 border border-border">
                                 <AvatarImage src={image || undefined} alt={name || "User"} />
                                 <AvatarFallback className="bg-orange-100 text-orange-600 font-semibold">
                                     {name?.[0] || "U"}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col flex-1 min-w-0">
-                                <span className="text-sm font-semibold text-gray-900 truncate">
+                                <span className="truncate text-sm font-semibold text-foreground">
                                     {nickname || name || "User"}
                                 </span>
                                 <span className="text-xs text-gray-500 truncate">

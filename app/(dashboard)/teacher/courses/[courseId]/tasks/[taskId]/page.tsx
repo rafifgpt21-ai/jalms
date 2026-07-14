@@ -160,7 +160,6 @@ export default function TaskWorkspacePage() {
             <MobileHeaderSetter
                 title={`Grading: ${assignment.title}`}
                 subtitle={assignment.course.name}
-                backLink="/teacher"
             />
             {/* Header Card */}
             <Card>

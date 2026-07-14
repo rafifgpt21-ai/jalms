@@ -23,7 +23,7 @@ export default async function AddTaskPage(props: AddTaskPageProps) {
 
     return (
         <>
-            <MobileHeaderSetter title="Create New Task" backLink="/teacher" />
+            <MobileHeaderSetter title="Create New Task" />
             <TaskForm courseId={courseId} course={course as any} quizzes={quizzes || []} />
         </>
     )

@@ -2,9 +2,11 @@ import { db } from "@/lib/db"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Download, FileText, Calendar } from "lucide-react"
+import { Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspaceActions } from "@/components/workspace/workspace-page"
 
 interface MaterialPageProps {
     params: Promise<{
@@ -34,25 +36,8 @@ export default async function MaterialPage({ params }: MaterialPageProps) {
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/teacher/courses/${courseId}/materials`}>
-                            <ArrowLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    <div>
-                        <h1 className="text-xl font-bold flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-blue-600" />
-                            {material.title}
-                        </h1>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            <span>Uploaded {format(new Date(material.uploadedAt), "MMM d, yyyy")}</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
+            <MobileHeaderSetter title={material.title} subtitle={`Uploaded ${format(new Date(material.uploadedAt), "MMM d, yyyy")}`} />
+            <WorkspaceActions>
                     {material.fileUrl && (
                         <Button variant="outline" asChild>
                             <a href={material.fileUrl} target="_blank" rel="noopener noreferrer" download>
@@ -66,8 +51,7 @@ export default async function MaterialPage({ params }: MaterialPageProps) {
                             Edit
                         </Link>
                     </Button>
-                </div>
-            </div>
+            </WorkspaceActions>
 
             {material.description && (
                 <div className="bg-muted/50 p-4 rounded-lg text-sm">

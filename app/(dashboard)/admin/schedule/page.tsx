@@ -1,6 +1,7 @@
 import { getTeachersWithCourses } from "@/lib/actions/teacher.actions"
 import { MasterScheduleManager } from "@/components/admin/schedule/master-schedule-manager"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
 
 export const dynamic = "force-dynamic"
 
@@ -17,9 +18,9 @@ export default async function SchedulePage({
     }
 
     return (
-        <div className="space-y-6 h-full flex flex-col">
-            <MobileHeaderSetter title="Schedule Manager" />
+        <WorkspacePage className="h-full">
+            <MobileHeaderSetter title="Schedule Manager" subtitle="Build and review teaching schedules across the active semester." />
             <MasterScheduleManager teachers={(teachers as any) || []} />
-        </div>
+        </WorkspacePage>
     )
 }

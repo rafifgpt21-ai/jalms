@@ -46,8 +46,7 @@ export default async function StudentAttendancePage() {
 
     return (
         <div className="space-y-6">
-            <MobileHeaderSetter title="My Attendance" />
-            <h1 className="text-3xl font-bold">My Attendance</h1>
+            <MobileHeaderSetter title="My Attendance" subtitle="Attendance totals and course-level status." />
 
             {/* Summary Cards */}
             <div className="grid gap-4 md:grid-cols-4">

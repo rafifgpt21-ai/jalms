@@ -40,14 +40,19 @@ export const columns: ColumnDef<UserColumn>[] = [
         cell: ({ row }) => {
             const user = row.original
             return (
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                     <Avatar className="h-9 w-9">
                         <AvatarImage src={user.image || undefined} alt={user.name} />
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
-                        <span className="font-medium">{user.name}</span>
-                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                    <div className="min-w-0">
+                        <div className="max-w-[38vw] truncate font-medium sm:max-w-72">{user.name}</div>
+                        <div className="max-w-[38vw] truncate text-xs text-muted-foreground sm:max-w-72">{user.email}</div>
+                        <StatusBadge
+                            status={user.isActive ? "ACTIVE" : "ARCHIVED"}
+                            label={user.isActive ? "Active" : "Archived"}
+                            className="mt-1 sm:hidden"
+                        />
                     </div>
                 </div>
             )
@@ -76,6 +81,9 @@ export const columns: ColumnDef<UserColumn>[] = [
     {
         accessorKey: "isActive",
         header: "Status",
+        meta: {
+            className: "max-sm:hidden",
+        },
         cell: ({ row }) => {
             const isActive = row.getValue("isActive") as boolean
             return (

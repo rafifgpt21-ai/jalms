@@ -194,7 +194,7 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
                                         <h3 className="text-lg md:text-2xl font-heading font-medium text-slate-900 dark:text-white leading-relaxed">
                                             {question.text}
                                             {question.points && (
-                                                <span className="ml-3 inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                                                <span className="ml-3 inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
                                                     {question.points} pts
                                                 </span>
                                             )}

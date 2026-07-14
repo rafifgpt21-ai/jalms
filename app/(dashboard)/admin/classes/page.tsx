@@ -1,6 +1,7 @@
 import { getClasses, getHomeroomTeachers, getActiveTerms } from "@/lib/actions/class.actions"
 import { ClassList } from "@/components/admin/classes/class-list"
-import { WorkspaceHeader, WorkspacePage } from "@/components/workspace/workspace-page"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
 
 export const dynamic = "force-dynamic"
 
@@ -23,7 +24,7 @@ export default async function ClassesPage() {
 
     return (
         <WorkspacePage>
-            <WorkspaceHeader><h1 className="text-xl font-semibold">Classes</h1><p className="text-sm text-muted-foreground">Manage rosters, class colors, homeroom teachers, and linked courses.</p></WorkspaceHeader>
+            <MobileHeaderSetter title="Classes" subtitle="Manage rosters, class colors, homeroom teachers, and linked courses." />
             <ClassList classes={classes} teachers={teachers} terms={terms} />
         </WorkspacePage>
     )

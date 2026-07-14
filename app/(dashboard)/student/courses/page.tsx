@@ -44,19 +44,7 @@ export default async function StudentCoursesPage() {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <MobileHeaderSetter title="My Courses" />
-
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-heading font-bold text-slate-900 dark:text-white tracking-tight">
-                        My Learning
-                    </h1>
-                    <p className="text-lg text-slate-500 dark:text-slate-400 mt-2">
-                        Continue your journey across <span className="font-semibold text-indigo-600 dark:text-indigo-400">{courses.length}</span> active courses.
-                    </p>
-                </div>
-            </div>
+            <MobileHeaderSetter title="My Courses" subtitle={`${courses.length} active courses`} />
 
             {/* Course Grid - Poster Style */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

@@ -3,6 +3,8 @@ import Link from "next/link"
 import { School, BookOpen, Calendar, Users, Shield, Activity } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
 
 import {
     AttendancePulseCard,
@@ -29,25 +31,17 @@ export default function AdminDashboard() {
     ]
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Premium Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2">
-                <div>
-                    <h1 className="text-4xl font-heading font-bold text-slate-900 dark:text-slate-50 tracking-tight">
-                        Admin Overview
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">
-                        {format(new Date(), "EEEE, MMMM do yyyy")}
-                    </p>
-                </div>
-                <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-900/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm">
+        <WorkspacePage className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <MobileHeaderSetter title="Dashboard" subtitle={format(new Date(), "EEEE, MMMM do yyyy")} />
+            <div className="flex justify-end">
+                <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/50 px-4 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
                     <Shield className="h-4 w-4 text-indigo-500" />
                     <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Admin Access</span>
                 </div>
             </div>
 
             {/* Bento Grid Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
 
                 {/* 1. Today's Pulse - Large Card (Span 8) */}
                 <Suspense fallback={<PulseSkeleton />}>
@@ -60,13 +54,13 @@ export default function AdminDashboard() {
                 </Suspense>
 
                 {/* 3. Quick Actions - Horizontal Strip (Span 12) */}
-                <div className="md:col-span-12">
+                <div className="xl:col-span-12">
                     <h3 className="text-lg font-heading font-semibold text-slate-700 dark:text-slate-300 mb-4 px-1">Quick Actions</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
                         {quickActions.map((action) => (
                             <Link key={action.label} href={action.href}>
                                 <div
-                                    className="h-full flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-slate-900/40 transition-all hover:bg-white/60 dark:hover:bg-slate-900/60 hover:border-indigo-200/50 dark:hover:border-indigo-800/50 hover:shadow-lg hover:-translate-y-1 group text-center cursor-pointer shadow-sm"
+                                    className="group flex h-full min-h-28 flex-col items-center justify-center gap-2 rounded-xl border bg-card p-3 text-center shadow-xs transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md dark:hover:border-indigo-800 sm:gap-3 sm:p-4"
                                 >
                                     <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm", action.bg, action.color)}>
                                         <action.icon className="h-6 w-6" />
@@ -86,6 +80,6 @@ export default function AdminDashboard() {
                 </Suspense>
 
             </div>
-        </div >
+        </WorkspacePage>
     )
 }

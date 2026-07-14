@@ -1,11 +1,9 @@
 import { auth } from "@/auth"
 import { getCourseAttendance } from "@/lib/actions/attendance.actions"
 import { AttendanceForm } from "@/components/teacher/attendance/attendance-form"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
 import { format } from "date-fns"
 import { notFound } from "next/navigation"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function CourseAttendancePage({
     params,
@@ -33,19 +31,10 @@ export default async function CourseAttendancePage({
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href={`/teacher/attendance?date=${format(date, "yyyy-MM-dd")}`}>
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">{course.name}</h1>
-                    <p className="text-muted-foreground">
-                        {course.class?.name} • {format(date, "EEEE, MMMM d, yyyy")}
-                    </p>
-                </div>
-            </div>
+            <MobileHeaderSetter
+                title={`${course.name} attendance`}
+                subtitle={`${course.class?.name || "Course"} · ${format(date, "MMM d, yyyy")}`}
+            />
 
             <AttendanceForm
                 courseId={courseId}

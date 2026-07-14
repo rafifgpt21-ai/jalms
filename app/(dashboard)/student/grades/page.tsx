@@ -48,8 +48,7 @@ export default async function StudentGradesPage({
 
     return (
         <div className="space-y-6">
-            <MobileHeaderSetter title="My Grades" />
-            <h1 className="text-3xl font-bold">My Grades</h1>
+            <MobileHeaderSetter title="My Grades" subtitle="Progress, statistics, and grade history." />
 
             <GradeHistoryChart history={history} />
 

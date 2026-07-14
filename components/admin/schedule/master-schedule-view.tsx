@@ -84,7 +84,7 @@ export function MasterScheduleView({ schedules }: MasterScheduleViewProps) {
     return (
         <div className="space-y-6">
             {/* Day Selector */}
-            <div className="flex flex-wrap gap-2 justify-center md:justify-start bg-white p-2 rounded-lg border shadow-sm">
+            <div className="flex flex-wrap justify-center gap-2 rounded-lg border bg-card p-2 shadow-sm md:justify-start">
                 {DAYS.map((day, index) => (
                     <Button
                         key={day}

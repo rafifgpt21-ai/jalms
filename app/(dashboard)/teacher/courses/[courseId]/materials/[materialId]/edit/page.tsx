@@ -1,6 +1,7 @@
 import { db } from "@/lib/db"
 import { MaterialForm } from "@/components/teacher/materials/material-form"
 import { notFound } from "next/navigation"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function EditMaterialPage({
     params,
@@ -23,12 +24,7 @@ export default async function EditMaterialPage({
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold">Edit Study Material</h1>
-                <p className="text-sm text-muted-foreground">
-                    Update the details of the study material.
-                </p>
-            </div>
+            <MobileHeaderSetter title="Edit Study Material" subtitle={material.title} />
 
             <MaterialForm courseId={courseId} initialData={material ? {
                 id: material.id,

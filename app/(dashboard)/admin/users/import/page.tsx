@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspaceActions, WorkspacePage } from "@/components/workspace/workspace-page"
 
 export default function ImportUsersPage() {
     const [data, setData] = useState<any[]>([])
@@ -143,14 +145,14 @@ export default function ImportUsersPage() {
     }
 
     return (
-        <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Import Users</h1>
+        <WorkspacePage className="mx-auto max-w-4xl">
+            <MobileHeaderSetter title="Import Users" subtitle="Upload a spreadsheet to create accounts in bulk." />
+            <WorkspaceActions>
                 <Button variant="outline" onClick={generateTemplate}>
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Download Template
                 </Button>
-            </div>
+            </WorkspaceActions>
 
             <Card>
                 <CardHeader>
@@ -158,7 +160,7 @@ export default function ImportUsersPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center justify-center w-full">
-                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <label htmlFor="dropzone-file" className="flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed bg-muted/40 transition-colors hover:bg-muted/70">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <Upload className="w-10 h-10 mb-3 text-gray-400" />
                                 <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
@@ -232,6 +234,6 @@ export default function ImportUsersPage() {
                     </CardContent>
                 </Card>
             )}
-        </div>
+        </WorkspacePage>
     )
 }

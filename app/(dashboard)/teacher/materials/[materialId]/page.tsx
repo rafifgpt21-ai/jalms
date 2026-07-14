@@ -1,9 +1,10 @@
 import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Download } from "lucide-react"
-import Link from "next/link"
+import { Download } from "lucide-react"
 import { notFound } from "next/navigation"
 import { getUser } from "@/lib/actions/user.actions"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspaceActions } from "@/components/workspace/workspace-page"
 
 export default async function MaterialViewPage({ params }: { params: Promise<{ materialId: string }> }) {
     const { materialId } = await params
@@ -26,27 +27,15 @@ export default async function MaterialViewPage({ params }: { params: Promise<{ m
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href="/teacher/materials">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    <div>
-                        <h1 className="text-xl font-bold">{material.title}</h1>
-                        {material.description && (
-                            <p className="text-sm text-muted-foreground">{material.description}</p>
-                        )}
-                    </div>
-                </div>
+            <MobileHeaderSetter title={material.title} subtitle={material.description || "Study material"} backLink="/teacher/materials" />
+            <WorkspaceActions>
                 <Button asChild>
                     <a href={`${material.fileUrl}?download=true`} target="_blank" rel="noopener noreferrer">
                         <Download className="mr-2 h-4 w-4" />
                         Download
                     </a>
                 </Button>
-            </div>
+            </WorkspaceActions>
 
             <div className="flex-1 border rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900">
                 {material.fileUrl ? (

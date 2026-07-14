@@ -3,10 +3,8 @@ import { getCourse } from "@/lib/actions/course.actions"
 import { CourseStudentList } from "@/components/admin/courses/course-student-list"
 import { AddCourseStudentModal } from "@/components/admin/courses/add-course-student-modal"
 import { AddClassToCourseModal } from "@/components/admin/courses/add-class-to-course-modal"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspaceActions, WorkspaceHeader, WorkspacePage } from "@/components/workspace/workspace-page"
 
 interface CourseWorkspacePageProps {
     params: {
@@ -25,38 +23,21 @@ export default async function CourseWorkspacePage({ params }: CourseWorkspacePag
     const students = course.students
 
     return (
-        <div className="space-y-6">
+        <WorkspacePage>
             <MobileHeaderSetter
                 title={course.name}
                 subtitle={`${course.term.academicYear.name} - ${course.term.type === "ODD" ? "Odd" : "Even"}`}
                 backLink="/admin/courses"
             />
-            <div className="hidden md:flex items-center gap-4">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/admin/courses">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
-                <div>
-                    <h1 className="text-xl md:text-2xl font-bold">{course.name}</h1>
-                    <p className="text-muted-foreground">
-                        {course.teacher.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        {course.term.academicYear.name} - {course.term.type === "ODD" ? "Odd" : "Even"}
-                    </p>
-                </div>
-            </div>
-
-            <div className="flex flex-row justify-between items-center gap-4">
+            <WorkspaceHeader>
                 <h2 className="text-lg md:text-xl font-semibold">Enrolled Students ({students.length})</h2>
-                <div className="flex gap-2">
+                <WorkspaceActions>
                     <AddClassToCourseModal courseId={id} />
                     <AddCourseStudentModal courseId={id} />
-                </div>
-            </div>
+                </WorkspaceActions>
+            </WorkspaceHeader>
 
             <CourseStudentList students={students} courseId={id} />
-        </div>
+        </WorkspacePage>
     )
 }

@@ -15,6 +15,19 @@ export type BrowseContext =
   | { kind: "admin" | "homeroom" | "family" }
   | { kind: "course"; course: NavigationCourse }
 
+export const ADMIN_NAV_SECTIONS: NavigationSection[] = [
+  { id: "dashboard", label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { id: "users", label: "Users", href: "/admin/users", icon: Users },
+  { id: "classes", label: "Classes", href: "/admin/classes", icon: School },
+  { id: "subjects", label: "Subjects", href: "/admin/subjects", icon: Library },
+  { id: "courses", label: "Courses", href: "/admin/courses", icon: BookOpen },
+  { id: "semesters", label: "Semesters", href: "/admin/semesters", icon: CalendarRange },
+  { id: "rollover", label: "Rollover", href: "/admin/rollover", icon: RotateCcw },
+  { id: "schedule", label: "Schedule", href: "/admin/schedule", icon: Calendar },
+  { id: "grading", label: "Grading", href: "/admin/grading", icon: PieChart },
+  { id: "socials", label: "Socials", href: "/admin/socials", icon: Activity },
+]
+
 export function contextFromPath(pathname: string, courses: NavigationCourse[]): BrowseContext {
   const match = pathname.match(/^\/(teacher|student)\/courses\/([^/]+)/)
   if (match) {
@@ -72,18 +85,7 @@ export function groupsForContext(context: BrowseContext, roles: Role[]): Navigat
     ]
   }
 
-  if (context.kind === "admin") return [{ id: "admin", sections: [
-    { id: "dashboard", label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { id: "users", label: "Users", href: "/admin/users", icon: Users },
-    { id: "classes", label: "Classes", href: "/admin/classes", icon: School },
-    { id: "subjects", label: "Subjects", href: "/admin/subjects", icon: Library },
-    { id: "courses", label: "Courses", href: "/admin/courses", icon: BookOpen },
-    { id: "semesters", label: "Semesters", href: "/admin/semesters", icon: CalendarRange },
-    { id: "rollover", label: "Semester Rollover", href: "/admin/rollover", icon: RotateCcw },
-    { id: "schedule", label: "Schedule", href: "/admin/schedule", icon: Calendar },
-    { id: "grading", label: "Grading", href: "/admin/grading", icon: PieChart },
-    { id: "socials", label: "Social Monitoring", href: "/admin/socials", icon: Activity },
-  ] }]
+  if (context.kind === "admin") return [{ id: "admin", sections: ADMIN_NAV_SECTIONS }]
   if (context.kind === "homeroom") return [{ id: "homeroom", sections: [{ id: "class", label: "My Class", href: "/homeroom", icon: School }] }]
   if (context.kind === "family") return [{ id: "family", sections: [{ id: "overview", label: "Family Overview", href: "/parent", icon: Users }] }]
   if (context.kind === "messages") return [{ id: "messages", sections: [{ id: "messages", label: "Direct Messages", href: "/socials", icon: MessageSquare }] }]
@@ -112,6 +114,6 @@ export function contextLabel(context: BrowseContext) {
 }
 
 export function isSectionActive(pathname: string, section: NavigationSection) {
-  if (section.id === "overview") return pathname === section.href
+  if (["overview", "dashboard", "teacher", "student", "home"].includes(section.id)) return pathname === section.href
   return pathname === section.href || pathname.startsWith(`${section.href}/`)
 }

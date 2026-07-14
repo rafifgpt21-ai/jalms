@@ -54,7 +54,7 @@ export function StudentList({ classId, students }: StudentListProps) {
 
     if (students.length === 0) {
         return (
-            <div className="text-center p-8 border rounded-lg bg-gray-50">
+            <div className="rounded-lg border bg-muted/40 p-8 text-center">
                 <p className="text-gray-500">No students enrolled in this class yet.</p>
             </div>
         )

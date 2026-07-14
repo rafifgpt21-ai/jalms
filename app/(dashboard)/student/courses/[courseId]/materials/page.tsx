@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { MaterialList } from "@/components/teacher/materials/material-list"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 export default async function StudentCourseMaterialsPage({ params }: { params: Promise<{ courseId: string }> }) {
     const { courseId } = await params
@@ -19,7 +20,7 @@ export default async function StudentCourseMaterialsPage({ params }: { params: P
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold">Study Materials</h1>
+            <MobileHeaderSetter title="Study Materials" subtitle="Resources assigned to this course." />
             <MaterialList materials={materials} isTeacher={false} courseId={courseId} />
         </div>
     )

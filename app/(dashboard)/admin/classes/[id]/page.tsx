@@ -4,10 +4,8 @@ import { getEnrolledStudents } from "@/lib/actions/enrollment.actions"
 import { StudentList } from "@/components/admin/classes/student-list"
 import { AddStudentModal } from "@/components/admin/classes/add-student-modal"
 import { AddClassToClassModal } from "@/components/admin/classes/add-class-to-class-modal"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspaceActions, WorkspaceHeader, WorkspacePage } from "@/components/workspace/workspace-page"
 
 interface ClassWorkspacePageProps {
     params: {
@@ -39,36 +37,21 @@ export default async function ClassWorkspacePage({ params }: ClassWorkspacePageP
     }
 
     return (
-        <div className="space-y-6">
+        <WorkspacePage>
             <MobileHeaderSetter
                 title={classData.name}
                 subtitle={`${classData.term.academicYear.name} - ${classData.term.type === "ODD" ? "Odd" : "Even"}`}
                 backLink="/admin/classes"
             />
-            <div className="hidden md:flex items-center gap-4">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/admin/classes">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-bold">{classData.name}</h1>
-                    <p className="text-muted-foreground">
-                        {classData.term.academicYear.name} - {classData.term.type === "ODD" ? "Odd" : "Even"}
-                        {classData.homeroomTeacher && ` • Homeroom: ${classData.homeroomTeacher.name}`}
-                    </p>
-                </div>
-            </div>
-
-            <div className="flex justify-between items-center">
+            <WorkspaceHeader>
                 <h2 className="text-xl font-semibold">Enrolled Students ({students?.length || 0})</h2>
-                <div className="flex gap-2">
+                <WorkspaceActions>
                     <AddClassToClassModal classId={id} />
                     <AddStudentModal classId={id} />
-                </div>
-            </div>
+                </WorkspaceActions>
+            </WorkspaceHeader>
 
             <StudentList classId={id} students={students || []} />
-        </div>
+        </WorkspacePage>
     )
 }

@@ -13,6 +13,7 @@ import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 import { SkipSessionButton } from "@/components/teacher/attendance/skip-session-button"
 import { SkipAllButton } from "@/components/teacher/attendance/skip-all-button"
+import { WorkspaceActions } from "@/components/workspace/workspace-page"
 
 export default async function AttendancePage({
     searchParams,
@@ -30,17 +31,11 @@ export default async function AttendancePage({
 
     return (
         <div className="space-y-6">
-            <MobileHeaderSetter title="Attendance Manager" />
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Attendance</h1>
-                    <p className="text-muted-foreground">Manage attendance for your classes.</p>
-                </div>
-                <div className="flex items-center gap-2">
+            <MobileHeaderSetter title="Attendance Manager" subtitle="Manage attendance for your classes." />
+            <WorkspaceActions>
                     <SkipAllButton teacherId={session.user.id} date={date} />
                     <DateNavigator />
-                </div>
-            </div>
+            </WorkspaceActions>
 
             {error && (
                 <div className="p-4 rounded-md bg-red-50 text-red-600 flex items-center gap-2">
@@ -50,7 +45,7 @@ export default async function AttendancePage({
             )}
 
             {!schedules || schedules.length === 0 ? (
-                <div className="text-center py-12 border rounded-lg bg-gray-50/5">
+                <div className="rounded-lg border bg-muted/30 py-12 text-center">
                     <p className="text-muted-foreground">No classes scheduled for {format(date, "EEEE, MMMM d, yyyy")}. :D</p>
                 </div>
             ) : (
