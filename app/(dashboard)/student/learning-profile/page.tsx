@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unescaped-entities */
+import { Suspense } from "react"
 import { getStudentLearningProfile } from "@/lib/actions/intelligence.actions"
 import { getUser } from "@/lib/actions/user.actions"
 import { redirect } from "next/navigation"
@@ -7,12 +9,13 @@ import dynamicLoader from "next/dynamic"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const LearningRadarChart = dynamicLoader(
-    () => import("@/components/student/intelligence/radar-chart")
+    () => import("@/components/student/intelligence/radar-chart"),
+    { loading: () => <Skeleton className="h-[450px] w-full rounded-xl" /> }
 )
 
 export const dynamic = "force-dynamic"
 
-export default async function LearningProfilePage() {
+async function LearningProfileContent() {
     const user = await getUser()
 
     if (!user || !user.id) {
@@ -25,9 +28,7 @@ export default async function LearningProfilePage() {
 
     const { profile } = await getStudentLearningProfile(user.id)
 
-    return (
-        <div className="space-y-6">
-            <MobileHeaderSetter title="Learning Profile" />
+    return <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <LearningRadarChart data={profile || []} />
                 {/* We can add another chart or summary here if needed, or just let the table take full width below */}
@@ -44,6 +45,19 @@ export default async function LearningProfilePage() {
             </div>
 
             <LearningProfileTable data={profile || []} />
-        </div>
-    )
+    </>
+}
+
+function LearningProfileSkeleton() {
+    return <div className="space-y-6" aria-label="Loading learning profile" aria-busy="true">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"><Skeleton className="h-[450px] w-full rounded-xl" /><Skeleton className="hidden h-[450px] w-full rounded-xl lg:block" /></div>
+        <Skeleton className="h-[32rem] w-full rounded-xl" />
+    </div>
+}
+
+export default function LearningProfilePage() {
+    return <div className="space-y-6">
+        <MobileHeaderSetter title="Learning Profile" />
+        <Suspense fallback={<LearningProfileSkeleton />}><LearningProfileContent /></Suspense>
+    </div>
 }

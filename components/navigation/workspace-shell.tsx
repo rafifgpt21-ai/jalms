@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core"
@@ -32,7 +33,7 @@ function CourseMark({ course, className }: { course: NavigationCourse; className
       className,
     )}>
       {identity.imageUrl && !failed
-        ? <img src={identity.imageUrl} alt="" className="size-full object-cover" onError={() => setFailed(true)} />
+        ? <Image src={identity.imageUrl} alt="" fill sizes="40px" className="object-cover" onError={() => setFailed(true)} />
         : identity.label}
     </span>
   )
@@ -59,7 +60,7 @@ function SortableCourse({ course, active, reorderEnabled, onSelect }: {
           {onSelect ? (
             <button type="button" className="w-full" onClick={() => !isDragging && onSelect({ kind: "course", course })} aria-label={resolveCourseIdentity(course).accessibleName}>{content}</button>
           ) : (
-            <Link href={defaultCourseHref(course)} aria-label={resolveCourseIdentity(course).accessibleName}>{content}</Link>
+            <Link href={defaultCourseHref(course)} prefetch aria-label={resolveCourseIdentity(course).accessibleName}>{content}</Link>
           )}
         </div>
       </TooltipTrigger>
@@ -84,7 +85,7 @@ function RailDestination({ label, href, active, icon: Icon, onSelect }: {
       <TooltipTrigger asChild>
         {onSelect
           ? <button type="button" onClick={onSelect} aria-label={label} className="group flex h-11 w-full items-center justify-center">{mark}</button>
-          : <Link href={href} aria-label={label} className="group flex h-11 w-full items-center justify-center">{mark}</Link>}
+          : <Link href={href} prefetch aria-label={label} className="group flex h-11 w-full items-center justify-center">{mark}</Link>}
       </TooltipTrigger>
       <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
@@ -167,7 +168,7 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
   context: BrowseContext
   roles: WorkspaceUser["roles"]
   pathname: string
-  onNavigate?: () => void
+  onNavigate?: (href: string) => void
   onCollapse?: () => void
 }) {
   const groups = groupsForContext(context, roles)
@@ -188,9 +189,9 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
               {group.sections.map((section) => {
                 const Icon = section.icon
                 const active = isSectionActive(pathname, section)
-                return <Link key={section.id} href={section.href} onClick={() => {
+                return <Link key={section.id} href={section.href} prefetch onClick={() => {
                   if (context.kind === "course") void rememberCourseSection(context.course.id, context.course.roleContext, section.id)
-                  onNavigate?.()
+                  onNavigate?.(section.href)
                 }} className={cn(
                   "flex min-h-8 items-center gap-2 rounded-md px-2.5 text-sm transition-colors",
                   active ? "bg-indigo-500/12 font-medium text-indigo-700 dark:text-indigo-300" : "text-muted-foreground hover:bg-[var(--workspace-row-hover)] hover:text-foreground",
@@ -218,16 +219,35 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
   const router = useRouter()
   const mobileHeader = useMobileHeader()
   const routeContext = contextFromPath(pathname, courses)
+  const [pendingPath, setPendingPath] = React.useState<string | null>(null)
   const [collapsed, setCollapsed] = React.useState(channelSidebarCollapsed)
   const [tabletSectionsOpen, setTabletSectionsOpen] = React.useState(false)
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = React.useState(false)
   const [browseContext, setBrowseContext] = React.useState<BrowseContext>(routeContext)
   const [mobileReorder, setMobileReorder] = React.useState(false)
   const isSocials = pathname.startsWith("/socials")
+  const displayPath = pendingPath ?? pathname
+  const displayContext = contextFromPath(displayPath, courses)
 
   React.useEffect(() => {
+    setPendingPath(null)
     setBrowseContext(routeContext)
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
+    const highPriorityRoutes = ["/home", "/socials"]
+    if (user.roles.includes("ADMIN")) highPriorityRoutes.push("/admin")
+    if (user.roles.includes("SUBJECT_TEACHER")) highPriorityRoutes.push("/teacher")
+    if (user.roles.includes("STUDENT")) highPriorityRoutes.push("/student")
+    if (user.roles.includes("HOMEROOM_TEACHER")) highPriorityRoutes.push("/homeroom")
+    if (user.roles.includes("PARENT")) highPriorityRoutes.push("/parent")
+
+    const siblingRoutes = groupsForContext(routeContext, user.roles)
+      .flatMap((group) => group.sections)
+      .map((section) => section.href)
+
+    for (const href of new Set([...highPriorityRoutes, ...siblingRoutes])) router.prefetch(href)
+  }, [routeContext.kind, pathname, router, user.roles]) // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
     const handlePop = () => {
@@ -249,7 +269,10 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
   const navigateFromMobile = (href?: string) => {
     window.history.replaceState({ ...window.history.state, arsyncNavigator: undefined }, "")
     setMobileNavigatorOpen(false)
-    if (href) router.push(href)
+    if (href) {
+      setPendingPath(href)
+      router.push(href)
+    }
   }
   const toggleCollapsed = () => {
     const next = !collapsed
@@ -257,19 +280,26 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
     void updateWorkspacePreference({ density: document.documentElement.dataset.density === "comfortable" ? "comfortable" : "compact", theme: (document.documentElement.dataset.theme as "system" | "light" | "dark") || "system", channelSidebarCollapsed: next })
   }
 
-  const activeGroups = groupsForContext(routeContext, user.roles)
-  const activeSection = activeGroups.flatMap((group) => group.sections).find((section) => isSectionActive(pathname, section))
-  const pageTitle = mobileHeader.title || activeSection?.label || contextLabel(routeContext)
+  const activeGroups = groupsForContext(displayContext, user.roles)
+  const activeSection = activeGroups.flatMap((group) => group.sections).find((section) => isSectionActive(displayPath, section))
+  const pageTitle = pendingPath ? activeSection?.label || contextLabel(displayContext) : mobileHeader.title || activeSection?.label || contextLabel(displayContext)
+
+  const beginNavigation = React.useCallback((href: string) => {
+    if (href !== pathname) setPendingPath(href)
+  }, [pathname])
 
   return (
     <div className="workspace-shell flex h-dvh min-h-0 w-full overflow-hidden bg-[var(--workspace-canvas)]">
-      <div className="hidden md:flex"><CourseRail user={user} courses={courses} activeContext={routeContext} /></div>
+      <div className="hidden md:flex" onClick={(event) => {
+        const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[href]")
+        if (link) beginNavigation(link.pathname)
+      }}><CourseRail user={user} courses={courses} activeContext={displayContext} /></div>
 
-      {!collapsed && <div className="hidden w-60 shrink-0 border-r lg:flex"><SectionSidebar context={routeContext} roles={user.roles} pathname={pathname} onCollapse={toggleCollapsed} /></div>}
+      {!collapsed && <div className="hidden w-60 shrink-0 border-r lg:flex"><SectionSidebar context={displayContext} roles={user.roles} pathname={displayPath} onNavigate={beginNavigation} onCollapse={toggleCollapsed} /></div>}
 
       {tabletSectionsOpen && <div className="fixed inset-0 z-50 hidden md:flex lg:hidden">
         <button className="absolute inset-0 bg-black/40" onClick={() => setTabletSectionsOpen(false)} aria-label="Close sections" />
-        <div className="relative ml-16 w-60 border-r shadow-xl"><SectionSidebar context={routeContext} roles={user.roles} pathname={pathname} onNavigate={() => setTabletSectionsOpen(false)} /></div>
+        <div className="relative ml-16 w-60 border-r shadow-xl"><SectionSidebar context={displayContext} roles={user.roles} pathname={displayPath} onNavigate={(href) => { beginNavigation(href); setTabletSectionsOpen(false) }} /></div>
       </div>}
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -304,8 +334,8 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
           <SectionSidebar
             context={browseContext}
             roles={user.roles}
-            pathname={pathname}
-            onNavigate={() => navigateFromMobile()}
+            pathname={displayPath}
+            onNavigate={(href) => navigateFromMobile(href)}
           />
         </div>
       </div>}

@@ -1,7 +1,5 @@
+import { Suspense } from "react"
 import { getStudentGrades, getStudentSemesters, getStudentGradeHistory } from "@/lib/actions/student.actions"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
 import { SemesterSelector } from "@/components/student/grades/semester-selector"
 import { GradeStatistics } from "@/components/student/grades/grade-statistics"
 import { GradesTable } from "@/components/student/grades/grades-table"
@@ -10,10 +8,11 @@ import dynamic from "next/dynamic"
 import { Skeleton } from "@/components/ui/skeleton"
 
 const GradeHistoryChart = dynamic(
-    () => import("@/components/student/grades/grade-history-chart")
+    () => import("@/components/student/grades/grade-history-chart"),
+    { loading: () => <Skeleton className="h-[284px] w-full rounded-xl" /> }
 )
 
-export default async function StudentGradesPage({
+async function GradesContent({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -31,9 +30,9 @@ export default async function StudentGradesPage({
         return <div>Error loading grades data</div>
     }
 
-    const { grades } = gradesRes as { grades: any[] }
-    const { semesters } = semestersRes as { semesters: any[] }
-    const { history } = historyRes as { history: any[] }
+    const { grades } = gradesRes
+    const { semesters } = semestersRes
+    const { history } = historyRes
 
     // Determine display title for the table
     let semesterTitle = "Active Semester"
@@ -46,10 +45,7 @@ export default async function StudentGradesPage({
         }
     }
 
-    return (
-        <div className="space-y-6">
-            <MobileHeaderSetter title="My Grades" subtitle="Progress, statistics, and grade history." />
-
+    return <>
             <GradeHistoryChart history={history} />
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -59,6 +55,21 @@ export default async function StudentGradesPage({
             <GradeStatistics grades={grades} />
 
             <GradesTable grades={grades} semesterTitle={semesterTitle} />
-        </div>
-    )
+    </>
+}
+
+function GradesContentSkeleton() {
+    return <div className="space-y-6" aria-label="Loading grades" aria-busy="true">
+        <Skeleton className="h-[284px] w-full rounded-xl" />
+        <Skeleton className="h-9 w-52" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-28 w-full rounded-xl" />)}</div>
+        <Skeleton className="h-[28rem] w-full rounded-xl" />
+    </div>
+}
+
+export default function StudentGradesPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+    return <div className="space-y-6">
+        <MobileHeaderSetter title="My Grades" subtitle="Progress, statistics, and grade history." />
+        <Suspense fallback={<GradesContentSkeleton />}><GradesContent searchParams={searchParams} /></Suspense>
+    </div>
 }

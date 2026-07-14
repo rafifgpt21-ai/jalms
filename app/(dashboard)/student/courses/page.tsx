@@ -1,9 +1,10 @@
+import { Suspense } from "react"
 import { getStudentCourses } from "@/lib/actions/student.actions"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, GraduationCap, ArrowRight } from "lucide-react"
+import { GridContentSkeleton } from "@/components/navigation/route-skeletons"
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,11 @@ function getGradient(id: string) {
     return gradients[index]
 }
 
-export default async function StudentCoursesPage() {
+function getProgress(id: string) {
+    return 20 + Math.abs(Array.from(id).reduce((hash, character) => character.charCodeAt(0) + ((hash << 5) - hash), 0)) % 80
+}
+
+async function StudentCoursesContent() {
     const { courses, error } = await getStudentCourses()
 
     if (error || !courses) {
@@ -36,7 +41,7 @@ export default async function StudentCoursesPage() {
                 </div>
                 <h3 className="text-lg font-bold text-red-900 dark:text-red-200">Failed to load courses</h3>
                 <p className="text-red-600 dark:text-red-400 max-w-sm mt-2">
-                    We couldn't fetch your learning dashboard at the moment. Please try again later.
+                    We couldn&apos;t fetch your learning dashboard at the moment. Please try again later.
                 </p>
             </div>
         )
@@ -44,14 +49,11 @@ export default async function StudentCoursesPage() {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <MobileHeaderSetter title="My Courses" subtitle={`${courses.length} active courses`} />
-
             {/* Course Grid - Poster Style */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {courses.length > 0 ? courses.map((course: any) => {
+                {courses.length > 0 ? courses.map((course) => {
                     const gradient = getGradient(course.id)
-                    // Mock progress for now until backend supports it fully
-                    const progress = Math.floor(Math.random() * (100 - 20) + 20)
+                    const progress = getProgress(course.id)
 
                     return (
                         <Link href={`/student/courses/${course.id}`} key={course.id} className="group block h-full">
@@ -65,7 +67,7 @@ export default async function StudentCoursesPage() {
                                     {/* Glass Badge */}
                                     <div className="absolute top-4 left-4">
                                         <Badge variant="secondary" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 py-1 font-medium shadow-sm">
-                                            {course.term.name}
+                                            {course.term.type}
                                         </Badge>
                                     </div>
 
@@ -122,11 +124,18 @@ export default async function StudentCoursesPage() {
                         </div>
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No courses found</h3>
                         <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                            You haven't been enrolled in any courses yet. Check back later or contact your administrator.
+                            You haven&apos;t been enrolled in any courses yet. Check back later or contact your administrator.
                         </p>
                     </div>
                 )}
             </div>
         </div>
     )
+}
+
+export default function StudentCoursesPage() {
+    return <div className="space-y-8">
+        <MobileHeaderSetter title="My Courses" subtitle="Your active learning spaces" />
+        <Suspense fallback={<GridContentSkeleton />}><StudentCoursesContent /></Suspense>
+    </div>
 }
