@@ -29,13 +29,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   })
   const roles = userRecord?.roles ?? session.user.roles ?? []
 
-  const [teacherResult, studentResult, conversations, workspacePreference, navigationStates] = await Promise.all([
+  const [teacherResult, studentResult, workspacePreference, navigationStates] = await Promise.all([
     roles.includes("SUBJECT_TEACHER") ? getTeacherActiveCourses(session.user.id) : Promise.resolve({ courses: [] }),
     roles.includes("STUDENT")
-      ? import("@/lib/actions/student.actions").then(({ getStudentCourses }) => getStudentCourses())
+      ? import("@/lib/actions/student.actions").then(({ getStudentCourses }) => getStudentCourses(session.user.id))
       : Promise.resolve({ courses: [] }),
-    import("@/app/actions/chat").then(({ getConversations }) => getConversations()),
-    getWorkspacePreference(),
+    getWorkspacePreference(session.user.id),
     db.courseNavigationState.findMany({ where: { userId: session.user.id } }).catch(() => []),
   ])
 
@@ -82,7 +81,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ]
 
   return (
-    <ChatNotificationProvider initialConversations={conversations} userId={session.user.id}>
+    <ChatNotificationProvider initialConversations={[]} userId={session.user.id}>
       <MobileHeaderProvider>
         <AppearancePreferenceHydrator density={workspacePreference.density} theme={workspacePreference.theme} />
         <WorkspaceShell

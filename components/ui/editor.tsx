@@ -10,10 +10,7 @@ import {
     Italic,
     Underline as UnderlineIcon,
     List,
-    ListOrdered,
-    Link as LinkIcon,
-    Heading1,
-    Heading2
+    ListOrdered
 } from "lucide-react"
 import React from 'react'
 
@@ -60,16 +57,18 @@ export function Editor({ value, onChange, editable = true, className }: EditorPr
     }
 
     if (!editable) {
-        return <EditorContent editor={editor} className="border rounded-md bg-gray-50 dark:bg-gray-900" />
+        return <EditorContent editor={editor} className="rounded-md border bg-muted/30" />
     }
 
     return (
-        <div className="border rounded-md overflow-hidden bg-white dark:bg-black">
-            <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-gray-50 dark:bg-gray-900">
+        <div className="overflow-hidden rounded-md border bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20">
+            <div className="flex flex-wrap items-center gap-1 border-b bg-muted/40 p-1.5">
                 <Toggle
                     size="sm"
                     pressed={editor.isActive('bold')}
                     onPressedChange={() => editor.chain().focus().toggleBold().run()}
+                    aria-label="Bold"
+                    title="Bold"
                 >
                     <Bold className="h-4 w-4" />
                 </Toggle>
@@ -77,6 +76,8 @@ export function Editor({ value, onChange, editable = true, className }: EditorPr
                     size="sm"
                     pressed={editor.isActive('italic')}
                     onPressedChange={() => editor.chain().focus().toggleItalic().run()}
+                    aria-label="Italic"
+                    title="Italic"
                 >
                     <Italic className="h-4 w-4" />
                 </Toggle>
@@ -84,14 +85,18 @@ export function Editor({ value, onChange, editable = true, className }: EditorPr
                     size="sm"
                     pressed={editor.isActive('underline')}
                     onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
+                    aria-label="Underline"
+                    title="Underline"
                 >
                     <UnderlineIcon className="h-4 w-4" />
                 </Toggle>
-                <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1" />
+                <div className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
                 <Toggle
                     size="sm"
                     pressed={editor.isActive('bulletList')}
                     onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+                    aria-label="Bulleted list"
+                    title="Bulleted list"
                 >
                     <List className="h-4 w-4" />
                 </Toggle>
@@ -99,6 +104,8 @@ export function Editor({ value, onChange, editable = true, className }: EditorPr
                     size="sm"
                     pressed={editor.isActive('orderedList')}
                     onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+                    aria-label="Numbered list"
+                    title="Numbered list"
                 >
                     <ListOrdered className="h-4 w-4" />
                 </Toggle>

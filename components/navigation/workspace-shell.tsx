@@ -16,6 +16,7 @@ import {
   type BrowseContext,
 } from "@/lib/navigation-config"
 import type { NavigationCourse, WorkspaceUser } from "@/types/navigation"
+import { getDefaultDashboardHref } from "@/lib/role-dashboard"
 import { rememberCourseSection, reorderCourses, updateWorkspacePreference } from "@/lib/actions/workspace-preferences.actions"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -25,12 +26,21 @@ import {
   CourseRouteSkeleton,
   DashboardRouteSkeleton,
   GridRouteSkeleton,
+  StudentTaskDetailRouteSkeleton,
+  StudentTaskRouteSkeleton,
   TaskGradingRouteSkeleton,
   TaskRouteSkeleton,
   TableRouteSkeleton,
 } from "@/components/navigation/route-skeletons"
 
 function PendingDestinationSkeleton({ pathname }: { pathname: string }) {
+  if (pathname === "/teacher") return <DashboardRouteSkeleton variant="teacher" />
+  if (pathname === "/student") return <DashboardRouteSkeleton variant="student" />
+  if (pathname === "/admin") return <DashboardRouteSkeleton variant="admin" />
+  if (pathname === "/homeroom") return <DashboardRouteSkeleton variant="homeroom" />
+  if (pathname === "/parent") return <DashboardRouteSkeleton variant="parent" />
+  if (/^\/student\/courses\/[^/]+\/tasks\/?$/.test(pathname)) return <StudentTaskRouteSkeleton />
+  if (/^\/student\/courses\/[^/]+\/tasks\/[^/]+\/?$/.test(pathname)) return <StudentTaskDetailRouteSkeleton />
   if (/^\/teacher\/courses\/[^/]+\/tasks\/?$/.test(pathname)) return <TaskRouteSkeleton />
   if (/^\/teacher\/courses\/[^/]+\/tasks\/[^/]+\/?$/.test(pathname) && !pathname.endsWith("/new")) return <TaskGradingRouteSkeleton />
   if (/^\/(teacher|student)\/courses\/[^/]+/.test(pathname)) return <CourseRouteSkeleton />
@@ -77,7 +87,7 @@ function SortableCourse({ course, active, reorderEnabled, onSelect }: {
           {onSelect ? (
             <button type="button" className="w-full" onClick={() => !isDragging && onSelect({ kind: "course", course })} aria-label={resolveCourseIdentity(course).accessibleName}>{content}</button>
           ) : (
-            <Link href={defaultCourseHref(course)} prefetch aria-label={resolveCourseIdentity(course).accessibleName}>{content}</Link>
+            <Link href={defaultCourseHref(course)} prefetch={false} aria-label={resolveCourseIdentity(course).accessibleName}>{content}</Link>
           )}
         </div>
       </TooltipTrigger>
@@ -109,11 +119,12 @@ function RailDestination({ label, href, active, icon: Icon, onSelect }: {
   )
 }
 
-function CourseRail({ user, courses, activeContext, onSelect, reorderEnabled = true }: {
+function CourseRail({ user, courses, activeContext, onSelect, onNavigate, reorderEnabled = true }: {
   user: WorkspaceUser
   courses: NavigationCourse[]
   activeContext: BrowseContext
   onSelect?: (context: BrowseContext) => void
+  onNavigate?: (href: string) => void
   reorderEnabled?: boolean
 }) {
   const [ordered, setOrdered] = React.useState(courses)
@@ -124,6 +135,7 @@ function CourseRail({ user, courses, activeContext, onSelect, reorderEnabled = t
   )
   const teaching = ordered.filter((course) => course.roleContext === "teacher")
   const enrolled = ordered.filter((course) => course.roleContext === "student")
+  const homeHref = getDefaultDashboardHref(user.roles)
 
   const handleDragEnd = (event: DragEndEvent) => {
     const activeId = String(event.active.id)
@@ -151,7 +163,7 @@ function CourseRail({ user, courses, activeContext, onSelect, reorderEnabled = t
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <aside className="flex h-full w-16 shrink-0 flex-col border-r border-[var(--workspace-rail-divider)] bg-[var(--workspace-rail)] text-[var(--workspace-rail-foreground)]">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
-            <RailDestination label="Home" href="/home" icon={Home} active={activeContext.kind === "home"} onSelect={onSelect ? () => select({ kind: "home" }) : undefined} />
+            <RailDestination label="Home" href={homeHref} icon={Home} active={activeContext.kind === "home"} onSelect={onNavigate ? () => onNavigate(homeHref) : undefined} />
             <RailDestination label="Messages" href="/socials" icon={MessageSquare} active={activeContext.kind === "messages"} onSelect={onSelect ? () => select({ kind: "messages" }) : undefined} />
             <div className="mx-auto my-2 h-px w-8 bg-[var(--workspace-rail-divider)]" />
             {teaching.length > 0 && <>
@@ -253,8 +265,8 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
         </div>
       )}
       <nav className="flex-1 space-y-3 overflow-y-auto p-2">
-        {groups.map((group) => (
-          <div key={group.id}>
+        {groups.map((group, index) => (
+          <div key={group.id} className={cn(context.kind === "home" && index > 0 && "border-t pt-3")}>
             {group.label && <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</div>}
             <div className="space-y-0.5">
               {group.sections.map((section) => {
@@ -307,7 +319,7 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
-    const highPriorityRoutes = ["/home", "/socials"]
+    const highPriorityRoutes = [getDefaultDashboardHref(user.roles), "/socials"]
     if (user.roles.includes("ADMIN")) highPriorityRoutes.push("/admin")
     if (user.roles.includes("SUBJECT_TEACHER")) highPriorityRoutes.push("/teacher")
     if (user.roles.includes("STUDENT")) highPriorityRoutes.push("/student")
@@ -395,7 +407,7 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
       </div>
 
       {mobileNavigatorOpen && <div className="fixed inset-0 z-[100] flex bg-background md:hidden">
-        <CourseRail user={user} courses={courses} activeContext={browseContext} onSelect={setBrowseContext} reorderEnabled={mobileReorder} />
+        <CourseRail user={user} courses={courses} activeContext={browseContext} onSelect={setBrowseContext} onNavigate={navigateFromMobile} reorderEnabled={mobileReorder} />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="workspace-topbar flex h-14 min-h-14 items-center justify-between gap-2 border-b bg-[var(--workspace-header)] px-4 py-1.5">
             <Button variant={mobileReorder ? "secondary" : "ghost"} size="sm" onClick={() => setMobileReorder((value) => !value)}>

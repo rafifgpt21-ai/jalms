@@ -1,40 +1,29 @@
-import {
-    getTeacherStats,
-    getClassesToday,
-    getAssignmentsOverview,
-    getRecentSubmissions
-} from "@/lib/actions/teacher.actions"
-import {
-    StatsSection,
-    ClassesSection,
-    AssignmentsWidget,
-    RecentSubmissionsSection
-} from "@/components/teacher/dashboard/teacher-dashboard-view"
+import { cache } from "react"
+import { getAssignmentsOverview, getClassesToday } from "@/lib/actions/teacher.actions"
+import { getUser } from "@/lib/actions/user.actions"
+import { AssignmentsWidget, ClassesSection } from "@/components/teacher/dashboard/teacher-dashboard-view"
+import { WorkspacePanel } from "@/components/workspace/workspace-page"
 
-export async function DashboardStats() {
-    const { stats, error } = await getTeacherStats()
-    if (error || !stats) return <div className="p-6 text-red-500">Failed to load stats</div>
+const getDashboardTeacherId = cache(async () => (await getUser())?.id)
 
-    return <StatsSection stats={stats} />
+function DashboardError({ label }: { label: string }) {
+  return <WorkspacePanel className="border-destructive/30 px-4 py-6 text-center text-sm text-destructive">Unable to load {label}. Refresh to try again.</WorkspacePanel>
 }
 
 export async function ClassesTodayCard() {
-    const { classesToday, error } = await getClassesToday()
-    if (error || !classesToday) return <div className="p-6 text-red-500">Failed to load classes</div>
+  const teacherId = await getDashboardTeacherId()
+  if (!teacherId) return <DashboardError label="today’s classes" />
 
-    return <ClassesSection classesToday={classesToday} />
+  const { classesToday, error } = await getClassesToday(teacherId)
+  if (error || !classesToday) return <DashboardError label="today’s classes" />
+  return <ClassesSection classesToday={classesToday} />
 }
 
 export async function AssignmentsWidgetWrapper() {
-    const { allAssignments, activeCourses, error } = await getAssignmentsOverview()
-    if (error || !allAssignments || !activeCourses) return <div className="p-6 text-red-500">Failed to load assignments</div>
+  const teacherId = await getDashboardTeacherId()
+  if (!teacherId) return <DashboardError label="assignments" />
 
-    return <AssignmentsWidget allAssignments={allAssignments} activeCourses={activeCourses} />
-}
-
-export async function RecentSubmissionsList() {
-    const { recentSubmissions, error } = await getRecentSubmissions()
-    if (error || !recentSubmissions) return <div className="p-6 text-red-500">Failed to load submissions</div>
-
-    return <RecentSubmissionsSection recentSubmissions={recentSubmissions} />
+  const { allAssignments, error } = await getAssignmentsOverview(teacherId)
+  if (error || !allAssignments) return <DashboardError label="assignments" />
+  return <AssignmentsWidget allAssignments={allAssignments} />
 }

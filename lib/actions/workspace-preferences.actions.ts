@@ -24,13 +24,13 @@ const DEFAULT_WORKSPACE_PREFERENCE: WorkspacePreferenceValue = {
   enrolledCourseOrder: [],
 };
 
-export async function getWorkspacePreference(): Promise<WorkspacePreferenceValue> {
-  const user = await getUser();
-  if (!user?.id) return DEFAULT_WORKSPACE_PREFERENCE;
+export async function getWorkspacePreference(explicitUserId?: string): Promise<WorkspacePreferenceValue> {
+  const userId = explicitUserId || (await getUser())?.id;
+  if (!userId) return DEFAULT_WORKSPACE_PREFERENCE;
 
   try {
     const preference = await db.userWorkspacePreference.findUnique({
-      where: { userId: user.id },
+      where: { userId },
     });
     if (!preference) return DEFAULT_WORKSPACE_PREFERENCE;
     return {

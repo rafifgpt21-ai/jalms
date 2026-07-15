@@ -1,24 +1,24 @@
 import { Suspense } from "react"
+import { format } from "date-fns"
 import { getHomeroomClasses } from "@/lib/actions/homeroom.actions"
 import { HomeroomDashboardView } from "@/components/homeroom/homeroom-dashboard-view"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
-import { GridContentSkeleton } from "@/components/navigation/route-skeletons"
+import { DashboardRouteSkeleton } from "@/components/navigation/route-skeletons"
+import { WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 async function HomeroomContent() {
-    const { classes, error } = await getHomeroomClasses()
-
-    if (error) {
-        return <div className="p-8 text-red-500 bg-red-50 rounded-lg">Error: {error}</div>
-    }
-
-    return <HomeroomDashboardView classes={classes!} />
+  const { classes, error } = await getHomeroomClasses()
+  if (error || !classes) return <WorkspacePanel className="border-destructive/30 px-4 py-8 text-center text-sm text-destructive">Unable to load homeroom classes. Refresh to try again.</WorkspacePanel>
+  return <HomeroomDashboardView classes={classes} />
 }
 
 export default function HomeroomDashboard() {
-    return <div className="space-y-6">
-        <MobileHeaderSetter title="Homeroom Dashboard" subtitle="Manage your class, monitor performance, and generate reports." />
-        <Suspense fallback={<GridContentSkeleton />}><HomeroomContent /></Suspense>
-    </div>
+  return (
+    <WorkspacePage>
+      <MobileHeaderSetter title="Homeroom dashboard" subtitle={format(new Date(), "EEEE, MMMM d")} />
+      <Suspense fallback={<DashboardRouteSkeleton variant="homeroom" nested />}><HomeroomContent /></Suspense>
+    </WorkspacePage>
+  )
 }

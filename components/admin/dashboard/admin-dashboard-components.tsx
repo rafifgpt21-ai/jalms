@@ -1,146 +1,59 @@
 import Link from "next/link"
-import { Activity, Users, ArrowUpRight, Clock } from "lucide-react"
 import { format } from "date-fns"
-
-import { Button } from "@/components/ui/button"
+import { Activity, ArrowRight, Clock3, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-    getAttendancePulse,
-    getTotalUsersCount,
-    getLastLoggedInUsers
-} from "@/lib/actions/dashboard.actions"
+import { Button } from "@/components/ui/button"
+import { WorkspacePanel } from "@/components/workspace/workspace-page"
+import { getAttendancePulse, getTotalUsersCount, getLastLoggedInUsers } from "@/lib/actions/dashboard.actions"
+
+function PanelHeading({ title, description, href, label }: { title: string; description: string; href?: string; label?: string }) {
+  return <div className="flex min-h-12 items-center justify-between gap-3 border-b px-4 py-2.5"><div className="min-w-0"><h2 className="truncate text-sm font-semibold">{title}</h2><p className="truncate text-xs text-muted-foreground">{description}</p></div>{href && <Button asChild size="sm" variant="ghost"><Link href={href}>{label || "View all"}<ArrowRight /></Link></Button>}</div>
+}
 
 export async function AttendancePulseCard() {
-    const { attendance } = await getAttendancePulse()
-    const stats = attendance || { percentage: 0, totalRecords: 0, presentCount: 0, absentCount: 0 }
-
-    return (
-        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-card shadow-sm transition-all hover:shadow-md dark:border-slate-800 xl:col-span-8">
-            <div className="absolute inset-0 bg-linear-to-br from-indigo-500/5 via-transparent to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-            <div className="p-8 h-full flex flex-col justify-between relative z-10">
-                <div className="flex items-start justify-between">
-                    <div>
-                        <h3 className="text-xl font-heading font-semibold text-slate-800 dark:text-slate-100">Today's Pulse</h3>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="relative flex h-2.5 w-2.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                            </span>
-                            <span className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-widest">Live Attendance</span>
-                        </div>
-                    </div>
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
-                        <Activity className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                </div>
-
-                <div className="mt-8 flex items-end gap-4">
-                    <div className="flex-1">
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-5xl font-bold text-slate-900 dark:text-white tracking-tighter">
-                                {stats.percentage}%
-                            </span>
-                            <span className="text-sm font-medium text-slate-500 mb-2">Overall Present</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full mt-4 overflow-hidden">
-                            <div
-                                className="h-full bg-linear-to-r from-indigo-500 to-cyan-500 rounded-full transition-all duration-1000 ease-out"
-                                style={{ width: `${stats.percentage}%` }}
-                            />
-                        </div>
-                        <p className="text-sm text-slate-400 mt-3 font-medium">
-                            Based on <span className="text-slate-700 dark:text-slate-200">{stats.totalRecords}</span> sessions recorded today
-                        </p>
-                    </div>
-
-                    {/* Circular indicator */}
-                    <div className="hidden sm:flex h-24 w-24 rounded-full border-8 border-slate-100 dark:border-slate-800 items-center justify-center relative shrink-0">
-                        <div
-                            className="absolute inset-0 rounded-full border-8 border-indigo-500 border-t-transparent border-l-transparent transform -rotate-45 opacity-20"
-                        />
-                        <div
-                            className="text-2xl font-bold text-slate-700 dark:text-slate-200"
-                        >
-                            {stats.presentCount}
-                        </div>
-                        <div className="absolute -bottom-6 text-[10px] font-semibold text-slate-400 uppercase">Present</div>
-                    </div>
-                </div>
-            </div>
-        </div >
-    )
+  const { attendance } = await getAttendancePulse()
+  const stats = attendance || { percentage: 0, totalRecords: 0, presentCount: 0, absentCount: 0 }
+  return (
+    <WorkspacePanel className="overflow-hidden">
+      <PanelHeading title="Today's attendance" description="Live school-wide pulse" href="/admin/schedule" label="Schedule" />
+      <div className="flex min-h-32 items-center gap-4 px-4 py-4">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"><Activity className="size-5" /></span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span className="text-3xl font-semibold tracking-tight tabular-nums">{stats.percentage}%</span><span className="text-sm font-medium">present</span></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.min(100, stats.percentage)}%` }} /></div>
+          <p className="mt-2 text-xs text-muted-foreground">{stats.presentCount} present · {stats.absentCount} other records · {stats.totalRecords} total today</p>
+        </div>
+      </div>
+    </WorkspacePanel>
+  )
 }
 
 export async function TotalUsersCard() {
-    const { totalUsers } = await getTotalUsersCount()
-
-    return (
-        <div className="flex flex-col gap-3 xl:col-span-4">
-            <div className="flex-1 rounded-3xl border border-slate-200 dark:border-slate-800 bg-linear-to-br from-indigo-600 to-violet-700 p-8 text-white shadow-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-white/20 transition-all duration-500" />
-                <div className="relative z-10 flex flex-col justify-between h-full">
-                    <div className="flex items-center justify-between">
-                        <h3 className="font-heading font-medium text-indigo-100">Total Users</h3>
-                        <Users className="h-5 w-5 text-indigo-200" />
-                    </div>
-                    <div>
-                        <div className="text-5xl font-bold tracking-tight mb-1">
-                            {totalUsers || 0}
-                        </div>
-                        <p className="text-sm text-indigo-200/80 font-medium">Active Accounts</p>
-                    </div>
-                    <Button size="sm" variant="secondary" style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} className="w-fit mt-4 bg-white/10 hover:bg-white/20 border-0 text-white" asChild>
-                        <Link href="/admin/users" className="flex items-center gap-2">
-                            Manage <ArrowUpRight className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                </div>
-            </div>
-        </div>
-    )
+  const { totalUsers } = await getTotalUsersCount()
+  return (
+    <WorkspacePanel className="overflow-hidden">
+      <PanelHeading title="Active accounts" description="Current school workspace" href="/admin/users" label="Manage" />
+      <Link href="/admin/users" className="group flex min-h-32 items-center gap-4 px-4 py-4 transition-colors hover:bg-[var(--workspace-row-hover)]">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-300"><Users className="size-5" /></span>
+        <span className="min-w-0 flex-1"><span className="block text-3xl font-semibold tracking-tight tabular-nums">{totalUsers || 0}</span><span className="block text-xs text-muted-foreground">Users able to access ARSync</span></span>
+        <ArrowRight className="size-4 text-muted-foreground group-hover:text-foreground" />
+      </Link>
+    </WorkspacePanel>
+  )
 }
 
 export async function RecentLoginList() {
-    const { lastLoggedInUsers } = await getLastLoggedInUsers()
-
-    return (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-card shadow-sm dark:border-slate-800 xl:col-span-12">
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-slate-400" />
-                    <h3 className="font-heading font-semibold text-slate-800 dark:text-slate-200">Recent Login Activity</h3>
-                </div>
-                <Button variant="ghost" size="sm" className="text-slate-400 hover:text-indigo-600" asChild>
-                    <Link href="/admin/users">View All Users</Link>
-                </Button>
-            </div>
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {lastLoggedInUsers?.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                            <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-slate-900">
-                                <AvatarImage src={user.image || undefined} alt={user.name} />
-                                <AvatarFallback className="bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold">{user.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                                <p className="truncate font-medium text-slate-900 dark:text-slate-100">{user.name}</p>
-                                <p className="truncate text-xs text-slate-500">{user.email}</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-col md:flex-row items-end md:items-center gap-3 md:gap-6">
-                            <div className="shrink-0 text-right text-[11px] font-medium text-slate-400 tabular-nums sm:text-xs">
-                                {user.lastLoginAt ? format(new Date(user.lastLoginAt), "MMM d, h:mm a") : "Never"}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-                {(!lastLoggedInUsers || lastLoggedInUsers.length === 0) && (
-                    <div className="p-8 text-center text-slate-400">
-                        No recent activity found.
-                    </div>
-                )}
-            </div>
-        </div>
-    )
+  const { lastLoggedInUsers } = await getLastLoggedInUsers()
+  return (
+    <WorkspacePanel className="overflow-hidden">
+      <PanelHeading title="Recent login activity" description="Latest workspace access" href="/admin/users" label="Users" />
+      {lastLoggedInUsers?.length ? <div className="divide-y">{lastLoggedInUsers.map((user) => (
+        <Link key={user.id} href="/admin/users" className="group flex min-h-14 items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--workspace-row-hover)]">
+          <Avatar className="size-8"><AvatarImage src={user.image || undefined} alt={user.name} /><AvatarFallback className="text-xs font-semibold">{user.name.slice(0, 1).toUpperCase()}</AvatarFallback></Avatar>
+          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{user.name}</span><span className="block truncate text-xs text-muted-foreground">{user.email}</span></span>
+          <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground"><Clock3 className="size-3.5" />{user.lastLoginAt ? format(new Date(user.lastLoginAt), "MMM d, h:mm a") : "Never"}</span>
+        </Link>
+      ))}</div> : <div className="px-4 py-8 text-center"><p className="text-sm font-medium">No recent login activity</p><p className="mt-1 text-xs text-muted-foreground">New activity will appear here.</p></div>}
+    </WorkspacePanel>
+  )
 }

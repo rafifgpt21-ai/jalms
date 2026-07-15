@@ -77,6 +77,12 @@ export function ChatNotificationProvider({
   }, [initialConversations]);
 
   useEffect(() => {
+    // Notifications are useful but must not hold the workspace shell or dashboard render.
+    // Hydrate them immediately after the interactive UI is available.
+    void refreshConversations();
+  }, [refreshConversations]);
+
+  useEffect(() => {
     // Lightweight polling for unread status
     // Poll every 15 seconds (reduced from 5s heavy poll)
     const pollUnread = async () => {

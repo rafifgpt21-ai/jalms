@@ -4,15 +4,15 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-export async function getConversations() {
-    const session = await auth();
-    if (!session?.user?.id) return [];
+export async function getConversations(explicitUserId?: string) {
+    const userId = explicitUserId || (await auth())?.user?.id;
+    if (!userId) return [];
 
     try {
         const conversations = await db.conversation.findMany({
             where: {
                 participantIds: {
-                    has: session.user.id,
+                    has: userId,
                 },
             },
             include: {
@@ -49,7 +49,7 @@ export async function getConversations() {
         // 2. OR current user is the initiator
         const visibleConversations = conversations.filter(conv => {
             if (conv.messages.length > 0) return true;
-            return conv.initiatorId === session.user.id;
+            return conv.initiatorId === userId;
         });
 
         return visibleConversations;

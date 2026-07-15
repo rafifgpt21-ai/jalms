@@ -289,6 +289,7 @@ model Course {
   updatedAt DateTime? @updatedAt
 
   @@index([termId])
+  @@index([teacherId, termId])
   @@index([subjectId])
   @@index([classId])
   @@index([studentIds])
@@ -360,6 +361,8 @@ model Schedule {
   course   Course @relation(fields: [courseId], references: [id])
 
   deletedAt DateTime?
+
+  @@index([dayOfWeek, courseId])
 }
 
 model Enrollment {
@@ -431,6 +434,8 @@ model Assignment {
   status ContentStatus? @default(PUBLISHED)
 
   deletedAt DateTime?
+
+  @@index([courseId, dueDate])
 }
 
 model UserWorkspacePreference {
@@ -549,6 +554,7 @@ model Submission {
   deletedAt DateTime?
 
   @@index([studentId, assignmentId])
+  @@index([assignmentId, submittedAt])
 }
 
 model Attendance {
@@ -572,6 +578,7 @@ model Attendance {
 
   @@index([studentId, date])
   @@index([courseId])
+  @@index([date, status])
 }
 
 model Conversation {

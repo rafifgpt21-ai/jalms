@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import {
   Activity, BookOpen, Calendar, CalendarRange, Clock, FileQuestion, FileText,
-  GraduationCap, Home, LayoutDashboard, Library, ListTodo, MessageSquare,
+  GraduationCap, LayoutDashboard, Library, ListTodo, MessageSquare,
   PieChart, RotateCcw, School, Settings, Table, Users,
 } from "lucide-react"
 import type { Role } from "@prisma/client"
@@ -35,6 +35,7 @@ export function contextFromPath(pathname: string, courses: NavigationCourse[]): 
     if (course) return { kind: "course", course }
   }
   if (pathname.startsWith("/socials")) return { kind: "messages" }
+  if (["/teacher", "/student", "/parent"].includes(pathname)) return { kind: "home" }
   if (pathname.startsWith("/admin")) return { kind: "admin" }
   if (pathname.startsWith("/homeroom")) return { kind: "homeroom" }
   if (pathname.startsWith("/parent")) return { kind: "family" }
@@ -88,7 +89,7 @@ export function groupsForContext(context: BrowseContext, roles: Role[]): Navigat
   if (context.kind === "family") return [{ id: "family", sections: [{ id: "overview", label: "Family Overview", href: "/parent", icon: Users }] }]
   if (context.kind === "messages") return [{ id: "messages", sections: [{ id: "messages", label: "Direct Messages", href: "/socials", icon: MessageSquare }] }]
 
-  const groups: NavigationGroup[] = [{ id: "home", sections: [{ id: "home", label: "Home", href: "/home", icon: Home }] }]
+  const groups: NavigationGroup[] = []
   if (roles.includes("SUBJECT_TEACHER")) groups.push({ id: "teaching", label: "Teaching", sections: [
     { id: "teacher", label: "Dashboard", href: "/teacher", icon: LayoutDashboard },
     { id: "attendance", label: "Daily Attendance", href: "/teacher/attendance", icon: Clock },
@@ -103,6 +104,9 @@ export function groupsForContext(context: BrowseContext, roles: Role[]): Navigat
     { id: "schedule", label: "Schedule", href: "/student/schedule", icon: Calendar },
     { id: "profile", label: "Learning Profile", href: "/student/learning-profile", icon: PieChart },
   ] })
+  if (roles.includes("PARENT")) groups.push({ id: "family", label: "Family", sections: [
+    { id: "family-dashboard", label: "Family Dashboard", href: "/parent", icon: Users },
+  ] })
   return groups
 }
 
@@ -112,6 +116,6 @@ export function contextLabel(context: BrowseContext) {
 }
 
 export function isSectionActive(pathname: string, section: NavigationSection) {
-  if (["dashboard", "teacher", "student", "home"].includes(section.id)) return pathname === section.href
+  if (["dashboard", "teacher", "student", "homeroom-dashboard", "family-dashboard"].includes(section.id)) return pathname === section.href
   return pathname === section.href || pathname.startsWith(`${section.href}/`)
 }

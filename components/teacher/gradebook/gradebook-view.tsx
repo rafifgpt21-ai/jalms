@@ -68,6 +68,14 @@ export function GradebookView({ data }: { data: GradebookData }) {
     : 0
   const highestGrade = gradebook.length ? Math.max(...gradebook.map((student) => student.totalScore)) : 0
   const needsSupport = gradebook.filter((student) => student.totalScore < 70).length
+  const taskMaxPoints = assignments.reduce(
+    (total, assignment) => total + (assignment.isExtraCredit ? 0 : assignment.maxPoints),
+    0,
+  )
+
+  function getTaskPoints(student: GradebookData["gradebook"][number]) {
+    return assignments.reduce((total, assignment) => total + (student.scores[assignment.id] ?? 0), 0)
+  }
 
   function exportGradebook() {
     const header = ["Student", ...assignments.map((assignment) => `${assignment.title} (${assignment.maxPoints} pts)`), "Attendance", "Points earned", "Final grade"]
@@ -131,20 +139,11 @@ export function GradebookView({ data }: { data: GradebookData }) {
         ) : (
           <>
             <div className="hidden p-3 md:block">
-              <Table className="min-w-max">
+              <Table className="min-w-[680px]">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="sticky left-0 z-20 min-w-56 border-r bg-muted">Student</TableHead>
-                    {assignments.map((assignment) => (
-                      <TableHead key={assignment.id} className="min-w-32 border-r text-center">
-                        <div className="mx-auto max-w-36 normal-case tracking-normal">
-                          <span className="block truncate text-xs font-semibold text-foreground" title={assignment.title}>{assignment.title}</span>
-                          <span className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
-                            {assignment.maxPoints} pts{assignment.isExtraCredit ? " · Extra" : ""}
-                          </span>
-                        </div>
-                      </TableHead>
-                    ))}
+                    <TableHead className="min-w-32 text-center">Task total</TableHead>
                     <TableHead className="min-w-28 text-center">Attendance</TableHead>
                     <TableHead className="min-w-28 text-center">Total points</TableHead>
                     <TableHead className="min-w-24 text-center">Grade</TableHead>
@@ -162,18 +161,10 @@ export function GradebookView({ data }: { data: GradebookData }) {
                           <span className="max-w-40 truncate font-semibold" title={student.studentName}>{student.studentName}</span>
                         </div>
                       </TableCell>
-                      {assignments.map((assignment) => (
-                        <TableCell key={assignment.id} className="border-r text-center">
-                          {student.scores[assignment.id] === null || student.scores[assignment.id] === undefined ? (
-                            <span className="text-muted-foreground/60">—</span>
-                          ) : (
-                            <span className="font-semibold">
-                              {student.scores[assignment.id]}
-                              <span className="text-[10px] font-normal text-muted-foreground">/{assignment.maxPoints}</span>
-                            </span>
-                          )}
-                        </TableCell>
-                      ))}
+                      <TableCell className="text-center font-semibold">
+                        {getTaskPoints(student)}
+                        <span className="text-[10px] font-normal text-muted-foreground">/{taskMaxPoints}</span>
+                      </TableCell>
                       <TableCell className="text-center font-semibold">{Math.round(student.attendancePercentage)}%</TableCell>
                       <TableCell className="text-center font-bold">{student.earnedPoints}/{maxPoints}</TableCell>
                       <TableCell className="text-center">
@@ -208,8 +199,8 @@ export function GradebookView({ data }: { data: GradebookData }) {
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <div className="rounded-lg bg-muted/60 p-2.5">
-                      <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">Assignment points</p>
-                      <p className="mt-1 text-sm font-bold">{student.earnedPoints} / {maxPoints}</p>
+                      <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">Task total</p>
+                      <p className="mt-1 text-sm font-bold">{getTaskPoints(student)} / {taskMaxPoints}</p>
                     </div>
                     <div className="rounded-lg bg-muted/60 p-2.5">
                       <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">Attendance</p>
@@ -217,24 +208,6 @@ export function GradebookView({ data }: { data: GradebookData }) {
                     </div>
                   </div>
 
-                  {assignments.length > 0 && (
-                    <div className="mt-3 overflow-hidden rounded-lg border">
-                      {assignments.map((assignment) => (
-                        <div key={assignment.id} className="flex items-center justify-between gap-3 border-b px-3 py-2.5 last:border-b-0">
-                          <div className="min-w-0">
-                            <p className="truncate text-xs font-medium">{assignment.title}</p>
-                            {assignment.isExtraCredit && <p className="text-[9px] font-bold uppercase text-indigo-600 dark:text-indigo-400">Extra credit</p>}
-                          </div>
-                          <span className="shrink-0 text-xs font-bold">
-                            {student.scores[assignment.id] ?? "—"}
-                            {student.scores[assignment.id] !== null && student.scores[assignment.id] !== undefined && (
-                              <span className="font-normal text-muted-foreground"> / {assignment.maxPoints}</span>
-                            )}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </article>
               ))}
             </div>

@@ -1,5 +1,5 @@
-import { GridRouteSkeleton } from "@/components/navigation/route-skeletons"
+import { DashboardRouteSkeleton } from "@/components/navigation/route-skeletons"
 
 export default function Loading() {
-    return <GridRouteSkeleton />
+    return <DashboardRouteSkeleton variant="homeroom" />
 }

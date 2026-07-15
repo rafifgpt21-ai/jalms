@@ -1,19 +1,21 @@
-
-import { getTeacherDashboardStats } from "../lib/actions/teacher.actions"
+import { db } from "../lib/db"
+import { getAssignmentsOverview, getClassesToday } from "../lib/actions/teacher.actions"
 
 async function main() {
-    console.log("Starting profile...")
-    const start = performance.now()
-    const result = await getTeacherDashboardStats("69672dd234c708807164eebf")
-    const end = performance.now()
+  const teacher = await db.user.findFirst({
+    where: { roles: { has: "SUBJECT_TEACHER" } },
+    select: { id: true },
+  })
+  if (!teacher) throw new Error("No teacher account is available for profiling")
 
-    if (result.error) {
-        console.error("Error:", result.error)
-    } else {
-        console.log("Success!")
-        // console.log(JSON.stringify(result, null, 2))
-    }
-    console.log(`Total execution time: ${(end - start).toFixed(2)}ms`)
+  const start = performance.now()
+  const [classes, assignments] = await Promise.all([
+    getClassesToday(teacher.id),
+    getAssignmentsOverview(teacher.id),
+  ])
+
+  if (classes.error || assignments.error) throw new Error("Dashboard query failed")
+  console.log(`Teacher dashboard data: ${(performance.now() - start).toFixed(2)}ms`)
 }
 
-main()
+void main().finally(() => db.$disconnect())

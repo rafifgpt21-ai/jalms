@@ -10,16 +10,20 @@ import { UTApi } from "uploadthing/server";
 
 const utapi = new UTApi();
 
-export async function getStudentCourses() {
+export async function getStudentCourses(explicitStudentId?: string) {
     try {
-        const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        let studentId = explicitStudentId
+        if (!studentId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            studentId = user.id
+        }
 
         const courses = await prisma.course.findMany({
             where: {
                 OR: [
-                    { studentIds: { has: user.id } },
-                    { courseEnrollments: { some: { studentId: user.id, OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }] } } }
+                    { studentIds: { has: studentId } },
+                    { courseEnrollments: { some: { studentId, OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }] } } }
                 ],
                 deletedAt: { isSet: false },
                 term: { isActive: true }
@@ -72,11 +76,14 @@ export async function getStudentCourses() {
     }
 }
 
-export async function getStudentSchedule() {
+export async function getStudentSchedule(explicitStudentId?: string) {
     try {
-        const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
-        const studentId = user.id
+        let studentId = explicitStudentId
+        if (!studentId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            studentId = user.id
+        }
 
         const today = new Date()
         const dayOfWeek = today.getDay()
@@ -142,13 +149,16 @@ export async function getStudentSchedule() {
     }
 }
 
-export async function getStudentAssignments() {
+export async function getStudentAssignments(explicitStudentId?: string) {
     try {
-        const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
-        const studentId = user.id
+        let studentId = explicitStudentId
+        if (!studentId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            studentId = user.id
+        }
 
-        // Fetch ALL Assignments for active courses (Filter in memory for speed)
+        // Bound the dashboard query so years of historical work cannot delay the first render.
         const allAssignments = await prisma.assignment.findMany({
             where: {
                 course: {
@@ -159,9 +169,19 @@ export async function getStudentAssignments() {
                 deletedAt: { isSet: false },
                 type: { in: ["SUBMISSION", "QUIZ"] }
             },
-            include: {
+            orderBy: { dueDate: "desc" },
+            take: 40,
+            select: {
+                id: true,
+                courseId: true,
+                title: true,
+                dueDate: true,
                 course: {
-                    include: { subject: true }
+                    select: {
+                        name: true,
+                        reportName: true,
+                        subject: { select: { name: true, reportName: true } }
+                    }
                 },
                 submissions: {
                     where: {
@@ -200,11 +220,14 @@ export async function getStudentAssignments() {
     }
 }
 
-export async function getRecentGrades() {
+export async function getRecentGrades(explicitStudentId?: string) {
     try {
-        const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
-        const studentId = user.id
+        let studentId = explicitStudentId
+        if (!studentId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            studentId = user.id
+        }
 
         const recentGrades = await prisma.submission.findMany({
             where: {
@@ -235,10 +258,12 @@ export async function getRecentGrades() {
 
 export async function getStudentDashboardStats() {
     try {
+        const user = await getUser()
+        if (!user) return { error: "Unauthorized" }
         const [scheduleRes, assignmentsRes, gradesRes] = await Promise.all([
-            getStudentSchedule(),
-            getStudentAssignments(),
-            getRecentGrades()
+            getStudentSchedule(user.id),
+            getStudentAssignments(user.id),
+            getRecentGrades(user.id)
         ])
 
         if (scheduleRes.error || assignmentsRes.error || gradesRes.error) {

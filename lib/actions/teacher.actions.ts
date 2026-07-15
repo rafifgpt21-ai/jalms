@@ -2,13 +2,13 @@
 
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
-import { AssignmentType, AcademicDomain, Submission } from "@prisma/client"
+import { AssignmentType, AcademicDomain, Prisma, Submission } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 
 export async function getTeachersWithCourses(search: string = "") {
     console.log("getTeachersWithCourses called with search:", search)
     try {
-        const where: any = {
+        const where: Prisma.UserWhereInput = {
             taughtCourses: {
                 some: {
                     deletedAt: { isSet: false },
@@ -122,7 +122,7 @@ export async function getTeacherActiveCourses(teacherId: string) {
 }
 
 export async function createAssignment(data: {
-    quizId?: any
+    quizId?: string
     title: string
     description?: string
     courseId: string
@@ -308,7 +308,7 @@ export async function updateSubmissionScore(
 }
 
 export async function updateAssignment(data: {
-    quizId?: any
+    quizId?: string
     assignmentId: string
     title: string
     description?: string
@@ -513,75 +513,6 @@ export async function getCourseGradebook(courseId: string) {
     }
 }
 
-export async function getTeacherStats(explicitTeacherId?: string) {
-    try {
-        let teacherId = explicitTeacherId
-        if (!teacherId) {
-            const user = await getUser()
-            if (!user) return { error: "Unauthorized" }
-            teacherId = user.id
-        }
-
-        const [studentsCount, activeCoursesCount, assignmentsCount, ungradedCount] = await Promise.all([
-            prisma.user.count({
-                where: {
-                    roles: { has: "STUDENT" },
-                    enrolledCourses: {
-                        some: {
-                            teacherId,
-                            deletedAt: { isSet: false },
-                            term: { isActive: true }
-                        }
-                    }
-                }
-            }),
-            prisma.course.count({
-                where: {
-                    teacherId,
-                    term: { isActive: true },
-                    deletedAt: { isSet: false }
-                }
-            }),
-            prisma.assignment.count({
-                where: {
-                    course: {
-                        teacherId,
-                        term: { isActive: true },
-                        deletedAt: { isSet: false },
-                    },
-                    deletedAt: { isSet: false },
-                }
-            }),
-            prisma.submission.count({
-                where: {
-                    grade: null,
-                    assignment: {
-                        course: {
-                            teacherId,
-                            term: { isActive: true },
-                            deletedAt: { isSet: false },
-                        },
-                        deletedAt: { isSet: false }
-                    },
-                    deletedAt: { isSet: false }
-                }
-            })
-        ])
-
-        return {
-            stats: {
-                courses: activeCoursesCount,
-                students: studentsCount,
-                assignments: assignmentsCount,
-                ungraded: ungradedCount
-            }
-        }
-    } catch (error) {
-        console.error("Error fetching teacher stats:", error)
-        return { error: "Failed to fetch stats" }
-    }
-}
-
 export async function getClassesToday(explicitTeacherId?: string) {
     try {
         let teacherId = explicitTeacherId
@@ -608,12 +539,16 @@ export async function getClassesToday(explicitTeacherId?: string) {
                 deletedAt: { isSet: false }
             },
             orderBy: { period: 'asc' },
-            include: {
+            select: {
+                id: true,
+                courseId: true,
+                period: true,
                 course: {
-                    include: {
-                        class: true,
-                        subject: true,
-                        term: true
+                    select: {
+                        name: true,
+                        class: { select: { name: true } },
+                        subject: { select: { name: true, reportName: true } },
+                        term: { select: { startDate: true, endDate: true } }
                     }
                 }
             }
@@ -648,7 +583,10 @@ export async function getClassesToday(explicitTeacherId?: string) {
                 a.courseId === schedule.courseId && a.period === schedule.period
             )
             return {
-                ...schedule,
+                id: schedule.id,
+                courseId: schedule.courseId,
+                period: schedule.period,
+                course: { name: schedule.course.name, class: schedule.course.class, subject: schedule.course.subject },
                 topic: attendance?.topic || null
             }
         })
@@ -670,112 +608,55 @@ export async function getAssignmentsOverview(explicitTeacherId?: string) {
             teacherId = user.id
         }
 
-        const [allAssignments, activeCourses] = await Promise.all([
-            prisma.assignment.findMany({
-                where: {
-                    course: {
-                        teacherId,
-                        term: { isActive: true },
-                        deletedAt: { isSet: false },
-                    },
-                    deletedAt: { isSet: false },
-                },
-                orderBy: { dueDate: 'asc' },
-                include: {
-                    course: {
-                        select: {
-                            id: true,
-                            name: true,
-                            _count: {
-                                select: { students: true }
-                            }
-                        }
-                    },
-                    submissions: {
-                        where: {
-                            grade: { not: null },
-                            deletedAt: { isSet: false }
-                        },
-                        select: { id: true }
-                    }
-                }
-            }),
-            prisma.course.findMany({
-                where: {
+        const allAssignments = await prisma.assignment.findMany({
+            where: {
+                course: {
                     teacherId,
                     term: { isActive: true },
-                    deletedAt: { isSet: false }
+                    deletedAt: { isSet: false },
                 },
-                select: { id: true, name: true },
-                orderBy: { name: 'asc' }
-            })
-        ])
-
-        return { allAssignments, activeCourses }
-    } catch (error) {
-        console.error("Error fetching assignments overview:", error)
-        return { error: "Failed to fetch assignments overview" }
-    }
-}
-
-export async function getRecentSubmissions(explicitTeacherId?: string) {
-    try {
-        let teacherId = explicitTeacherId
-        if (!teacherId) {
-            const user = await getUser()
-            if (!user) return { error: "Unauthorized" }
-            teacherId = user.id
-        }
-
-        const recentSubmissions = await prisma.submission.findMany({
-            where: {
-                assignment: {
-                    course: {
-                        teacherId,
-                        term: { isActive: true },
-                        deletedAt: { isSet: false }
-                    },
-                    deletedAt: { isSet: false }
-                },
-                deletedAt: { isSet: false }
+                deletedAt: { isSet: false },
             },
-            take: 5,
-            orderBy: { submittedAt: 'desc' },
-            include: {
-                student: true,
-                assignment: {
-                    include: { course: true }
+            orderBy: { dueDate: 'desc' },
+            take: 12,
+            select: {
+                id: true,
+                title: true,
+                type: true,
+                dueDate: true,
+                course: {
+                    select: {
+                        id: true,
+                        name: true,
+                        studentIds: true,
+                        courseEnrollments: {
+                            where: {
+                                OR: [
+                                    { deletedAt: null },
+                                    { deletedAt: { isSet: false } }
+                                ]
+                            },
+                            select: { studentId: true }
+                        },
+                        _count: {
+                            select: { students: true }
+                        }
+                    }
+                },
+                submissions: {
+                where: {
+                    grade: { not: null },
+                    deletedAt: { isSet: false }
+                },
+                    select: { id: true }
                 }
             }
         })
 
-        return { recentSubmissions }
-
+        return { allAssignments }
     } catch (error) {
-        console.error("Error fetching recent submissions:", error)
-        return { error: "Failed to fetch recent submissions" }
-    }
-}
-
-// Deprecated: Kept for backward compatibility if needed, but we should move away from it.
-export async function getTeacherDashboardStats(explicitTeacherId?: string) {
-    const [statsRes, classesRes, assignmentsRes, submissionsRes] = await Promise.all([
-        getTeacherStats(explicitTeacherId),
-        getClassesToday(explicitTeacherId),
-        getAssignmentsOverview(explicitTeacherId),
-        getRecentSubmissions(explicitTeacherId)
-    ])
-
-    if (statsRes.error || classesRes.error || assignmentsRes.error || submissionsRes.error) {
-        return { error: "Failed to fetch dashboard stats" }
-    }
-
-    return {
-        stats: statsRes.stats!,
-        classesToday: classesRes.classesToday!,
-        allAssignments: assignmentsRes.allAssignments!,
-        activeCourses: assignmentsRes.activeCourses!,
-        recentSubmissions: submissionsRes.recentSubmissions!
+        console.error("Error fetching assignments overview:", error)
+        return { error: "Failed to fetch assignments overview" }
     }
 }
 

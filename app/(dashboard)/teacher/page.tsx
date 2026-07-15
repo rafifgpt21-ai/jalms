@@ -1,47 +1,37 @@
 import { Suspense } from "react"
+import Link from "next/link"
+import { format } from "date-fns"
+import { Clock, FileQuestion, FileText } from "lucide-react"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
-import {
-    DashboardStats,
-    ClassesTodayCard,
-    AssignmentsWidgetWrapper,
-    RecentSubmissionsList
-} from "@/components/teacher/dashboard/dashboard-components"
-import {
-    StatsSkeleton,
-    ClassesSkeleton,
-    AssignmentsSkeleton,
-    RecentSubmissionsSkeleton
-} from "@/components/teacher/dashboard/skeletons"
+import { WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
+import { ClassesTodayCard, AssignmentsWidgetWrapper } from "@/components/teacher/dashboard/dashboard-components"
+import { ClassesSkeleton, AssignmentsSkeleton } from "@/components/teacher/dashboard/skeletons"
+import { cn } from "@/lib/utils"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
+
+const quickActions = [
+  { href: "/teacher/attendance", label: "Attendance", icon: Clock },
+  { href: "/teacher/quiz-manager", label: "Quiz library", icon: FileQuestion },
+  { href: "/teacher/materials", label: "Material library", icon: FileText },
+]
 
 export default function TeacherDashboard() {
-    return (
-        <div className="space-y-6">
-            <MobileHeaderSetter title="Teacher Dashboard" />
+  return (
+    <WorkspacePage>
+      <MobileHeaderSetter title="Teaching dashboard" subtitle={format(new Date(), "EEEE, MMMM d")} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-10">
-                {/* Stats Row */}
-                <Suspense fallback={<StatsSkeleton />}>
-                    <DashboardStats />
-                </Suspense>
+      <WorkspacePanel className="grid grid-cols-1 overflow-hidden sm:grid-cols-3">
+        {quickActions.map(({ href, label, icon: Icon }, index) => (
+          <Link key={href} href={href} className={cn("flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--workspace-row-hover)]", index > 0 && "border-t sm:border-l sm:border-t-0")}>
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"><Icon className="size-4" /></span>
+            <span className="text-sm font-medium">{label}</span>
+          </Link>
+        ))}
+      </WorkspacePanel>
 
-                {/* Left Column: Classes & Assignments (Span 3) */}
-                <div className="lg:col-span-3 space-y-6">
-                    <Suspense fallback={<ClassesSkeleton />}>
-                        <ClassesTodayCard />
-                    </Suspense>
-
-                    <Suspense fallback={<AssignmentsSkeleton />}>
-                        <AssignmentsWidgetWrapper />
-                    </Suspense>
-                </div>
-
-                {/* Right Column: Recent Submissions (Span 1) */}
-                <Suspense fallback={<RecentSubmissionsSkeleton />}>
-                    <RecentSubmissionsList />
-                </Suspense>
-            </div>
-        </div>
-    )
+      <Suspense fallback={<ClassesSkeleton />}><ClassesTodayCard /></Suspense>
+      <Suspense fallback={<AssignmentsSkeleton />}><AssignmentsWidgetWrapper /></Suspense>
+    </WorkspacePage>
+  )
 }

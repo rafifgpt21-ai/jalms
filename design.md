@@ -175,7 +175,7 @@ The browser body does not scroll while the workspace shell is present. Scrolling
 Mobile alternates between two full-screen states:
 
 - **Section page:** content fills the viewport below the retained 56px top bar.
-- **Navigator:** a narrow 56px rail plus the selected context's section list fills the screen.
+- **Navigator:** a 64px touch-safe rail plus the selected context's section list fills the screen.
 
 The top-bar Menu control opens the Navigator. Choosing a course changes the section list without navigating. Choosing a section navigates and closes the Navigator. Ephemeral browser history makes native Back close the Navigator before leaving the page.
 
@@ -223,6 +223,8 @@ The rail can expose:
 - Family, when authorized;
 - profile/settings at the bottom.
 
+Home is a routing action, not a standalone dashboard. It opens the highest-priority dashboard authorized for the current user. Daily academic work takes priority in this order: Teaching, Learning, Homeroom, Administration, then Family. `/home` remains redirect-only for compatibility with old bookmarks.
+
 Teaching and enrolled courses are separate ordered groups and can be reordered. Course identity appears as a 40px mark.
 
 ### Section contexts
@@ -247,7 +249,7 @@ Student course sections:
 - Grades;
 - Attendance.
 
-Administration and the Home context use the centralized configuration in `lib/navigation-config.ts`. Add or change shared destinations there rather than hardcoding a second navigation list.
+Administration and the Home context use the centralized configuration in `lib/navigation-config.ts`. Administration and Homeroom retain dedicated rail contexts and expose their menus only after their rail icons are selected. The Home section sidebar combines the authorized Teaching, Learning, and Family menus and separates each visible role group with a divider. Add or change shared destinations there rather than hardcoding a second navigation list.
 
 Detail routes keep their parent section active through prefix matching. A course remembers its last visited valid section and reopens there from the rail.
 
@@ -283,10 +285,30 @@ The shell also suppresses old page-specific subtitles and header actions during 
 - Existing examples include Home destinations, admin Users/Classes/Courses, Homeroom, course overviews, Student Grades, and Learning Profile.
 - Heavy client-only visualizations such as charts should be dynamically imported with a fixed-size loading fallback so their code does not block the initial frame.
 
+### Performance review for new and redesigned pages
+
+Loading speed is part of the page's acceptance criteria. A skeleton is temporary feedback, not permission for a slow data path.
+
+- Before finishing a new page or a substantial redesign, inspect its critical render path for repeated authentication, duplicate fetches, sequential independent queries, unbounded collection reads, oversized relation includes, and unrelated work such as notifications or analytics.
+- Render the useful static frame and primary actions immediately. Defer secondary data until after the page is usable when it does not affect the user's first decision.
+- Select only fields used by the page, bound dashboard and preview collections with a meaningful limit, and add indexes for recurring filters and sort keys.
+- Share request identity and memoize identical reads within a render. Run independent reads concurrently, but do not launch broad speculative prefetches that compete with the destination being opened.
+- If a low-value widget is consistently responsible for a multi-second delay, simplify it, move it to a dedicated page, load it after interaction, or remove it. Do not preserve it by making the skeleton last longer.
+
+Testing must be proportional to the change:
+
+- Always run the relevant static checks and review the query shape when a page reads server data.
+- Measure loading when a new or changed page introduces database queries, large or unknown datasets, third-party requests, heavy client code, or when the UI is observed remaining in a skeleton for too long.
+- Profile the slow sections independently so one expensive query is not hidden inside a combined page timing. Compare before and after when addressing a reported regression.
+- Use representative data and the roles or responsive layouts affected by the change. A focused page check is preferred over an exhaustive application-wide performance suite.
+- Static copy changes, minor styling adjustments, and pages using an already-verified shared data path do not require dedicated performance profiling unless they show a regression.
+- Never add artificial waits or optimize only the loading animation. Fix, defer, bound, or remove the work causing the delay.
+
 ### Loading presentation
 
 - Do not use route-level progress bars, centered spinners, blank screens, or generic `Loading...` text.
 - Use structural skeletons that match the final component's dimensions and layout.
+- Match header presence, summary-cell count, action placement, responsive breakpoints, and desktop/mobile collection representation. A header-free page must not load through a skeleton with a content header.
 - Keep shell navigation visible and interactive while content streams.
 - Skeleton containers should use `aria-busy="true"` and a concise accessible label where appropriate.
 - Do not add artificial delays to make a loading treatment visible.
@@ -302,19 +324,39 @@ The shared skeleton families are in `components/navigation/route-skeletons.tsx`:
 | `TaskRouteSkeleton` | teacher task management list |
 | `TaskGradingRouteSkeleton` | teacher task grading detail |
 
-When creating a page with materially different final geometry, add a localized skeleton rather than forcing an inaccurate generic one.
+When creating a page with materially different final geometry, add a localized skeleton rather than forcing an inaccurate generic one. The optimistic shell mapping must select that destination-specific skeleton before the route commits. `TaskRouteSkeleton` and `TaskGradingRouteSkeleton` are reference implementations for compact management and detail pages.
 
 ## 12. Shared workspace primitives
 
 Use the components in `components/workspace/workspace-page.tsx`:
 
 - `WorkspacePage`: vertical page composition and shared section rhythm;
-- `WorkspaceHeader`: page-level heading/summary boundary inside content;
+- `WorkspaceHeader`: optional page-level boundary for identity or controls that cannot fit in the retained top bar;
 - `WorkspaceToolbar`: filters, search, view controls, and compact utilities;
 - `WorkspaceActions`: page actions, right-aligned on desktop and stacked on mobile;
 - `WorkspacePanel`: the standard bordered content surface.
 
-The retained top-bar title is usually set with `MobileHeaderSetter`. Avoid duplicating a giant page title below it. A content header is appropriate when it carries identity, summary, or page actions that the compact top bar cannot contain.
+### Retained top bar and content headers
+
+These rules apply to authenticated workspace pages. Public/authentication surfaces and generated or exported documents keep their scoped presentation systems.
+
+The retained top bar owns page identity by default. Use `MobileHeaderSetter` for the page or record title, concise subtitle/context, and the parent Back destination on detail routes.
+
+- Do not repeat the same title, subtitle, identity icon tile, or mobile Back control inside page content.
+- Use `WorkspaceHeader` only when it adds distinct identity, summary, or controls that the top bar cannot reasonably contain. It is optional, not the default first section.
+- On mobile detail pages, Back belongs in the retained top bar. Do not add a second content-level Back button.
+- On desktop detail pages, a visible Back action may sit beside Edit or the primary record action when that improves workflow clarity.
+
+### Compact summary/action strips
+
+When a page begins with short metrics or record metadata, combine them and their immediate action into one bordered `WorkspacePanel` instead of separate cards, a repeated content header, and an independent action row.
+
+- Keep summary cells and actions on one horizontal desktop row, with dividers inside one shared surface.
+- Put the desktop detail Back action beside Edit or the relevant primary action in the final action segment.
+- On mobile, keep a small set of short summary cells in one row when they remain readable, then place the primary action as a full-width segment beneath them.
+- Hide decorative icons before removing meaningful labels or values. Truncate secondary context deliberately and preserve accessible names.
+- Mobile action segments and icon-only controls must retain 44px touch targets.
+- If content length, accessibility, or localization makes the horizontal pattern unreadable, use a deliberate responsive alternative without reintroducing duplicated page identity.
 
 Before creating a new primitive, check `components/ui` and `components/workspace`. Prefer extending a shared component with a semantic variant over copying a long class list into several pages.
 
@@ -424,10 +466,12 @@ Metrics should support decisions, not exist as decoration. Each async dashboard 
 Recommended composition:
 
 1. retained top-bar title and optional subtitle;
-2. `WorkspaceActions` for create/import actions;
+2. an optional compact summary/action strip for metrics and create/import actions;
 3. toolbar with search, filters, sorting, archive visibility, and counts;
 4. a full-width table or compact operational list;
 5. pagination or result summary near the collection.
+
+Do not add a content header solely to repeat the top-bar title or to hold an action that fits naturally in the summary strip or toolbar.
 
 Search and filters that define a shareable view should be URL-backed. During a route-backed filter change, keep the stable toolbar visible and skeleton only the changing results when possible.
 
@@ -443,9 +487,12 @@ Recommended composition:
 ### Detail page
 
 - Preserve the parent section's active navigation state.
-- Put identity and primary actions first.
+- Put record identity and parent Back navigation in the retained top bar.
+- Begin content with a compact metadata/action strip when the record has short facts such as due date, score, status, or lifecycle state.
+- Keep desktop Back and Edit actions together in the strip's action segment; rely on the retained top-bar Back control on mobile.
 - Group related fields and records into a small number of clear panels.
 - Keep critical save or submission actions reachable on long pages.
+- Avoid the redundant sequence of content identity header, separate metric cards, and separate action row when one strip communicates the same information.
 
 ### Forms
 
@@ -470,7 +517,7 @@ Chat, schedule grids, gradebooks, and other full-height tools may own their inte
 
 Design and test mobile first, then verify tablet and desktop hierarchy.
 
-- Below 768px: one-column content by default, full-width action stacks, 44px controls, Navigator/Page mobile model.
+- Below 768px: one-column content by default, full-width action stacks, 44px controls, Navigator/Page mobile model. Compact summary strips may retain short metrics in one row, with their action moved to a full-width segment below.
 - At 768px (`md`): persistent rail, tablet section overlay, multi-column layouts where content supports them.
 - At 1024px (`lg`): persistent section sidebar and denser desktop layouts.
 - At 1280px (`xl`): use extra columns only when they improve scanning; do not stretch text or forms across the full width without reason.
@@ -589,11 +636,14 @@ A UI change is ready when:
 - active and pressed feedback is immediate;
 - static structure appears without waiting for unrelated data;
 - loading is local, structural, and layout-stable;
+- the skeleton matches the final page's header presence, summary/action geometry, responsive breakpoints, and collection representation;
 - mobile navigation does not expose stale page content;
 - mobile targets and layouts are usable at 360px width;
 - desktop density remains efficient;
 - light, dark, compact, and comfortable modes remain coherent;
 - keyboard focus and accessible names are intact;
+- the retained top bar and page content do not duplicate titles, subtitles, identity tiles, or mobile Back controls;
+- related summary metadata and immediate actions use a compact shared strip when the content remains readable;
 - no artificial delay, route spinner, or new navigation duplication was introduced;
 - relevant TypeScript, lint, and build checks pass;
 - this file is updated if the change modifies a system-level design rule.

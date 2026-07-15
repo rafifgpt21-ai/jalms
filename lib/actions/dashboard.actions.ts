@@ -81,18 +81,14 @@ export async function getAttendancePulse() {
         const tomorrow = new Date(today)
         tomorrow.setDate(tomorrow.getDate() + 1)
 
-        const todayAttendances = await prisma.attendance.findMany({
-            where: {
-                date: {
-                    gte: today,
-                    lt: tomorrow
-                },
-                deletedAt: { isSet: false }
-            }
-        })
-
-        const totalRecords = todayAttendances.length
-        const totalPresent = todayAttendances.filter(a => a.status === "PRESENT").length
+        const dateFilter = {
+            date: { gte: today, lt: tomorrow },
+            deletedAt: { isSet: false } as const
+        }
+        const [totalRecords, totalPresent] = await Promise.all([
+            prisma.attendance.count({ where: dateFilter }),
+            prisma.attendance.count({ where: { ...dateFilter, status: "PRESENT" } })
+        ])
         const percentage = totalRecords > 0 ? Math.round((totalPresent / totalRecords) * 100) : 0
 
         return {

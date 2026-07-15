@@ -1,14 +1,18 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Editor } from "@/components/ui/editor"
-import { Label } from "@/components/ui/label"
-import { submitAssignment, deleteSubmissionFile } from "@/lib/actions/student.actions"
-import { Loader2, Paperclip, FileText, Trash, Link as LinkIcon, RefreshCw } from "lucide-react"
+import { useId, useState } from "react"
+import { useRouter } from "next/navigation"
+import {
+    ExternalLink,
+    FileText,
+    Link as LinkIcon,
+    Loader2,
+    Paperclip,
+    RefreshCw,
+    Send,
+    Trash2,
+} from "lucide-react"
 import { toast } from "sonner"
-import { Input } from "@/components/ui/input"
-import { useLocalUpload } from "@/hooks/use-local-upload"
 
 import {
     AlertDialog,
@@ -20,6 +24,12 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import { Editor } from "@/components/ui/editor"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useLocalUpload } from "@/hooks/use-local-upload"
+import { deleteSubmissionFile, submitAssignment } from "@/lib/actions/student.actions"
 
 interface SubmissionFormProps {
     assignmentId: string
@@ -29,255 +39,274 @@ interface SubmissionFormProps {
     isLate?: boolean
 }
 
+function hasWrittenContent(value: string) {
+    return value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0
+}
+
 export function SubmissionForm({ assignmentId, initialUrl, initialAttachmentUrl, initialLink, isLate }: SubmissionFormProps) {
+    const router = useRouter()
+    const fileInputId = useId()
     const [url, setUrl] = useState(initialUrl || "")
     const [attachmentUrl, setAttachmentUrl] = useState(initialAttachmentUrl || "")
     const [link, setLink] = useState(initialLink || "")
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showLateConfirmation, setShowLateConfirmation] = useState(false)
-
-
+    const [validationMessage, setValidationMessage] = useState("")
     const { startUpload, isUploading } = useLocalUpload()
 
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!url && !attachmentUrl && !selectedFile && !link) return
+    const hasExistingSubmission = Boolean(initialUrl || initialAttachmentUrl || initialLink)
+    const hasWork = hasWrittenContent(url) || Boolean(attachmentUrl || selectedFile || link.trim())
 
-        if (isLate) {
-            setShowLateConfirmation(true)
-        } else {
-            submit()
+    const handleFormSubmit = (event: React.FormEvent) => {
+        event.preventDefault()
+
+        if (!hasWork) {
+            setValidationMessage("Add a written response, link, or attachment before submitting.")
+            return
         }
+
+        setValidationMessage("")
+        if (isLate) setShowLateConfirmation(true)
+        else void submit()
     }
 
     const submit = async () => {
-        const toastId = toast.loading("Submitting assignment...")
+        const toastId = toast.loading(hasExistingSubmission ? "Updating submission..." : "Submitting assignment...")
         setIsSubmitting(true)
+
         try {
             let finalAttachmentUrl = attachmentUrl
 
-            // 1. Upload file if selected
             if (selectedFile) {
-                toast.loading("Uploading file...", { id: toastId })
-                const res = await startUpload([selectedFile], "tasks")
-                if (res && res[0]) {
-                    finalAttachmentUrl = res[0].url
-                } else {
-                    throw new Error("Failed to upload file")
-                }
+                toast.loading("Uploading attachment...", { id: toastId })
+                const result = await startUpload([selectedFile], "tasks")
+                if (!result?.[0]) throw new Error("The attachment could not be uploaded.")
+                finalAttachmentUrl = result[0].url
             }
 
-            // 2. Submit assignment
-            toast.loading("Saving submission...", { id: toastId })
-            const res = await submitAssignment(assignmentId, url, finalAttachmentUrl, link)
-            if (res.error) {
-                toast.error(res.error, { id: toastId })
-            } else {
-                toast.success("Assignment submitted successfully!", { id: toastId })
-                setShowLateConfirmation(false)
-                // Clear selected file after successful submission
-                setSelectedFile(null)
-                setAttachmentUrl(finalAttachmentUrl)
+            toast.loading("Saving your work...", { id: toastId })
+            const result = await submitAssignment(assignmentId, url, finalAttachmentUrl, link.trim())
+
+            if (result.error) {
+                toast.error(result.error, { id: toastId })
+                return
             }
-        } catch (error: any) {
-            toast.error(error.message || "Something went wrong", { id: toastId })
+
+            setSelectedFile(null)
+            setAttachmentUrl(finalAttachmentUrl)
+            setShowLateConfirmation(false)
+            toast.success(hasExistingSubmission ? "Submission updated." : "Assignment submitted.", { id: toastId })
+            router.refresh()
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Something went wrong.", { id: toastId })
         } finally {
             setIsSubmitting(false)
         }
     }
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0]
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (!file) return
 
-            if (file.size > 1 * 1024 * 1024) {
-                toast.error("File is too large. Max 1MB allowed.")
-                e.target.value = "" // Reset input
-                return
-            }
-
-            setSelectedFile(file)
+        if (file.size > 1024 * 1024) {
+            toast.error("The file is larger than the 1 MB limit.")
+            event.target.value = ""
+            return
         }
+
+        setSelectedFile(file)
+        setValidationMessage("")
     }
 
     const handleRemoveFile = async () => {
         if (selectedFile) {
             setSelectedFile(null)
-            const fileInput = document.getElementById("file-upload") as HTMLInputElement
-            if (fileInput) fileInput.value = ""
+            const input = document.getElementById(fileInputId) as HTMLInputElement | null
+            if (input) input.value = ""
             return
         }
 
-        if (attachmentUrl) {
-            const toastId = toast.loading("Removing file...")
+        if (!attachmentUrl) return
 
-            // Optimistic update
-            const urlToDelete = attachmentUrl
-            setAttachmentUrl("")
+        const toastId = toast.loading("Removing attachment...")
+        const urlToDelete = attachmentUrl
+        setAttachmentUrl("")
 
-            try {
-                // Call server action to delete from UT and DB
-                const res = await deleteSubmissionFile(assignmentId, urlToDelete)
-                if (res.error) {
-                    toast.error("Failed to delete file", { id: toastId })
-                    // Revert optimistic update if needed, but for now let's prioritize UI responsiveness
-                } else {
-                    toast.success("File removed", { id: toastId })
-                }
-            } catch (e) {
-                toast.error("Error removing file", { id: toastId })
-                console.error(e)
+        try {
+            const result = await deleteSubmissionFile(assignmentId, urlToDelete)
+            if (result.error) {
+                setAttachmentUrl(urlToDelete)
+                toast.error("The attachment could not be removed.", { id: toastId })
+            } else {
+                toast.success("Attachment removed.", { id: toastId })
+                router.refresh()
             }
+        } catch {
+            setAttachmentUrl(urlToDelete)
+            toast.error("The attachment could not be removed.", { id: toastId })
         }
     }
 
     return (
         <>
-            <form onSubmit={handleFormSubmit} className="space-y-4">
-                {/* ... existing content ... */}
-
-                <div className="space-y-2">
-                    <Label>Submission Content</Label>
+            <form onSubmit={handleFormSubmit} className="space-y-4" noValidate>
+                <div className="space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                        <Label>Written response</Label>
+                        <span className="text-[11px] text-muted-foreground">Optional</span>
+                    </div>
                     <Editor
                         value={url}
-                        onChange={setUrl}
+                        onChange={(value) => {
+                            setUrl(value)
+                            setValidationMessage("")
+                        }}
+                        className="min-h-56 text-sm lg:min-h-[22rem]"
                     />
-                    <p className="text-xs text-gray-500">
-                        Write your submission content here.
-                    </p>
+                    <p className="text-xs text-muted-foreground">Write directly here, or submit a link or file below.</p>
                 </div>
 
-                <div className="space-y-2">
-                    <Label>Link (Optional)</Label>
-                    <Input
-                        placeholder="https://..."
-                        value={link}
-                        onChange={(e) => setLink(e.target.value)}
-                        disabled={isSubmitting}
-                    />
-                    <p className="text-xs text-gray-500">
-                        Add a link to your work (e.g. Google Drive, YouTube, etc.)
-                    </p>
-                </div>
+                <div className="grid items-start gap-4 lg:grid-cols-2">
+                    <div className="space-y-1.5">
+                        <div className="flex items-baseline justify-between gap-3">
+                            <Label htmlFor={`${fileInputId}-link`}>Work link</Label>
+                            <span className="text-[11px] text-muted-foreground">Optional</span>
+                        </div>
+                        <div className="relative">
+                            <LinkIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                            <Input
+                                id={`${fileInputId}-link`}
+                                type="url"
+                                inputMode="url"
+                                placeholder="https://docs.google.com/..."
+                                value={link}
+                                onChange={(event) => {
+                                    setLink(event.target.value)
+                                    setValidationMessage("")
+                                }}
+                                disabled={isSubmitting}
+                                className="pl-8"
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Use a shareable link your teacher can open.</p>
+                    </div>
 
-                <div className="space-y-2">
-                    <Label>Attachment (Optional)</Label>
+                    <div className="space-y-1.5">
+                        <div className="flex items-baseline justify-between gap-3">
+                            <Label htmlFor={fileInputId}>Attachment</Label>
+                            <span className="text-[11px] text-muted-foreground">PDF or DOCX · 1 MB max</span>
+                        </div>
 
-                    {/* Show if NO file is selected AND NO existing attachment */}
-                    {!selectedFile && !attachmentUrl && (
-                        <div className="flex items-center gap-2">
+                        <input
+                            id={fileInputId}
+                            type="file"
+                            className="sr-only"
+                            accept=".pdf,.docx,.doc"
+                            onChange={handleFileChange}
+                            disabled={isSubmitting}
+                        />
+
+                        {!selectedFile && !attachmentUrl ? (
                             <Button
                                 type="button"
                                 variant="outline"
                                 disabled={isSubmitting}
-                                onClick={() => document.getElementById("file-upload")?.click()}
-                                className="w-full"
+                                onClick={() => document.getElementById(fileInputId)?.click()}
+                                className="w-full border-dashed bg-muted/20 px-3 text-muted-foreground hover:bg-accent hover:text-foreground"
                             >
-                                <Paperclip className="mr-2 h-4 w-4" />
-                                Attach File (PDF, DOCX - Max 1MB)
+                                <Paperclip className="size-4" />
+                                Choose a file
                             </Button>
-                            <input
-                                id="file-upload"
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.docx,.doc"
-                                onChange={handleFileChange}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    )}
-
-                    {/* Show if file IS selected OR existing attachment exists */}
-                    {(selectedFile || attachmentUrl) && (
-                        <div className="flex items-center justify-between p-3 border rounded-md bg-muted/50">
-                            <div className="flex items-center gap-2 overflow-hidden">
-                                <FileText className="h-4 w-4 shrink-0 text-blue-500" />
-                                <div className="flex flex-col overflow-hidden">
-                                    <span className="text-sm font-medium truncate">
-                                        {selectedFile ? selectedFile.name : "Attached File"}
-                                    </span>
-                                    {selectedFile && (
-                                        <span className="text-xs text-amber-600 font-medium">
-                                            Pending Upload
-                                        </span>
-                                    )}
-                                    {!selectedFile && attachmentUrl && (
-                                        <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:underline">
-                                            View File
-                                        </a>
-                                    )}
+                        ) : (
+                            <div className="flex min-h-8 items-center justify-between gap-3 rounded-md border bg-muted/30 px-2.5 py-1">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-background text-primary">
+                                        <FileText className="size-3.5" aria-hidden="true" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="truncate text-xs font-medium">{selectedFile ? selectedFile.name : "Attached file"}</p>
+                                        {selectedFile ? (
+                                            <p className="text-[10px] text-amber-700 dark:text-amber-300">Uploads when you submit</p>
+                                        ) : (
+                                            <a
+                                                href={attachmentUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                                            >
+                                                Open file <ExternalLink className="size-3" aria-hidden="true" />
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-1">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={() => document.getElementById(fileInputId)?.click()}
+                                        disabled={isSubmitting}
+                                        aria-label="Replace attachment"
+                                    >
+                                        <RefreshCw className="size-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={() => void handleRemoveFile()}
+                                        disabled={isSubmitting}
+                                        aria-label="Remove attachment"
+                                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => document.getElementById("file-upload")?.click()}
-                                    className="text-muted-foreground hover:text-foreground"
-                                    disabled={isSubmitting}
-                                    title="Replace File"
-                                >
-                                    <RefreshCw className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleRemoveFile}
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                    disabled={isSubmitting}
-                                    title="Remove File"
-                                >
-                                    <Trash className="h-4 w-4" />
-                                </Button>
-                                <input
-                                    id="file-upload"
-                                    type="file"
-                                    className="hidden"
-                                    accept=".pdf,.docx,.doc"
-                                    onChange={handleFileChange}
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
-                <Button type="submit" disabled={isSubmitting || (!url && !attachmentUrl && !selectedFile && !link)} className="w-full">
-                    {isSubmitting ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {isUploading ? "Uploading File..." : "Submitting..."}
-                        </>
-                    ) : (
-                        initialUrl || initialAttachmentUrl ? "Update Submission" : "Submit Assignment"
-                    )}
-                </Button>
-
-                {isLate && (
-                    <p className="text-xs text-red-500 text-center">
-                        Note: This submission will be marked as Late.
+                {validationMessage && (
+                    <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive" role="alert">
+                        {validationMessage}
                     </p>
                 )}
+
+                <div className="sticky -bottom-3 z-10 -mx-3 -mb-3 border-t bg-card/95 px-3 py-3 supports-[backdrop-filter]:bg-card/90 supports-[backdrop-filter]:backdrop-blur-sm">
+                    {isLate && (
+                        <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">This will be recorded as a late submission.</p>
+                    )}
+                    <Button type="submit" disabled={isSubmitting} className="w-full">
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="size-4 animate-spin" />
+                                {isUploading ? "Uploading attachment..." : "Saving..."}
+                            </>
+                        ) : (
+                            <>
+                                <Send className="size-4" />
+                                {hasExistingSubmission ? "Update submission" : "Submit assignment"}
+                            </>
+                        )}
+                    </Button>
+                </div>
             </form>
 
             <AlertDialog open={showLateConfirmation} onOpenChange={setShowLateConfirmation}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Late Submission</AlertDialogTitle>
+                        <AlertDialogTitle>Submit this work late?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This assignment is past its due date. Submitting now will mark it as <strong>Late</strong>.
-                            {(initialUrl || initialAttachmentUrl) && " Any previous grade might be affected."}
-                            <br /><br />
-                            Are you sure you want to proceed?
+                            The due date has passed, so your teacher will see this as a late submission.
+                            {hasExistingSubmission && " Updating it may also require the teacher to review your grade again."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={submit}>
-                            Yes, Submit Late
+                        <AlertDialogCancel>Keep editing</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => void submit()}>
+                            Submit late
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
