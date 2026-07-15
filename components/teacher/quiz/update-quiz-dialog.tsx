@@ -18,19 +18,23 @@ import { Textarea } from "@/components/ui/textarea"
 import { updateQuiz } from "@/lib/actions/quiz.actions"
 import { toast } from "sonner"
 import { Loader2, Edit2 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 
 interface UpdateQuizDialogProps {
     quiz: {
         id: string
         title: string
         description?: string | null
+        randomizeChoices?: boolean
     }
+    trigger?: "menu" | "button"
 }
 
-export function UpdateQuizDialog({ quiz }: UpdateQuizDialogProps) {
+export function UpdateQuizDialog({ quiz, trigger = "menu" }: UpdateQuizDialogProps) {
     const [open, setOpen] = useState(false)
     const [title, setTitle] = useState(quiz.title)
     const [description, setDescription] = useState(quiz.description || "")
+    const [randomizeChoices, setRandomizeChoices] = useState(Boolean(quiz.randomizeChoices))
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
 
@@ -39,7 +43,7 @@ export function UpdateQuizDialog({ quiz }: UpdateQuizDialogProps) {
         if (!title.trim()) return
 
         startTransition(async () => {
-            const result = await updateQuiz(quiz.id, { title, description })
+            const result = await updateQuiz(quiz.id, { title, description, randomizeChoices })
             if (result.error) {
                 toast.error(result.error)
             } else {
@@ -53,10 +57,13 @@ export function UpdateQuizDialog({ quiz }: UpdateQuizDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50">
-                    <Edit2 className="mr-2 h-4 w-4" />
-                    Edit Details
-                </div>
+                {trigger === "button" ? (
+                    <Button variant="outline" size="sm"><Edit2 className="size-4" />Quiz settings</Button>
+                ) : (
+                    <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50">
+                        <Edit2 className="mr-2 h-4 w-4" />Edit details
+                    </div>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
@@ -79,6 +86,16 @@ export function UpdateQuizDialog({ quiz }: UpdateQuizDialogProps) {
                                 placeholder="Quiz Title"
                                 required
                             />
+                        </div>
+                        <div className="grid grid-cols-4 items-start gap-4">
+                            <Label htmlFor="edit-randomize" className="pt-2 text-right">Choice order</Label>
+                            <div className="col-span-3 flex items-start gap-3 rounded-md border bg-muted/20 p-3">
+                                <Switch id="edit-randomize" checked={randomizeChoices} onCheckedChange={setRandomizeChoices} />
+                                <div>
+                                    <Label htmlFor="edit-randomize">Shuffle choices for students</Label>
+                                    <p className="mt-1 text-xs text-muted-foreground">Each attempt can show choices in a different order.</p>
+                                </div>
+                            </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="edit-description" className="text-right">

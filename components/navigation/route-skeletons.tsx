@@ -38,6 +38,51 @@ export function DashboardRouteSkeleton({ variant = "generic", nested = false }: 
   return <WorkspacePage aria-label={`Loading ${variant} dashboard`} aria-busy="true">{content}</WorkspacePage>
 }
 
+export function AttendanceRouteSkeleton({ detail = false }: { detail?: boolean }) {
+  return (
+    <WorkspacePage aria-label={detail ? "Loading attendance roster" : "Loading daily attendance"} aria-busy="true">
+      <WorkspacePanel className="overflow-hidden">
+        <div className="grid grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="space-y-1.5 border-r px-3 py-2.5 last:border-r-0">
+              <Skeleton className="h-4 w-8" />
+              <Skeleton className="h-3 w-14 max-w-full" />
+            </div>
+          ))}
+        </div>
+        {detail ? (
+          <div className="flex min-h-8 items-center justify-between border-t px-2.5 py-1">
+            <div className="flex items-center gap-2"><Skeleton className="h-3 w-28" /><Skeleton className="h-5 w-9" /></div>
+            <Skeleton className="hidden h-8 w-72 lg:block" />
+          </div>
+        ) : (
+          <div className="flex gap-2 border-t p-2">
+            <Skeleton className="h-8 flex-1 sm:w-44 sm:flex-none" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+        )}
+      </WorkspacePanel>
+
+      {detail ? (
+        <Skeleton className="h-11 w-full lg:hidden" />
+      ) : null}
+
+      <WorkspacePanel className="overflow-hidden">
+        <div className="flex h-12 items-center justify-between border-b px-3"><div className="space-y-1.5"><Skeleton className="h-4 w-28" /><Skeleton className="h-3 w-48" /></div><Skeleton className="h-3 w-12" /></div>
+        <div className="divide-y">
+          {Array.from({ length: detail ? 7 : 5 }, (_, index) => (
+            <div key={index} className="flex min-h-16 items-center gap-3 px-3">
+              <Skeleton className="size-8 shrink-0" />
+              <div className="min-w-0 flex-1 space-y-2"><Skeleton className="h-4 w-2/5" /><Skeleton className="h-3 w-3/5" /></div>
+              <Skeleton className="h-8 w-28" />
+            </div>
+          ))}
+        </div>
+      </WorkspacePanel>
+    </WorkspacePage>
+  )
+}
+
 export function TableRouteSkeleton() {
   return (
     <WorkspacePage aria-label="Loading list" aria-busy="true">

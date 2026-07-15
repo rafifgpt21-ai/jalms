@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { UserSettings } from "@/components/user-settings"
 import { useMobileHeader } from "@/components/mobile-header-context"
 import {
+  AttendanceRouteSkeleton,
   CourseRouteSkeleton,
   DashboardRouteSkeleton,
   GridRouteSkeleton,
@@ -43,6 +44,8 @@ function PendingDestinationSkeleton({ pathname }: { pathname: string }) {
   if (/^\/student\/courses\/[^/]+\/tasks\/[^/]+\/?$/.test(pathname)) return <StudentTaskDetailRouteSkeleton />
   if (/^\/teacher\/courses\/[^/]+\/tasks\/?$/.test(pathname)) return <TaskRouteSkeleton />
   if (/^\/teacher\/courses\/[^/]+\/tasks\/[^/]+\/?$/.test(pathname) && !pathname.endsWith("/new")) return <TaskGradingRouteSkeleton />
+  if (/^\/teacher\/attendance\/[^/]+\/?$/.test(pathname)) return <AttendanceRouteSkeleton detail />
+  if (pathname === "/teacher/attendance") return <AttendanceRouteSkeleton />
   if (/^\/(teacher|student)\/courses\/[^/]+/.test(pathname)) return <CourseRouteSkeleton />
   if (pathname === "/student/courses" || pathname === "/homeroom") return <GridRouteSkeleton />
   if (/^\/admin\/(users|classes|courses|subjects|semesters|schedule|grading|rollover)/.test(pathname)) return <TableRouteSkeleton />

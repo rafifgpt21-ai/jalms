@@ -50,54 +50,46 @@ export function CreateQuizDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create New Quiz
+                <Button className="col-span-2 h-10 w-full 2xl:w-auto">
+                    <Plus className="size-4" />
+                    Create quiz
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Create New Quiz</DialogTitle>
+                        <DialogTitle>Create a quiz</DialogTitle>
                         <DialogDescription>
                             Give your quiz a title and optional description to get started.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="title" className="text-right">
-                                Title
-                            </Label>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="title">Title</Label>
                             <Input
                                 id="title"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="col-span-3"
                                 placeholder="e.g. Chapter 1 Review"
                                 required
                             />
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="description" className="text-right">
-                                Description
-                            </Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description <span className="font-normal text-muted-foreground">(optional)</span></Label>
                             <Textarea
                                 id="description"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="col-span-3"
-                                placeholder="Optional description..."
+                                placeholder="What does this quiz cover?"
                             />
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="randomize" className="text-right">
-                                Settings
-                            </Label>
-                            <div className="flex items-center space-x-2 col-span-3">
+                        <div className="flex items-start gap-3 rounded-md border bg-muted/20 p-3">
                                 <Switch id="randomize" checked={randomizeChoices} onCheckedChange={setRandomizeChoices} />
-                                <Label htmlFor="randomize">Randomize Choices for Students</Label>
+                                <div>
+                                    <Label htmlFor="randomize">Shuffle choices for students</Label>
+                                    <p className="mt-1 text-xs text-muted-foreground">Each attempt can show choices in a different order.</p>
+                                </div>
                             </div>
-                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -105,7 +97,7 @@ export function CreateQuizDialog() {
                         </Button>
                         <Button type="submit" disabled={isPending || !title.trim()}>
                             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Quiz
+                            Create and add questions
                         </Button>
                     </DialogFooter>
                 </form>

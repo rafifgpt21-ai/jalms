@@ -130,6 +130,7 @@ model User {
   materials       Material[]       @relation("TeacherMaterials")
   materialFolders MaterialFolder[] @relation("TeacherMaterialFolders")
   quizzes         Quiz[]           @relation("TeacherQuizzes")
+  quizFolders     QuizFolder[]     @relation("TeacherQuizFolders")
 
   conversations   Conversation[] @relation(fields: [conversationIds], references: [id])
   conversationIds String[]       @db.ObjectId
@@ -629,7 +630,27 @@ model Quiz {
 
   randomizeChoices Boolean @default(false)
 
+  // Optional private organization inside the owning teacher's library.
+  folderId String?     @db.ObjectId
+  folder   QuizFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
   deletedAt DateTime?
+}
+
+model QuizFolder {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  color String @default("indigo")
+
+  teacherId String @db.ObjectId
+  teacher   User   @relation("TeacherQuizFolders", fields: [teacherId], references: [id])
+
+  quizzes   Quiz[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teacherId, name])
+  @@index([teacherId])
 }
 
 model QuizQuestion {

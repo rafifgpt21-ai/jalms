@@ -1,57 +1,76 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { skipAllSessions } from "@/lib/actions/attendance.actions"
-import { Loader2, Ban } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Ban, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { skipAllSessions } from "@/lib/actions/attendance.actions"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface SkipAllButtonProps {
     teacherId: string
     date: Date
+    pendingCount: number
 }
 
-export function SkipAllButton({ teacherId, date }: SkipAllButtonProps) {
+export function SkipAllButton({ teacherId, date, pendingCount }: SkipAllButtonProps) {
+    const router = useRouter()
+    const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
 
-    const handleSkipAll = async () => {
-        console.log("Skip All clicked")
-        toast.info("Starting skip process...")
-
-        // if (!confirm("Are you sure you want to skip all sessions for this day?")) return
-
+    const confirmSkip = async () => {
         setLoading(true)
-        try {
-            // Ensure date is a Date object (it might be a string due to serialization)
-            const dateObj = new Date(date)
-            console.log("Calling skipAllSessions with date:", dateObj)
+        const result = await skipAllSessions(teacherId, new Date(date))
 
-            const result = await skipAllSessions(teacherId, dateObj)
-            console.log("skipAllSessions result:", result)
-
-            if (result.success) {
-                toast.success(result.message || "All sessions skipped")
-            } else {
-                toast.error(result.message || result.error || "Failed to skip sessions")
-            }
-        } catch (e) {
-            console.error("Error in handleSkipAll:", e)
-            toast.error("An error occurred: " + (e instanceof Error ? e.message : String(e)))
-        } finally {
-            setLoading(false)
+        if (result.success) {
+            toast.success(result.message || "Pending sessions skipped")
+            setOpen(false)
+            router.refresh()
+        } else {
+            toast.error(result.message || result.error || "Failed to skip pending sessions")
         }
+        setLoading(false)
     }
 
     return (
-        <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSkipAll}
-            disabled={loading}
-            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-        >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
-            Skip All
-        </Button>
+        <AlertDialog open={open} onOpenChange={setOpen}>
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                disabled={loading || pendingCount === 0}
+                onClick={() => setOpen(true)}
+            >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Ban className="size-4" />}
+                Skip pending ({pendingCount})
+            </Button>
+
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Skip all pending sessions?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This marks {pendingCount} {pendingCount === 1 ? "session" : "sessions"} as skipped. Sessions with recorded attendance will not be changed.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmSkip} disabled={loading} className={buttonVariants({ variant: "destructive" })}>
+                        {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+                        Skip pending sessions
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     )
 }

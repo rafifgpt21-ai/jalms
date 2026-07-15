@@ -17,24 +17,141 @@ export async function getQuizzes(teacherId?: string) {
         // (Assuming teacher can only see their own quizzes for now)
         const targetTeacherId = teacherId || session.user.id;
 
-        const quizzes = await db.quiz.findMany({
-            where: {
-                teacherId: targetTeacherId,
-                deletedAt: { isSet: false }
-            },
-            orderBy: {
-                updatedAt: 'desc'
-            },
-            include: {
-                _count: {
-                    select: { questions: true }
+        const [quizzes, folders] = await Promise.all([
+            db.quiz.findMany({
+                where: {
+                    teacherId: targetTeacherId,
+                    deletedAt: { isSet: false }
+                },
+                orderBy: {
+                    updatedAt: 'desc'
+                },
+                include: {
+                    folder: true,
+                    _count: {
+                        select: { questions: true, assignments: true }
+                    }
                 }
-            }
-        })
-        return { quizzes }
+            }),
+            db.quizFolder.findMany({
+                where: { teacherId: targetTeacherId },
+                include: {
+                    _count: {
+                        select: {
+                            quizzes: {
+                                where: { deletedAt: { isSet: false } }
+                            }
+                        }
+                    }
+                },
+                orderBy: { name: "asc" }
+            })
+        ])
+        return { quizzes, folders }
     } catch (error) {
         console.error("Error fetching quizzes:", error)
         return { error: "Failed to fetch quizzes" }
+    }
+}
+
+const QUIZ_FOLDER_COLORS = new Set(["indigo", "sky", "emerald", "amber", "rose", "violet"])
+
+export async function createQuizFolder(name: string, color = "indigo") {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) return { folder: null, error: "Unauthorized" }
+
+        const cleanName = name.trim()
+        if (!cleanName) return { folder: null, error: "Folder name is required" }
+        if (cleanName.length > 60) return { folder: null, error: "Folder name is too long" }
+
+        const existing = await db.quizFolder.findFirst({
+            where: { teacherId: session.user.id, name: { equals: cleanName, mode: "insensitive" } }
+        })
+        if (existing) return { folder: null, error: "A folder with this name already exists" }
+
+        const folder = await db.quizFolder.create({
+            data: {
+                name: cleanName,
+                color: QUIZ_FOLDER_COLORS.has(color) ? color : "indigo",
+                teacherId: session.user.id
+            }
+        })
+        revalidatePath("/teacher/quiz-manager")
+        return { folder, error: undefined }
+    } catch (error) {
+        console.error("Error creating quiz folder:", error)
+        return { folder: null, error: "Failed to create folder" }
+    }
+}
+
+export async function renameQuizFolder(folderId: string, name: string) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        const cleanName = name.trim()
+        if (!cleanName) return { success: false, error: "Folder name is required" }
+        if (cleanName.length > 60) return { success: false, error: "Folder name is too long" }
+
+        const folder = await db.quizFolder.findUnique({ where: { id: folderId } })
+        if (!folder || folder.teacherId !== session.user.id) return { success: false, error: "Folder not found" }
+
+        const duplicate = await db.quizFolder.findFirst({
+            where: {
+                teacherId: session.user.id,
+                id: { not: folderId },
+                name: { equals: cleanName, mode: "insensitive" }
+            }
+        })
+        if (duplicate) return { success: false, error: "A folder with this name already exists" }
+
+        await db.quizFolder.update({ where: { id: folderId }, data: { name: cleanName } })
+        revalidatePath("/teacher/quiz-manager")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error renaming quiz folder:", error)
+        return { success: false, error: "Failed to rename folder" }
+    }
+}
+
+export async function deleteQuizFolder(folderId: string) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        const folder = await db.quizFolder.findUnique({ where: { id: folderId } })
+        if (!folder || folder.teacherId !== session.user.id) return { success: false, error: "Folder not found" }
+
+        await db.quiz.updateMany({ where: { teacherId: session.user.id, folderId }, data: { folderId: null } })
+        await db.quizFolder.delete({ where: { id: folderId } })
+        revalidatePath("/teacher/quiz-manager")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error deleting quiz folder:", error)
+        return { success: false, error: "Failed to delete folder" }
+    }
+}
+
+export async function moveQuizToFolder(quizId: string, folderId: string | null) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        const quiz = await db.quiz.findUnique({ where: { id: quizId } })
+        if (!quiz || quiz.teacherId !== session.user.id) return { success: false, error: "Quiz not found" }
+
+        if (folderId) {
+            const folder = await db.quizFolder.findUnique({ where: { id: folderId } })
+            if (!folder || folder.teacherId !== session.user.id) return { success: false, error: "Folder not found" }
+        }
+
+        await db.quiz.update({ where: { id: quizId }, data: { folderId } })
+        revalidatePath("/teacher/quiz-manager")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error moving quiz:", error)
+        return { success: false, error: "Failed to move quiz" }
     }
 }
 
@@ -166,7 +283,7 @@ export async function deleteQuiz(quizId: string) {
     } catch (error) {
         console.error("Error deleting quiz:", error)
         // Check for Foreign Key constraint
-        if ((error as any).code === 'P2003') {
+        if (typeof error === "object" && error !== null && "code" in error && error.code === "P2003") {
             return { error: "Cannot delete quiz because it is assigned to students. Delete the assignment first." }
         }
         return { error: "Failed to delete quiz" }
@@ -543,7 +660,7 @@ export async function getStudentQuiz(quizId: string, assignmentId?: string) {
             const correctCount = q.choices.filter(c => c.isCorrect).length
             const allowMultiple = correctCount > 1 || q.gradingType === 'RIGHT_MINUS_WRONG'
 
-            let choices = [...q.choices]
+            const choices = [...q.choices]
             // Randomize only if NOT reviewing (or preserve order if reviewing? usually preserve original order is hard if we didn't save seed. 
             // If we randomize, explanation might be confusing if it refers to "Option A". 
             // For now, let's randomize if configured, even in review. 

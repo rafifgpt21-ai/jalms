@@ -1,60 +1,89 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { skipSession, unskipSession } from "@/lib/actions/attendance.actions"
-import { Loader2, Ban, Undo2 } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Ban, Loader2, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { skipSession, unskipSession } from "@/lib/actions/attendance.actions"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface SkipSessionButtonProps {
     courseId: string
+    courseName: string
     date: Date
     period: number
     isSkipped: boolean
+    hasAttendance?: boolean
 }
 
-export function SkipSessionButton({ courseId, date, period, isSkipped }: SkipSessionButtonProps) {
+export function SkipSessionButton({ courseId, courseName, date, period, isSkipped, hasAttendance = false }: SkipSessionButtonProps) {
+    const router = useRouter()
+    const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
 
-    const handleToggleSkip = async () => {
+    const confirmToggle = async () => {
         setLoading(true)
-        // Ensure date is a Date object
-        const dateObj = new Date(date)
+        const result = isSkipped
+            ? await unskipSession(courseId, new Date(date), period)
+            : await skipSession(courseId, new Date(date), period)
 
-        if (isSkipped) {
-            const result = await unskipSession(courseId, dateObj, period)
-            if (result.success) {
-                toast.success("Session unskipped")
-            } else {
-                toast.error("Failed to unskip session")
-            }
+        if (result.success) {
+            toast.success(isSkipped ? "Session restored" : "Session skipped")
+            setOpen(false)
+            router.refresh()
         } else {
-            const result = await skipSession(courseId, dateObj, period)
-            if (result.success) {
-                toast.success("Session skipped")
-            } else {
-                toast.error("Failed to skip session")
-            }
+            toast.error(result.error || (isSkipped ? "Failed to restore session" : "Failed to skip session"))
         }
         setLoading(false)
     }
 
     return (
-        <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 px-2 ${isSkipped ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50" : "text-muted-foreground hover:text-red-600"}`}
-            onClick={handleToggleSkip}
-            disabled={loading}
-            title={isSkipped ? "Unskip Session" : "Skip Session"}
-        >
-            {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isSkipped ? (
-                <Undo2 className="h-4 w-4" />
-            ) : (
-                <Ban className="h-4 w-4" />
-            )}
-        </Button>
+        <AlertDialog open={open} onOpenChange={setOpen}>
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={isSkipped ? undefined : "text-destructive hover:text-destructive"}
+                disabled={loading}
+                onClick={() => setOpen(true)}
+            >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : isSkipped ? <RotateCcw className="size-4" /> : <Ban className="size-4" />}
+                {isSkipped ? "Restore" : "Skip"}
+            </Button>
+
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{isSkipped ? "Restore this session?" : "Skip this session?"}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {isSkipped
+                            ? `${courseName} will return to pending and can be recorded normally.`
+                            : hasAttendance
+                                ? `${courseName} already has attendance. Skipping will replace those records with a skipped session.`
+                                : `${courseName} will be marked as skipped for every student in this period.`}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={confirmToggle}
+                        disabled={loading}
+                        className={isSkipped ? undefined : buttonVariants({ variant: "destructive" })}
+                    >
+                        {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+                        {isSkipped ? "Restore session" : "Skip session"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     )
 }

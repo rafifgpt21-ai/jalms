@@ -1,86 +1,70 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
-import { format, addDays, subDays } from "date-fns"
+import { useTransition } from "react"
+import { addDays, format, isToday, parseISO, subDays } from "date-fns"
+import { CalendarDays, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { useState } from "react"
-
-// Since we don't have a Calendar component installed, we'll use a simple input for now inside the popover
-// or just rely on the prev/next buttons.
-// Actually, let's just use a native date input for the "jump to date" feature if needed, 
-// but styling it to look like a button.
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export function DateNavigator() {
     const router = useRouter()
     const searchParams = useSearchParams()
-
+    const [isPending, startTransition] = useTransition()
     const dateParam = searchParams.get("date")
-    const date = dateParam ? new Date(dateParam) : new Date()
+    const date = dateParam ? parseISO(dateParam) : new Date()
 
-    const handleDateChange = (newDate: Date) => {
-        const dateString = format(newDate, "yyyy-MM-dd")
-        router.push(`?date=${dateString}`)
+    const navigate = (nextDate: Date) => {
+        startTransition(() => {
+            router.push(`/teacher/attendance?date=${format(nextDate, "yyyy-MM-dd")}`)
+        })
     }
 
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto">
             <Button
+                type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => handleDateChange(subDays(date, 1))}
+                aria-label="Previous day"
+                disabled={isPending}
+                onClick={() => navigate(subDays(date, 1))}
             >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="size-4" />
             </Button>
 
-            <div className="relative">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-[240px] justify-start text-left font-normal",
-                                !date && "text-muted-foreground"
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date ? format(date, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-4" align="start">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium">Jump to date:</label>
-                            <input
-                                type="date"
-                                className="border rounded p-2"
-                                value={format(date, "yyyy-MM-dd")}
-                                onChange={(e) => {
-                                    if (e.target.value) {
-                                        handleDateChange(new Date(e.target.value))
-                                    }
-                                }}
-                            />
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                className="mt-2"
-                                onClick={() => handleDateChange(new Date())}
-                            >
-                                Go to Today
-                            </Button>
-                        </div>
-                    </PopoverContent>
-                </Popover>
+            <div className="relative min-w-0 flex-1 sm:w-44 sm:flex-none">
+                <CalendarDays className="pointer-events-none absolute left-2.5 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    type="date"
+                    aria-label="Attendance date"
+                    value={format(date, "yyyy-MM-dd")}
+                    disabled={isPending}
+                    onChange={(event) => event.target.value && navigate(parseISO(event.target.value))}
+                    className="w-full pl-8"
+                />
             </div>
 
             <Button
+                type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => handleDateChange(addDays(date, 1))}
+                aria-label="Next day"
+                disabled={isPending}
+                onClick={() => navigate(addDays(date, 1))}
             >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="size-4" />
+            </Button>
+
+            <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={isPending || isToday(date)}
+                onClick={() => navigate(new Date())}
+            >
+                {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                Today
             </Button>
         </div>
     )

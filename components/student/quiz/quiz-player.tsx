@@ -1,17 +1,24 @@
 "use client"
 
-import { useState, useTransition, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { toast } from "sonner"
-import { Loader2, CheckCircle, XCircle, Play, Pause, Volume2, AlertTriangle } from "lucide-react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
+import {
+    AlertCircle,
+    Check,
+    CheckCircle2,
+    Circle,
+    FileQuestion,
+    Loader2,
+    Play,
+    Send,
+    Volume2,
+    XCircle,
+} from "lucide-react"
+import { toast } from "sonner"
+
 import { getStudentQuiz } from "@/lib/actions/quiz.actions"
 import { submitQuizAttempt } from "@/lib/actions/student.actions"
-import { useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -22,11 +29,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface QuizPlayerProps {
     quizId: string
     assignmentId: string
-    initialAnswers?: Record<string, string> // If review mode
+    initialAnswers?: Record<string, string | string[]>
     isReadOnly?: boolean
     showGradeAfterSubmission?: boolean
 }
@@ -40,7 +50,7 @@ interface Question {
     choices: Choice[]
     order: number
     points: number
-    gradingType: 'ALL_OR_NOTHING' | 'RIGHT_MINUS_WRONG'
+    gradingType: "ALL_OR_NOTHING" | "RIGHT_MINUS_WRONG"
     allowMultiple: boolean
     explanation?: string
 }
@@ -50,329 +60,181 @@ interface Choice {
     text: string
     imageUrl?: string
     order: number
+    isCorrect?: boolean
 }
 
 export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = false, showGradeAfterSubmission = true }: QuizPlayerProps) {
+    const router = useRouter()
     const [questions, setQuestions] = useState<Question[]>([])
     const [loading, setLoading] = useState(true)
     const [answers, setAnswers] = useState<Record<string, string | string[]>>(initialAnswers || {})
     const [isPending, startTransition] = useTransition()
-    const router = useRouter()
-
-    useEffect(() => {
-        async function loadQuiz() {
-            setLoading(true)
-            // Pass assignmentId to fetch review data if submitted
-            const res = await getStudentQuiz(quizId, assignmentId)
-            if (res.quiz) {
-                setQuestions(res.quiz.questions as any)
-            } else {
-                toast.error(res.error || "Failed to load quiz")
-            }
-            setLoading(false)
-        }
-        loadQuiz()
-    }, [quizId, assignmentId])
-
     const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false)
     const [unansweredCount, setUnansweredCount] = useState(0)
 
-    const handleAnswer = (questionId: string, choiceId: string, allowMultiple: boolean) => {
+    useEffect(() => {
+        let active = true
+
+        async function loadQuiz() {
+            setLoading(true)
+            const result = await getStudentQuiz(quizId, assignmentId)
+            if (!active) return
+            if (result.quiz) setQuestions(result.quiz.questions as Question[])
+            else toast.error(result.error || "Failed to load quiz")
+            setLoading(false)
+        }
+
+        void loadQuiz()
+        return () => { active = false }
+    }, [assignmentId, quizId])
+
+    function hasAnswer(questionId: string) {
+        const answer = answers[questionId]
+        return Boolean(answer && (!Array.isArray(answer) || answer.length > 0))
+    }
+
+    function handleAnswer(questionId: string, choiceId: string, allowMultiple: boolean) {
         if (isReadOnly) return
+        setAnswers((currentAnswers) => {
+            const current = currentAnswers[questionId]
+            if (!allowMultiple) return { ...currentAnswers, [questionId]: choiceId }
 
-        setAnswers(prev => {
-            const current = prev[questionId]
-
-            if (allowMultiple) {
-                // Handle Array
-                const currentArray = Array.isArray(current) ? current : (current ? [current as string] : [])
-                if (currentArray.includes(choiceId)) {
-                    return { ...prev, [questionId]: currentArray.filter(id => id !== choiceId) }
-                } else {
-                    return { ...prev, [questionId]: [...currentArray, choiceId] }
-                }
-            } else {
-                // Handle Single
-                return { ...prev, [questionId]: choiceId }
+            const values = Array.isArray(current) ? current : current ? [current] : []
+            return {
+                ...currentAnswers,
+                [questionId]: values.includes(choiceId) ? values.filter((id) => id !== choiceId) : [...values, choiceId],
             }
         })
     }
 
-    const isSelected = (questionId: string, choiceId: string) => {
-        const current = answers[questionId]
-        if (Array.isArray(current)) {
-            return current.includes(choiceId)
-        }
-        return current === choiceId
+    function isSelected(questionId: string, choiceId: string) {
+        const answer = answers[questionId]
+        return Array.isArray(answer) ? answer.includes(choiceId) : answer === choiceId
     }
 
-    const handlePreSubmit = () => {
-        const unanswered = questions.filter(q => {
-            const ans = answers[q.id]
-            return !ans || (Array.isArray(ans) && ans.length === 0)
-        })
-
-        setUnansweredCount(unanswered.length)
+    function prepareSubmit() {
+        const unanswered = questions.filter((question) => !hasAnswer(question.id)).length
+        setUnansweredCount(unanswered)
         setIsSubmitDialogOpen(true)
     }
 
-    const handleConfirmSubmit = () => {
+    function confirmSubmit() {
         setIsSubmitDialogOpen(false)
         startTransition(async () => {
-            // Need to ensure answers are compatible with server expectation
-            // Server expects Record<string, string | string[]>
-            const res = await submitQuizAttempt(assignmentId, answers)
-            if ("success" in res && res.success) {
-                if (showGradeAfterSubmission) {
-                    toast.success(`Quiz submitted! Grade: ${res.grade}`)
-                } else {
-                    toast.success("Quiz submitted successfully!")
-                }
+            const result = await submitQuizAttempt(assignmentId, answers)
+            if ("success" in result && result.success) {
+                toast.success(showGradeAfterSubmission ? `Quiz submitted · Grade: ${result.grade}` : "Quiz submitted")
                 router.refresh()
             } else {
-                toast.error("error" in res ? res.error : "Failed to submit quiz")
+                toast.error("error" in result ? result.error : "Failed to submit quiz")
             }
         })
     }
 
-    if (loading) {
+    if (loading) return <QuizPlayerSkeleton />
+
+    if (questions.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-slate-400">
-                <Loader2 className="h-8 w-8 animate-spin mb-4" />
-                <p>Loading Quiz...</p>
+            <div className="flex min-h-44 flex-col items-center justify-center rounded-md border border-dashed bg-muted/20 px-6 text-center">
+                <FileQuestion className="size-7 text-muted-foreground/60" />
+                <p className="mt-2 text-sm font-medium">This quiz has no questions</p>
+                <p className="mt-1 text-xs text-muted-foreground">Ask your teacher to check the quiz setup.</p>
             </div>
         )
     }
 
-    if (questions.length === 0) {
-        return <div className="text-center p-8 text-slate-500">No questions in this quiz.</div>
-    }
+    const answeredCount = questions.filter((question) => hasAnswer(question.id)).length
+    const completion = Math.round((answeredCount / questions.length) * 100)
 
     return (
-        <div className="max-w-4xl mx-auto space-y-12 pb-12">
-            {!isReadOnly && (
-                <div className="flex items-center justify-between p-4 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
-                    <span className="text-sm font-medium text-indigo-700 dark:text-indigo-400">
-                        {/* If multiple allowed, "Zen Mode" label is fine */}
-                        Quiz in Progress
-                    </span>
-                    <span className="text-sm text-slate-500">
-                        {Object.keys(answers).length} / {questions.length} Answered
-                    </span>
-                </div>
-            )}
-
-            <div className="space-y-8 md:space-y-16">
-                {questions.map((question, index) => (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.05 }}
-                        key={question.id}
-                        className="group relative"
-                    >
-                        {/* Connector Line */}
-                        {index !== questions.length - 1 && (
-                            <div className="hidden md:block absolute left-[15px] md:left-[19px] top-10 md:top-12 bottom-[-32px] md:bottom-[-64px] w-0.5 bg-slate-100 dark:bg-slate-800 -z-10 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 transition-colors" />
-                        )}
-
-                        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-                            <div className="flex-none">
-                                <span className={cn(
-                                    "flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full font-bold text-sm shadow-sm transition-all duration-300",
-                                    answers[question.id]
-                                        ? "bg-indigo-600 text-white shadow-indigo-500/30 scale-100"
-                                        : "bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
-                                )}>
-                                    {index + 1}
-                                </span>
-                            </div>
-
-                            <div className="flex-1 space-y-4 md:space-y-6">
-                                <div className="space-y-3 md:space-y-4">
-                                    <div className="flex justify-between items-start gap-4">
-                                        <h3 className="text-lg md:text-2xl font-heading font-medium text-slate-900 dark:text-white leading-relaxed">
-                                            {question.text}
-                                            {question.points && (
-                                                <span className="ml-3 inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
-                                                    {question.points} pts
-                                                </span>
-                                            )}
-                                        </h3>
-                                    </div>
-
-                                    {question.imageUrl && (
-                                        <div className="w-full max-w-2xl rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700">
-                                            <Image
-                                                src={question.imageUrl}
-                                                alt="Question"
-                                                width={0}
-                                                height={0}
-                                                sizes="100vw"
-                                                className="w-full h-auto block"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {question.audioUrl && (
-                                        <div className="w-full max-w-md">
-                                            <AudioPlayer
-                                                src={question.audioUrl}
-                                                limit={question.audioLimit || 0}
-                                                quizId={quizId}
-                                                questionId={question.id}
-                                                isReadOnly={isReadOnly}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2 md:space-y-3 pt-1 md:pt-2">
-                                    {/* Handle Choice Rendering using custom buttons for both Radio/Checkbox feel */}
-                                    {question.choices.map((choice) => {
-                                        const selected = isSelected(question.id, choice.id)
-                                        // If ReadOnly (Review Mode) + Explain:
-                                        // Highlight Correct: Green border/bg
-                                        // Highlight Incorrect Selected: Red border/bg
-                                        // We need 'isCorrect' from question.choices (which is populated if submitted/reviewing)
-                                        // If question.choices doesn't have isCorrect typed yet, we cast or assume.
-
-                                        const isCorrect = (choice as any).isCorrect
-
-                                        let statusColorClass = ""
-                                        if (isReadOnly) {
-                                            // IF showing grades is allowed, show RED/GREEN
-                                            if (showGradeAfterSubmission) {
-                                                if (selected && isCorrect) statusColorClass = "ring-2 ring-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/20"
-                                                else if (selected && !isCorrect) statusColorClass = "ring-2 ring-red-500 bg-red-50/50 dark:bg-red-900/20"
-                                                else statusColorClass = "opacity-60 grayscale-[0.5]" // dimmed other options
-                                            } else {
-                                                // IF hiding grades, show NEUTRAL for selected, dimmed for others
-                                                if (selected) statusColorClass = "ring-2 ring-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20"
-                                                else statusColorClass = "opacity-60 grayscale-[0.5]"
-                                            }
-                                        } else {
-                                            if (selected) statusColorClass = "bg-indigo-50/80 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 shadow-sm"
-                                            else statusColorClass = "bg-white/40 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 hover:bg-white/60 dark:hover:bg-slate-900/60"
-                                        }
-
-                                        return (
-                                            <motion.div
-                                                whileHover={!isReadOnly ? { scale: 1.01, x: 4 } : {}}
-                                                whileTap={!isReadOnly ? { scale: 0.99 } : {}}
-                                                key={choice.id}
-                                                onClick={() => handleAnswer(question.id, choice.id, (question as any).allowMultiple)}
-                                                className={cn(
-                                                    "relative flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl border transition-all cursor-pointer overflow-hidden backdrop-blur-sm",
-                                                    statusColorClass
-                                                )}
-                                            >
-                                                <div className={cn(
-                                                    "w-5 h-5 flex items-center justify-center flex-none transition-colors",
-                                                    (question as any).allowMultiple ? "rounded-sm" : "rounded-full", // Checkbox vs Radio Shape
-                                                    "border-2",
-                                                    selected
-                                                        ? (isReadOnly
-                                                            ? (showGradeAfterSubmission ? (isCorrect ? "border-emerald-500" : "border-red-500") : "border-indigo-600 dark:border-indigo-400")
-                                                            : "border-indigo-600 dark:border-indigo-400")
-                                                        : "border-slate-300 dark:border-slate-600"
-                                                )}>
-                                                    {selected && (
-                                                        <div className={cn(
-                                                            "w-2.5 h-2.5",
-                                                            (question as any).allowMultiple ? "rounded-sm" : "rounded-full",
-                                                            isReadOnly
-                                                                ? (showGradeAfterSubmission ? (isCorrect ? "bg-emerald-500" : "bg-red-500") : "bg-indigo-600 dark:bg-indigo-400")
-                                                                : "bg-indigo-600 dark:bg-indigo-400"
-                                                        )} />
-                                                    )}
-                                                    {/* Removed the hint for unselected correct answers */}
-                                                </div>
-
-                                                <div className="flex-1">
-                                                    <Label className="cursor-pointer text-base font-normal text-slate-700 dark:text-slate-200 block pointer-events-none">
-                                                        {choice.text}
-                                                    </Label>
-                                                    {choice.imageUrl && (
-                                                        <div className="mt-2 md:mt-3 w-full md:w-64 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
-                                                            <Image
-                                                                src={choice.imageUrl}
-                                                                alt="Choice"
-                                                                width={0}
-                                                                height={0}
-                                                                sizes="(max-width: 768px) 100vw, 256px"
-                                                                className="w-full h-auto block"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Correct/Incorrect Icon Indicators */}
-                                                {isReadOnly && showGradeAfterSubmission && (
-                                                    <div className="flex-none">
-                                                        {isCorrect && <CheckCircle className="w-5 h-5 text-emerald-500" />}
-                                                        {selected && !isCorrect && <XCircle className="w-5 h-5 text-red-500" />}
-                                                    </div>
-                                                )}
-                                            </motion.div>
-                                        )
-                                    })}
-                                </div>
-
-                                {/* Explanation Section if ReadOnly */}
-                                {isReadOnly && showGradeAfterSubmission && (question as any).explanation && (
-                                    <div className="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm border border-blue-100 dark:border-blue-900/50 animate-in fade-in slide-in-from-top-2">
-                                        <div className="flex items-center gap-2 font-semibold mb-1">
-                                            <AlertTriangle className="w-4 h-4" />
-                                            Explanation
-                                        </div>
-                                        <p>{(question as any).explanation}</p>
-                                    </div>
-                                )}
-                            </div>
+        <div className="space-y-4">
+            <section className="sticky top-0 z-20 rounded-md border bg-card/95 p-3 shadow-xs backdrop-blur-sm" aria-label="Quiz progress">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                            {isReadOnly ? <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" /> : <FileQuestion className="size-4 text-primary" />}
+                            <p className="text-sm font-semibold">{isReadOnly ? "Quiz review" : "Quiz in progress"}</p>
                         </div>
-                    </motion.div>
-                ))}
-            </div>
-
-            <div className="flex justify-end pt-12 border-t border-slate-100 dark:border-slate-800">
-                {!isReadOnly ? (
-                    <Button
-                        onClick={handlePreSubmit}
-                        disabled={isPending}
-                        size="lg"
-                        className="w-full sm:w-auto min-w-[240px] h-12 text-lg rounded-xl shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all hover:-translate-y-1"
-                    >
-                        {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle className="mr-2 h-5 w-5" />}
-                        Submit Quiz
-                    </Button>
-                ) : (
-                    <div className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-6 py-3 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
-                        <CheckCircle className="h-5 w-5" />
-                        <span className="font-medium">Quiz Review Mode</span>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            {isReadOnly ? "Your submitted answers are shown below." : `${answeredCount} of ${questions.length} answered`}
+                        </p>
+                    </div>
+                    <span className="text-sm font-semibold tabular-nums">{isReadOnly ? `${questions.length} questions` : `${completion}%`}</span>
+                </div>
+                {!isReadOnly && (
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Quiz completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completion}>
+                        <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${completion}%` }} />
                     </div>
                 )}
+                <nav className="mt-3 flex gap-1.5 overflow-x-auto pb-0.5 xl:hidden" aria-label="Jump to a question">
+                    {questions.map((question, index) => <QuestionNavLink key={question.id} index={index} answered={hasAnswer(question.id)} />)}
+                </nav>
+            </section>
+
+            <div className="grid items-start gap-4 xl:grid-cols-[12rem_minmax(0,1fr)]">
+                <aside className="sticky top-24 hidden rounded-md border bg-card p-3 xl:block" aria-label="Question navigator">
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Questions</p>
+                        <Badge variant="secondary">{answeredCount}/{questions.length}</Badge>
+                    </div>
+                    <nav className="grid grid-cols-5 gap-1.5">
+                        {questions.map((question, index) => <QuestionNavLink key={question.id} index={index} answered={hasAnswer(question.id)} />)}
+                    </nav>
+                    {!isReadOnly && (
+                        <div className="mt-3 space-y-1.5 border-t pt-3 text-[11px] text-muted-foreground">
+                            <p className="flex items-center gap-1.5"><CheckCircle2 className="size-3.5 text-primary" />Answered</p>
+                            <p className="flex items-center gap-1.5"><Circle className="size-3.5" />Not answered</p>
+                        </div>
+                    )}
+                </aside>
+
+                <main className="min-w-0 space-y-3">
+                    {questions.map((question, index) => (
+                        <QuestionPanel
+                            key={question.id}
+                            question={question}
+                            index={index}
+                            totalQuestions={questions.length}
+                            quizId={quizId}
+                            selected={(choiceId) => isSelected(question.id, choiceId)}
+                            onAnswer={(choiceId) => handleAnswer(question.id, choiceId, question.allowMultiple)}
+                            isReadOnly={isReadOnly}
+                            showGradeAfterSubmission={showGradeAfterSubmission}
+                        />
+                    ))}
+                </main>
             </div>
+
+            <footer className="sticky bottom-0 z-20 flex flex-col gap-3 rounded-md border bg-card/95 p-3 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+                {isReadOnly ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />Submission complete</div>
+                ) : (
+                    <div>
+                        <p className="text-sm font-medium">{answeredCount === questions.length ? "All questions answered" : `${questions.length - answeredCount} unanswered`}</p>
+                        <p className="text-xs text-muted-foreground">Review your choices before submitting.</p>
+                    </div>
+                )}
+                {!isReadOnly && (
+                    <Button onClick={prepareSubmit} disabled={isPending} className="w-full sm:w-auto">
+                        {isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                        Submit quiz
+                    </Button>
+                )}
+            </footer>
 
             <AlertDialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to submit?</AlertDialogTitle>
+                        <AlertDialogTitle>Submit this quiz?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {unansweredCount > 0 ? (
-                                <span className="text-red-600 font-medium block mb-2">
-                                    Warning: You have {unansweredCount} unanswered questions.
-                                </span>
-                            ) : (
-                                <span>You are about to submit your quiz answers. This action cannot be undone.</span>
-                            )}
+                            {unansweredCount > 0
+                                ? `You still have ${unansweredCount} unanswered ${unansweredCount === 1 ? "question" : "questions"}. You can submit anyway, but you cannot change answers afterward.`
+                                : "Your answers cannot be changed after submission."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmSubmit} className="bg-indigo-600 hover:bg-indigo-700">
-                            Submit Quiz
-                        </AlertDialogAction>
+                        <AlertDialogCancel>Keep reviewing</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmSubmit}>Submit quiz</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -380,144 +242,195 @@ export function QuizPlayer({ quizId, assignmentId, initialAnswers, isReadOnly = 
     )
 }
 
-function AudioPlayer({ src, limit, quizId, questionId, isReadOnly }: { src: string, limit: number, quizId: string, questionId: string, isReadOnly: boolean }) {
+function QuestionNavLink({ index, answered }: { index: number; answered: boolean }) {
+    return (
+        <a
+            href={`#quiz-question-${index + 1}`}
+            className={cn(
+                "flex size-9 shrink-0 items-center justify-center rounded-md border text-xs font-semibold tabular-nums transition-colors hover:border-primary/50 hover:text-primary",
+                answered ? "border-primary/30 bg-primary/10 text-primary" : "bg-background text-muted-foreground",
+            )}
+            aria-label={`Go to question ${index + 1}${answered ? ", answered" : ", not answered"}`}
+        >
+            {index + 1}
+        </a>
+    )
+}
+
+function QuestionPanel({ question, index, totalQuestions, quizId, selected, onAnswer, isReadOnly, showGradeAfterSubmission }: {
+    question: Question
+    index: number
+    totalQuestions: number
+    quizId: string
+    selected: (choiceId: string) => boolean
+    onAnswer: (choiceId: string) => void
+    isReadOnly: boolean
+    showGradeAfterSubmission: boolean
+}) {
+    return (
+        <article id={`quiz-question-${index + 1}`} className="scroll-mt-28 overflow-hidden rounded-md border bg-card">
+            <header className="flex items-center gap-3 border-b bg-muted/25 px-3 py-2.5 sm:px-4">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{index + 1}</span>
+                <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-muted-foreground">Question {index + 1} of {totalQuestions}</p>
+                    <p className="text-[11px] text-muted-foreground">{question.allowMultiple ? "Select all that apply" : "Select one answer"}</p>
+                </div>
+                <Badge variant="secondary">{question.points} {question.points === 1 ? "pt" : "pts"}</Badge>
+            </header>
+
+            <div className="space-y-4 p-3 sm:p-4">
+                <h3 className="text-base font-semibold leading-6">{question.text}</h3>
+
+                {question.imageUrl && (
+                    <div className="relative aspect-video w-full max-w-2xl overflow-hidden rounded-md border bg-muted">
+                        <Image src={question.imageUrl} alt={`Illustration for question ${index + 1}`} fill sizes="(max-width: 768px) 100vw, 768px" className="object-contain" />
+                    </div>
+                )}
+
+                {question.audioUrl && <AudioPlayer src={question.audioUrl} limit={question.audioLimit || 0} quizId={quizId} questionId={question.id} isReadOnly={isReadOnly} />}
+
+                <div role="group" aria-label={`Answers for question ${index + 1}`} className="grid gap-2">
+                    {question.choices.map((choice, choiceIndex) => {
+                        const isChoiceSelected = selected(choice.id)
+                        const isCorrect = Boolean(choice.isCorrect)
+                        const showCorrect = isReadOnly && showGradeAfterSubmission && isCorrect
+                        const showIncorrect = isReadOnly && showGradeAfterSubmission && isChoiceSelected && !isCorrect
+
+                        return (
+                            <button
+                                type="button"
+                                key={choice.id}
+                                onClick={() => onAnswer(choice.id)}
+                                disabled={isReadOnly}
+                                aria-pressed={isChoiceSelected}
+                                className={cn(
+                                    "flex min-h-12 w-full items-start gap-3 rounded-md border bg-background p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                    !isReadOnly && !isChoiceSelected && "hover:border-primary/35 hover:bg-muted/30",
+                                    !isReadOnly && isChoiceSelected && "border-primary bg-primary/5",
+                                    isReadOnly && !showCorrect && !showIncorrect && !isChoiceSelected && "opacity-60",
+                                    isReadOnly && isChoiceSelected && !showGradeAfterSubmission && "border-primary bg-primary/5",
+                                    showCorrect && "border-emerald-500 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/30",
+                                    showIncorrect && "border-destructive bg-destructive/5",
+                                )}
+                            >
+                                <span className={cn(
+                                    "mt-0.5 flex size-6 shrink-0 items-center justify-center border text-xs font-semibold",
+                                    question.allowMultiple ? "rounded-sm" : "rounded-full",
+                                    isChoiceSelected ? "border-primary bg-primary text-primary-foreground" : "border-input text-muted-foreground",
+                                    showCorrect && "border-emerald-600 bg-emerald-600 text-white",
+                                    showIncorrect && "border-destructive bg-destructive text-white",
+                                )}>
+                                    {isChoiceSelected ? <Check className="size-3.5" /> : String.fromCharCode(65 + choiceIndex)}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="block text-sm leading-5">{choice.text}</span>
+                                    {choice.imageUrl && (
+                                        <span className="relative mt-2 block aspect-video w-full max-w-sm overflow-hidden rounded-md border bg-muted">
+                                            <Image src={choice.imageUrl} alt={`Illustration for choice ${String.fromCharCode(65 + choiceIndex)}`} fill sizes="(max-width: 768px) 100vw, 384px" className="object-contain" />
+                                        </span>
+                                    )}
+                                </span>
+                                {showCorrect && <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-label="Correct answer" />}
+                                {showIncorrect && <XCircle className="mt-0.5 size-5 shrink-0 text-destructive" aria-label="Incorrect selection" />}
+                            </button>
+                        )
+                    })}
+                </div>
+
+                {isReadOnly && showGradeAfterSubmission && question.explanation && (
+                    <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50/60 p-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+                        <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                        <div><p className="font-semibold">Answer explanation</p><p className="mt-1 leading-5">{question.explanation}</p></div>
+                    </div>
+                )}
+            </div>
+        </article>
+    )
+}
+
+function QuizPlayerSkeleton() {
+    return (
+        <div className="space-y-3" aria-busy="true" aria-label="Loading quiz">
+            <div className="rounded-md border p-3"><div className="h-4 w-32 animate-pulse rounded bg-muted" /><div className="mt-3 h-1.5 animate-pulse rounded bg-muted" /></div>
+            {[0, 1].map((item) => (
+                <div key={item} className="rounded-md border p-4">
+                    <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
+                    <div className="mt-5 space-y-2">{[0, 1, 2, 3].map((choice) => <div key={choice} className="h-12 animate-pulse rounded-md bg-muted/70" />)}</div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+function AudioPlayer({ src, limit, quizId, questionId, isReadOnly }: { src: string; limit: number; quizId: string; questionId: string; isReadOnly: boolean }) {
     const audioRef = useRef<HTMLAudioElement>(null)
     const [plays, setPlays] = useState(0)
     const [isPlaying, setIsPlaying] = useState(false)
     const [progress, setProgress] = useState(0)
-
-    // Key for local storage
     const storageKey = `quiz-audio-${quizId}-${questionId}-plays`
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const savedPlays = parseInt(localStorage.getItem(storageKey) || '0')
-            setPlays(savedPlays)
-        }
+        // Playback limits persist across reloads for the current browser.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPlays(parseInt(localStorage.getItem(storageKey) || "0"))
     }, [storageKey])
 
     useEffect(() => {
         const audio = audioRef.current
         if (!audio) return
-
-        const updateProgress = () => {
-            if (audio.duration) {
-                setProgress((audio.currentTime / audio.duration) * 100)
-            }
-        }
-
-        audio.addEventListener('timeupdate', updateProgress)
-        return () => audio.removeEventListener('timeupdate', updateProgress)
+        const updateProgress = () => setProgress(audio.duration ? (audio.currentTime / audio.duration) * 100 : 0)
+        audio.addEventListener("timeupdate", updateProgress)
+        return () => audio.removeEventListener("timeupdate", updateProgress)
     }, [])
 
-    // Standard Player for Review Mode
     if (isReadOnly) {
         return (
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        <Volume2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Audio Clip (Review)</p>
-                    </div>
-                </div>
-                <audio controls className="w-full h-10" src={src} />
+            <div className="max-w-md rounded-md border bg-muted/25 p-3">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium"><Volume2 className="size-4 text-primary" />Audio clip</div>
+                <audio controls className="h-9 w-full" src={src} />
             </div>
         )
     }
 
-    // Strict Player for Attempt Mode
-    const handleStrictPlay = () => {
-        if (isPlaying) return // Ignore if already playing (no pause)
+    const remaining = limit > 0 ? Math.max(0, limit - plays) : null
+    const limitReached = remaining === 0
 
-        if (limit > 0 && plays >= limit) {
-            toast.error("Maximum playback limit reached")
-            return
-        }
-
-        if (audioRef.current) {
-            audioRef.current.currentTime = 0
-            audioRef.current.play()
+    async function playAudio() {
+        if (isPlaying || limitReached || !audioRef.current) return
+        audioRef.current.currentTime = 0
+        try {
+            await audioRef.current.play()
             setIsPlaying(true)
+        } catch {
+            toast.error("Audio could not be played")
         }
     }
 
-    const handleEnded = () => {
+    function handleEnded() {
         setIsPlaying(false)
         setProgress(0)
-
-        // Decrement count (increment plays) ONLY on completion
-        const newPlays = plays + 1
-        setPlays(newPlays)
-        localStorage.setItem(storageKey, newPlays.toString())
+        const nextPlays = plays + 1
+        setPlays(nextPlays)
+        localStorage.setItem(storageKey, String(nextPlays))
     }
 
-    // Prevent manual pausing via media keys/menu if possible by forced resume? 
-    // It's aggressive, but user asked "not even pausing". 
-    // Simple approach: Just hide UI controls. If they pause via OS, it just pauses.
-    // But we won't count it as complete until it Ends.
-
-    const remaining = limit > 0 ? Math.max(0, limit - plays) : Infinity
-    const isLimitReached = limit > 0 && plays >= limit
-
     return (
-        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 select-none">
-            <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                    <Volume2 className="w-5 h-5" />
+        <div className="max-w-md rounded-md border bg-muted/25 p-3">
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <span className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary"><Volume2 className="size-4" /></span>
+                    <div><p className="text-sm font-medium">Audio clip</p><p className="text-[11px] text-muted-foreground">Playback cannot be paused or scrubbed</p></div>
                 </div>
-                <div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Audio Clip</p>
-                    {limit > 0 && (
-                        <p className={`text-xs ${remaining === 0 ? "text-red-500" : "text-slate-500"}`}>
-                            {remaining === 0 ? "No plays remaining" : `${remaining} plays remaining`}
-                        </p>
-                    )}
-                </div>
+                {remaining !== null && <Badge variant={limitReached ? "destructive" : "secondary"}>{remaining} {remaining === 1 ? "play" : "plays"} left</Badge>}
             </div>
-
-            <audio
-                ref={audioRef}
-                className="hidden"
-                src={src}
-                onEnded={handleEnded}
-            // No controls attribute = No scrubbing/pausing UI
-            />
-
-            <div className="space-y-3">
-                {/* Custom Progress Bar (Non-interactive) */}
-                <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                        className="h-full bg-indigo-600 transition-all duration-300 ease-linear"
-                        style={{ width: `${progress}%` }}
-                    />
-                </div>
-
-                <Button
-                    onClick={handleStrictPlay}
-                    disabled={isPlaying || isLimitReached}
-                    className="w-full"
-                    variant={isPlaying ? "secondary" : "default"}
-                >
-                    {isPlaying ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Playing...
-                        </>
-                    ) : isLimitReached ? (
-                        <>
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Limit Reached
-                        </>
-                    ) : (
-                        <>
-                            <Play className="mr-2 h-4 w-4" />
-                            Play Audio
-                        </>
-                    )}
-                </Button>
+            <audio ref={audioRef} className="hidden" src={src} onEnded={handleEnded} />
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Audio progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
+                <div className="h-full bg-primary transition-[width]" style={{ width: `${progress}%` }} />
             </div>
+            <Button type="button" size="sm" variant="outline" onClick={playAudio} disabled={isPlaying || limitReached} className="mt-3 w-full">
+                {isPlaying ? <Loader2 className="size-4 animate-spin" /> : limitReached ? <XCircle className="size-4" /> : <Play className="size-4" />}
+                {isPlaying ? "Playing…" : limitReached ? "Playback limit reached" : "Play audio"}
+            </Button>
         </div>
     )
 }

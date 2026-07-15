@@ -1,18 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useTransition } from "react"
-import { useLocalUpload } from "@/hooks/use-local-upload"
-import { upsertQuestion, deleteQuestion, deleteQuizImages } from "@/lib/actions/quiz.actions"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle as CardTitleUI } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Trash2, Plus, Image as ImageIcon, Loader2, X } from "lucide-react"
-import { toast } from "sonner"
+import { useEffect, useRef, useState, useTransition } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import imageCompression from "browser-image-compression"
+import { AudioLines, Image as ImageIcon, Loader2, Plus, Save, Trash2, X } from "lucide-react"
+import { toast } from "sonner"
+
+import { useLocalUpload } from "@/hooks/use-local-upload"
+import { deleteQuestion, deleteQuizImages, upsertQuestion } from "@/lib/actions/quiz.actions"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -23,6 +19,11 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
     Select,
     SelectContent,
@@ -30,576 +31,413 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { AudioLines, Play, Check } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
 
-import imageCompression from "browser-image-compression";
-
-interface Choice {
+export interface QuizEditorChoice {
     id?: string
     text: string
-    imageUrl?: string
+    imageUrl?: string | null
     isCorrect: boolean
     order: number
 }
 
-interface QuestionProps {
-    quizId: string
-    question?: any // Type properly if possible
-    onCancelNew?: () => void
+export interface QuizEditorQuestion {
+    id: string
+    text: string
+    imageUrl?: string | null
+    audioUrl?: string | null
+    audioLimit: number
+    points: number
+    gradingType: "ALL_OR_NOTHING" | "RIGHT_MINUS_WRONG"
+    explanation?: string | null
+    order: number
+    choices: QuizEditorChoice[]
 }
 
-export function QuestionCard({ quizId, question, onCancelNew }: QuestionProps) {
+type Choice = QuizEditorChoice
+
+interface QuestionProps {
+    quizId: string
+    question?: QuizEditorQuestion
+    onCancelNew?: () => void
+    questionNumber?: number
+}
+
+export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: QuestionProps) {
     const isNew = !question
+    const router = useRouter()
+    const { startUpload, isUploading } = useLocalUpload()
+    const [isPending, startTransition] = useTransition()
+
     const [text, setText] = useState(question?.text || "")
     const [imageUrl, setImageUrl] = useState<string | undefined>(question?.imageUrl || undefined)
-    const [choices, setChoices] = useState<Choice[]>(question?.choices || [
-        { text: "", isCorrect: false, order: 0 },
-        { text: "", isCorrect: false, order: 1 }
-    ])
     const [audioUrl, setAudioUrl] = useState<string | undefined>(question?.audioUrl || undefined)
     const [audioLimit, setAudioLimit] = useState<number>(question?.audioLimit || 0)
     const [points, setPoints] = useState<number>(question?.points ?? 1)
-    const [gradingType, setGradingType] = useState<string>(question?.gradingType || 'ALL_OR_NOTHING')
+    const [gradingType, setGradingType] = useState<"ALL_OR_NOTHING" | "RIGHT_MINUS_WRONG">(question?.gradingType || "ALL_OR_NOTHING")
     const [explanation, setExplanation] = useState<string>(question?.explanation || "")
+    const [choices, setChoices] = useState<Choice[]>(question?.choices || [
+        { text: "", isCorrect: false, order: 0 },
+        { text: "", isCorrect: false, order: 1 },
+    ])
 
-    // Lazy Upload State
     const [pendingQuestionFile, setPendingQuestionFile] = useState<File | null>(null)
     const [pendingAudioFile, setPendingAudioFile] = useState<File | null>(null)
     const [pendingChoiceFiles, setPendingChoiceFiles] = useState<Record<number, File>>({})
-    const [objectUrls, setObjectUrls] = useState<string[]>([]) // Track for cleanup
-
-    const [isPending, startTransition] = useTransition()
-    const { startUpload, isUploading } = useLocalUpload()
-    const router = useRouter()
+    const [questionPreview, setQuestionPreview] = useState<string | undefined>(imageUrl)
+    const [audioPreview, setAudioPreview] = useState<string | undefined>(audioUrl)
+    const [choicePreviews, setChoicePreviews] = useState<Record<number, string>>(() =>
+        Object.fromEntries((question?.choices || []).flatMap((choice, index) => choice.imageUrl ? [[index, choice.imageUrl] as const] : [])),
+    )
+    const localPreviewUrls = useRef<string[]>([])
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
-    // Cleanup object URLs on unmount
     useEffect(() => {
-        return () => {
-            objectUrls.forEach(url => URL.revokeObjectURL(url))
-        }
-    }, [objectUrls])
+        const urls = localPreviewUrls.current
+        return () => urls.forEach((url) => URL.revokeObjectURL(url))
+    }, [])
 
-    const createPreview = (file: File) => {
+    function createPreview(file: File) {
         const url = URL.createObjectURL(file)
-        setObjectUrls(prev => [...prev, url])
+        localPreviewUrls.current.push(url)
         return url
     }
 
-    const compressFile = async (file: File) => {
-        // Options for compression
-        const options = {
-            maxSizeMB: 0.5, // 512KB
-            maxWidthOrHeight: 1920, // Max width/height
-            useWebWorker: true,
-            fileType: "image/webp", // Optimized format
-            initialQuality: 0.8
-        }
-
+    async function compressFile(file: File) {
+        if (!file.type.startsWith("image/")) return file
         try {
-            // Only compress images
-            if (file.type.startsWith('image/')) {
-                toast.info("Compressing image...", { duration: 1000 })
-                const compressedFile = await imageCompression(file, options);
-                return compressedFile;
-            }
-            return file;
+            toast.info("Optimizing image…", { duration: 1000 })
+            return await imageCompression(file, {
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+                fileType: "image/webp",
+                initialQuality: 0.8,
+            })
         } catch (error) {
-            console.error("Compression failed:", error);
-            // Fallback to original
-            return file;
+            console.error("Image compression failed:", error)
+            return file
         }
     }
 
-    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>, target: 'question' | 'audio' | number) => {
-        const files = e.target.files
-        if (!files || files.length === 0) return
-        let file = files[0]
+    async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>, target: "question" | "audio" | number) {
+        const selected = event.target.files?.[0]
+        if (!selected) return
 
-        // Validate Audio Size (1MB Strict Limit)
-        if (target === 'audio') {
-            if (file.size > 1 * 1024 * 1024) { // 1MB in bytes
-                toast.error("Audio file must be less than 1MB");
-                // Reset input value so user can select again
-                e.target.value = "";
-                return;
+        if (target === "audio") {
+            if (selected.size > 1024 * 1024) {
+                toast.error("Audio must be smaller than 1 MB")
+                event.target.value = ""
+                return
             }
+            setPendingAudioFile(selected)
+            setAudioPreview(createPreview(selected))
+            return
         }
 
-        // Compress if it's an image
-        if (target === 'question' || (typeof target === 'number')) {
-            if (file.type.startsWith('image/')) {
-                file = await compressFile(file);
-            }
-        }
-
-        if (target === 'question') {
+        const file = await compressFile(selected)
+        if (target === "question") {
             setPendingQuestionFile(file)
-        } else if (target === 'audio') {
-            setPendingAudioFile(file)
+            setQuestionPreview(createPreview(file))
         } else {
-            setPendingChoiceFiles(prev => ({ ...prev, [target]: file }))
+            setPendingChoiceFiles((current) => ({ ...current, [target]: file }))
+            setChoicePreviews((current) => ({ ...current, [target]: createPreview(file) }))
         }
     }
 
-    const removeImage = (target: 'question' | 'audio' | number) => {
-        if (target === 'question') {
+    function removeMedia(target: "question" | "audio" | number) {
+        if (target === "question") {
             setPendingQuestionFile(null)
             setImageUrl(undefined)
-        } else if (target === 'audio') {
+            setQuestionPreview(undefined)
+            return
+        }
+        if (target === "audio") {
             setPendingAudioFile(null)
             setAudioUrl(undefined)
-        } else {
-            const newChoices = [...choices]
-            newChoices[target as number].imageUrl = undefined
-            setChoices(newChoices)
-            setPendingChoiceFiles(prev => {
-                const next = { ...prev }
-                delete next[target as number]
-                return next
-            })
-        }
-    }
-
-    const updateChoice = (index: number, field: keyof Choice, value: any) => {
-        const newChoices = [...choices]
-        newChoices[index] = { ...newChoices[index], [field]: value }
-
-        if (field === 'isCorrect') {
-            // Toggle logic (Checkbox behavior)
-            // No need to uncheck others
-        }
-
-        setChoices(newChoices)
-    }
-
-    const addChoice = () => {
-        if (choices.length >= 6) return
-        setChoices([...choices, { text: "", isCorrect: false, order: choices.length }])
-    }
-
-    const removeChoice = (index: number) => {
-        if (choices.length <= 2) {
-            toast.error("Minimum 2 choices required")
+            setAudioPreview(undefined)
             return
         }
 
-        // When removing a choice, ensure we also cleanup pending files for it
-        // However, indices shift. This is tricky with index-based keys.
-        // It's better to use unique IDs for keys in pendingChoiceFiles if possible, but choices don't always have IDs.
-        // Simplified approach: Clear all pending choice uploads if we remove a choice to prevent index mismatch? 
-        // Or just warn user? 
-        // Correct approach: Map old indices to new indices. 
-        // For this task, let's keep it simple: If you remove a choice, we remove its pending file. 
-        // For subsequent choices, we need to shift their keys in pendingChoiceFiles.
-
-        const newPending = { ...pendingChoiceFiles }
-        delete newPending[index]
-        // Shift keys > index down by 1
-        Object.keys(newPending).forEach(key => {
-            const k = parseInt(key)
-            if (k > index) {
-                newPending[k - 1] = newPending[k]
-                delete newPending[k]
-            }
+        setChoices((current) => current.map((choice, index) => index === target ? { ...choice, imageUrl: undefined } : choice))
+        setPendingChoiceFiles((current) => {
+            const next = { ...current }
+            delete next[target]
+            return next
         })
-        setPendingChoiceFiles(newPending)
-
-
-
-        const newChoices = choices.filter((_, i) => i !== index).map((c, i) => ({ ...c, order: i }))
-        setChoices(newChoices)
+        setChoicePreviews((current) => {
+            const next = { ...current }
+            delete next[target]
+            return next
+        })
     }
 
-    const handleSave = async () => {
-        if (!text.trim()) {
-            toast.error("Question text is required")
+    function updateChoice(index: number, field: keyof Choice, value: string | boolean) {
+        setChoices((current) => current.map((choice, choiceIndex) => choiceIndex === index ? { ...choice, [field]: value } : choice))
+    }
+
+    function addChoice() {
+        if (choices.length >= 6) return
+        setChoices((current) => [...current, { text: "", isCorrect: false, order: current.length }])
+    }
+
+    function removeChoice(index: number) {
+        if (choices.length <= 2) {
+            toast.error("A question needs at least two choices")
             return
         }
-        if (choices.length < 2) {
-            toast.error("At least 2 choices are required")
-            return
-        }
-        if (!choices.some(c => c.isCorrect)) {
-            toast.error("Please mark one choice as correct")
-            return
-        }
-        if (choices.some(c => !c.text.trim() && !c.imageUrl && !pendingChoiceFiles[c.order])) {
-            // Note: need to check if pending file exists for that index too
-            toast.error("All choices must have text or an image")
-            return
+
+        setChoices((current) => current.filter((_, choiceIndex) => choiceIndex !== index).map((choice, choiceIndex) => ({ ...choice, order: choiceIndex })))
+        setPendingChoiceFiles((current) => shiftIndexedRecord(current, index))
+        setChoicePreviews((current) => shiftIndexedRecord(current, index))
+    }
+
+    function handleSave() {
+        if (!text.trim()) return toast.error("Question text is required")
+        if (choices.length < 2) return toast.error("Add at least two choices")
+        if (!choices.some((choice) => choice.isCorrect)) return toast.error("Mark at least one correct answer")
+        if (choices.some((choice, index) => !choice.text.trim() && !choice.imageUrl && !pendingChoiceFiles[index])) {
+            return toast.error("Every choice needs text or an image")
         }
 
         startTransition(async () => {
-            // 1. Upload Images
             let finalQuestionImageUrl = imageUrl
-            const finalChoices = [...choices]
+            let finalAudioUrl = audioUrl
+            const finalChoices = choices.map((choice) => ({ ...choice }))
 
-            // Question Image
             if (pendingQuestionFile) {
                 const uploaded = await startUpload([pendingQuestionFile], "quiz-pictures")
-                if (uploaded?.[0]) {
-                    finalQuestionImageUrl = uploaded[0].url
-                }
+                if (uploaded?.[0]) finalQuestionImageUrl = uploaded[0].url
             }
-
-            // Audio Upload
-            let finalAudioUrl = audioUrl
             if (pendingAudioFile) {
                 const uploaded = await startUpload([pendingAudioFile], "quiz-audio")
-                if (uploaded?.[0]) {
-                    finalAudioUrl = uploaded[0].url
-                }
+                if (uploaded?.[0]) finalAudioUrl = uploaded[0].url
+            }
+            for (let index = 0; index < finalChoices.length; index++) {
+                const file = pendingChoiceFiles[index]
+                if (!file) continue
+                const uploaded = await startUpload([file], "quiz-pictures")
+                if (uploaded?.[0]) finalChoices[index].imageUrl = uploaded[0].url
             }
 
-            // Choice Images
-            for (let i = 0; i < finalChoices.length; i++) {
-                const pendingFile = pendingChoiceFiles[i]
-                if (pendingFile) {
-                    const uploaded = await startUpload([pendingFile], "quiz-pictures")
-                    if (uploaded?.[0]) {
-                        finalChoices[i].imageUrl = uploaded[0].url
-                    }
-                }
-            }
-
-            const questionData = {
+            const result = await upsertQuestion(quizId, {
                 id: question?.id,
-                text,
+                text: text.trim(),
                 imageUrl: finalQuestionImageUrl,
                 audioUrl: finalAudioUrl,
-                audioLimit: audioLimit,
-                order: question?.order || 0,
-                points: points,
-                gradingType: gradingType,
-                explanation: explanation,
-                choices: finalChoices.map((c, i) => ({ ...c, order: i }))
-            }
+                audioLimit,
+                order: question?.order ?? 0,
+                points,
+                gradingType,
+                explanation: explanation.trim(),
+                choices: finalChoices.map((choice, index) => ({ ...choice, imageUrl: choice.imageUrl || undefined, text: choice.text.trim(), order: index })),
+            })
 
-            const result = await upsertQuestion(quizId, questionData as any)
-            if ('error' in result && result.error) {
+            if ("error" in result && result.error) {
                 toast.error(result.error)
-            } else {
-                // Success! Now we can safely delete old images in background
-                const oldUrls = new Set<string>()
-                if (question?.imageUrl) oldUrls.add(question.imageUrl)
-                if (question?.audioUrl) oldUrls.add(question.audioUrl)
-                question?.choices?.forEach((c: any) => {
-                    if (c.imageUrl) oldUrls.add(c.imageUrl)
-                })
-
-                const newUrls = new Set<string>()
-                if (finalQuestionImageUrl) newUrls.add(finalQuestionImageUrl)
-                if (finalAudioUrl) newUrls.add(finalAudioUrl)
-                finalChoices.forEach(c => {
-                    if (c.imageUrl) newUrls.add(c.imageUrl)
-                })
-
-                const toDelete = Array.from(oldUrls).filter(url => !newUrls.has(url))
-                if (toDelete.length > 0) {
-                    deleteQuizImages(toDelete)
-                }
-
-                toast.success(isNew ? "Question added" : "Question updated")
-                if (isNew && onCancelNew) onCancelNew()
-                router.refresh()
+                return
             }
+
+            const previousUrls = new Set<string>()
+            const nextUrls = new Set<string>()
+            if (question?.imageUrl) previousUrls.add(question.imageUrl)
+            if (question?.audioUrl) previousUrls.add(question.audioUrl)
+            question?.choices?.forEach((choice: Choice) => choice.imageUrl && previousUrls.add(choice.imageUrl))
+            if (finalQuestionImageUrl) nextUrls.add(finalQuestionImageUrl)
+            if (finalAudioUrl) nextUrls.add(finalAudioUrl)
+            finalChoices.forEach((choice) => choice.imageUrl && nextUrls.add(choice.imageUrl))
+            const removedUrls = Array.from(previousUrls).filter((url) => !nextUrls.has(url))
+            if (removedUrls.length) void deleteQuizImages(removedUrls)
+
+            toast.success(isNew ? "Question added" : "Question updated")
+            if (isNew) onCancelNew?.()
+            router.refresh()
         })
     }
 
-    const getDisplayQuestionUrl = () => {
-        if (pendingQuestionFile) return URL.createObjectURL(pendingQuestionFile)
-        return imageUrl
-    }
-
-    const getDisplayAudioUrl = () => {
-        if (pendingAudioFile) return URL.createObjectURL(pendingAudioFile)
-        return audioUrl
-    }
-
-    const getDisplayChoiceUrl = (index: number) => {
-        if (pendingChoiceFiles[index]) return URL.createObjectURL(pendingChoiceFiles[index])
-        return choices[index].imageUrl
-    }
-
-    const handleDelete = () => {
+    function handleDelete() {
+        if (!question) return
         startTransition(async () => {
             const result = await deleteQuestion(question.id)
-            if ('error' in result && result.error) {
+            if ("error" in result && result.error) {
                 toast.error(result.error)
-            } else {
-                toast.success("Question deleted")
-                setIsDeleteOpen(false)
-                router.refresh()
+                return
             }
+            toast.success("Question deleted")
+            setIsDeleteOpen(false)
+            router.refresh()
         })
     }
 
+    const correctCount = choices.filter((choice) => choice.isCorrect).length
+    const busy = isPending || isUploading
+    const identity = question?.id || "new"
+
     return (
-        <Card className="relative overflow-hidden">
-            {(isPending || isUploading) && (
-                <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <article className="relative overflow-hidden rounded-md border bg-card shadow-xs" aria-busy={busy}>
+            {busy && <div className="absolute inset-x-0 top-0 z-20 h-0.5 animate-pulse bg-primary" />}
+
+            <header className="flex items-center gap-3 border-b bg-muted/25 px-3 py-2.5">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-semibold tabular-nums text-primary-foreground">{questionNumber || "+"}</span>
+                <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold">{isNew ? "New question" : `Question ${questionNumber || ""}`}</h3>
+                    <p className="truncate text-xs text-muted-foreground">{text || "Write the question prompt below."}</p>
                 </div>
-            )}
-            <CardHeader className="pb-4">
-                <div className="flex items-start gap-4">
-                    <div className="flex-1 space-y-4">
-                        <div className="space-y-2">
-                            <Label>Question</Label>
-                            <Textarea
-                                value={text}
-                                onChange={(e) => setText(e.target.value)}
-                                placeholder="Enter your question here..."
-                                className="resize-none"
-                            />
-                        </div>
+                <div className="hidden items-center gap-1.5 sm:flex">
+                    <Badge variant="secondary">{points} pts</Badge>
+                    <Badge variant={correctCount > 0 ? "outline" : "destructive"}>{correctCount} correct</Badge>
+                </div>
+                {!isNew && (
+                    <Button variant="ghost" size="icon-sm" onClick={() => setIsDeleteOpen(true)} className="text-muted-foreground hover:text-destructive" aria-label={`Delete question ${questionNumber || ""}`}>
+                        <Trash2 className="size-4" />
+                    </Button>
+                )}
+            </header>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Points</Label>
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    value={points}
-                                    onChange={(e) => setPoints(Math.max(1, parseInt(e.target.value) || 1))}
-                                />
-                            </div>
+            <div className="space-y-5 p-3 sm:p-4">
+                <section className="space-y-3">
+                    <div>
+                        <Label htmlFor={`question-text-${identity}`}>Question prompt</Label>
+                        <p className="mt-0.5 text-xs text-muted-foreground">Keep it direct. Add media only when it helps students answer.</p>
+                    </div>
+                    <Textarea id={`question-text-${identity}`} value={text} onChange={(event) => setText(event.target.value)} placeholder="What do you want students to answer?" className="min-h-24 resize-y" />
 
-                            {choices.filter(c => c.isCorrect).length > 1 && (
-                                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 bg-muted/40 p-2 rounded-md border border-dashed">
-                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Grading Strategy</Label>
-                                    <Select value={gradingType} onValueChange={setGradingType}>
-                                        <SelectTrigger className="h-9">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="ALL_OR_NOTHING">All or Nothing</SelectItem>
-                                            <SelectItem value="RIGHT_MINUS_WRONG">Partial Credit (Right - Wrong)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Explanation (Optional)</Label>
-                            <Textarea
-                                value={explanation}
-                                onChange={(e) => setExplanation(e.target.value)}
-                                placeholder="Explain the correct answer..."
-                                className="resize-none h-20 text-sm"
-                            />
-                        </div>
-
-                        {getDisplayQuestionUrl() ? (
-                            <div className="relative w-full max-w-sm aspect-video rounded-md overflow-hidden border bg-muted">
-                                <Image
-                                    src={getDisplayQuestionUrl()!}
-                                    alt="Question Image"
-                                    fill
-                                    className="object-contain"
-                                />
-                                <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-2 right-2 h-6 w-6"
-                                    onClick={() => removeImage('question')}
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor={`q-img-${question?.id || 'new'}`} style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-white/50 dark:bg-slate-900/50 hover:bg-accent hover:text-accent-foreground h-9 px-3">
-                                    <ImageIcon className="mr-2 h-4 w-4" />
-                                    Add Image
-                                </Label>
-                                <Input
-                                    id={`q-img-${question?.id || 'new'}`}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => handleImageSelect(e, 'question')}
-                                    disabled={isUploading}
-                                />
-                            </div>
-                        )}
-
-                        {/* Audio Upload Section */}
-                        <div className="space-y-2">
-                            <Label>Audio (Optional)</Label>
-                            {getDisplayAudioUrl() ? (
-                                <div className="flex items-center gap-4 p-3 border rounded-md bg-muted/50">
-                                    <div className="flex-1 flex gap-3 items-center">
-                                        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                                            <AudioLines className="h-5 w-5" />
-                                        </div>
-                                        <div className="flex-1 space-y-1">
-                                            <p className="text-sm font-medium line-clamp-1">
-                                                {pendingAudioFile ? pendingAudioFile.name : "Audio Attachment"}
-                                            </p>
-                                            <audio controls className="h-8 w-full" src={getDisplayAudioUrl()!} />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 border-l pl-3">
-                                        <div className="flex flex-col gap-1.5">
-                                            <Label htmlFor={`audio-limit-${question?.id || 'new'}`} className="text-xs text-muted-foreground">
-                                                Max Plays (0=∞)
-                                            </Label>
-                                            <Input
-                                                id={`audio-limit-${question?.id || 'new'}`}
-                                                type="number"
-                                                min="0"
-                                                value={audioLimit}
-                                                onChange={(e) => setAudioLimit(Math.max(0, parseInt(e.target.value) || 0))}
-                                                className="h-7 w-20 text-center"
-                                            />
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <Label htmlFor={`q-audio-${question?.id || 'new'}`} className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted cursor-pointer">
-                                                <AudioLines className="h-4 w-4 text-muted-foreground" />
-                                            </Label>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => removeImage('audio')}
-                                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <Label htmlFor={`q-audio-${question?.id || 'new'}`} style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }} className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-white/50 dark:bg-slate-900/50 hover:bg-accent hover:text-accent-foreground h-9 px-3">
-                                        <AudioLines className="mr-2 h-4 w-4" />
-                                        Attach Audio
-                                    </Label>
-                                    <Input
-                                        id={`q-audio-${question?.id || 'new'}`}
-                                        type="file"
-                                        accept="audio/*"
-                                        className="hidden"
-                                        onChange={(e) => handleImageSelect(e, 'audio')}
-                                        disabled={isUploading}
-                                    />
-                                </div>
-                            )}
-                        </div>
+                    <div className="flex flex-wrap gap-2">
+                        {!questionPreview && <AttachmentLabel htmlFor={`q-img-${identity}`} icon={ImageIcon} label="Add image" />}
+                        <Input id={`q-img-${identity}`} type="file" accept="image/*" className="hidden" onChange={(event) => handleFileSelect(event, "question")} disabled={isUploading} />
+                        {!audioPreview && <AttachmentLabel htmlFor={`q-audio-${identity}`} icon={AudioLines} label="Add audio" />}
+                        <Input id={`q-audio-${identity}`} type="file" accept="audio/*" className="hidden" onChange={(event) => handleFileSelect(event, "audio")} disabled={isUploading} />
                     </div>
 
-                    {!isNew && (
-                        <div className="flex flex-col gap-2">
-                            <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Delete Question?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will permanently delete this question and its associated images.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                            Delete
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-
-                            <Button variant="ghost" size="icon"
-                                onClick={() => setIsDeleteOpen(true)}
-                                className="text-destructive hover:text-destructive"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                    {questionPreview && (
+                        <div className="relative aspect-video w-full max-w-md overflow-hidden rounded-md border bg-muted">
+                            <Image src={questionPreview} alt="Question attachment preview" fill className="object-contain" />
+                            <Button variant="destructive" size="icon-sm" className="absolute right-2 top-2" onClick={() => removeMedia("question")} aria-label="Remove question image"><X className="size-4" /></Button>
                         </div>
                     )}
-                </div>
-            </CardHeader >
-            <CardContent>
-                <div className="space-y-4">
-                    <Label>Choices</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {audioPreview && (
+                        <div className="grid gap-3 rounded-md border bg-muted/25 p-3 sm:grid-cols-[minmax(0,1fr)_8rem_auto] sm:items-end">
+                            <div className="min-w-0">
+                                <Label>Audio attachment</Label>
+                                <audio controls className="mt-2 h-9 w-full" src={audioPreview} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor={`audio-limit-${identity}`}>Maximum plays</Label>
+                                <Input id={`audio-limit-${identity}`} type="number" min="0" value={audioLimit} onChange={(event) => setAudioLimit(Math.max(0, parseInt(event.target.value) || 0))} />
+                                <p className="text-[10px] text-muted-foreground">0 means unlimited</p>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => removeMedia("audio")} className="text-muted-foreground hover:text-destructive" aria-label="Remove audio"><X className="size-4" /></Button>
+                        </div>
+                    )}
+                </section>
+
+                <section className="space-y-3 border-t pt-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                            <Label>Answer choices</Label>
+                            <p className="mt-0.5 text-xs text-muted-foreground">Select every correct answer. Two to six choices are supported.</p>
+                        </div>
+                        {choices.length < 6 && <Button variant="outline" size="sm" onClick={addChoice}><Plus className="size-4" />Add choice</Button>}
+                    </div>
+
+                    <div className="grid gap-2 lg:grid-cols-2">
                         {choices.map((choice, index) => (
-                            <div key={index} className={`flex flex-col gap-2 p-3 rounded-md border ${choice.isCorrect ? 'border-green-500 bg-green-50/20' : 'border-border'}`}>
+                            <div key={choice.id || index} className={`rounded-md border p-3 transition-colors ${choice.isCorrect ? "border-emerald-400 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/25" : "bg-background"}`}>
                                 <div className="flex items-start gap-2">
-                                    <div className="pt-2">
-                                        <div
-                                            className={`h-5 w-5 rounded-md border border-primary cursor-pointer flex items-center justify-center transition-all ${choice.isCorrect ? 'bg-primary text-primary-foreground' : 'bg-transparent'}`}
-                                            onClick={() => updateChoice(index, 'isCorrect', !choice.isCorrect)}
-                                            title="Mark as correct answer"
-                                        >
-                                            {choice.isCorrect && <Check className="h-3.5 w-3.5" />}
-                                        </div>
+                                    <div className="flex min-h-9 items-center gap-2">
+                                        <Checkbox id={`correct-${identity}-${index}`} checked={choice.isCorrect} onCheckedChange={(checked) => updateChoice(index, "isCorrect", checked === true)} aria-label={`Mark choice ${index + 1} as correct`} />
+                                        <span className="text-xs font-semibold text-muted-foreground">{String.fromCharCode(65 + index)}</span>
                                     </div>
-                                    <div className="flex-1 space-y-2">
-                                        <Input
-                                            value={choice.text}
-                                            onChange={(e) => updateChoice(index, 'text', e.target.value)}
-                                            placeholder={`Option ${index + 1}`}
-                                        />
-                                        {getDisplayChoiceUrl(index) ? (
-                                            <div className="relative w-full aspect-video rounded-md overflow-hidden border bg-muted">
-                                                <Image
-                                                    src={getDisplayChoiceUrl(index)!}
-                                                    alt={`Choice ${index + 1}`}
-                                                    fill
-                                                    className="object-contain"
-                                                />
-                                                <Button
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    className="absolute top-1 right-1 h-5 w-5"
-                                                    onClick={() => removeImage(index)}
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </Button>
+                                    <div className="min-w-0 flex-1 space-y-2">
+                                        <Input value={choice.text} onChange={(event) => updateChoice(index, "text", event.target.value)} placeholder={`Choice ${index + 1}`} aria-label={`Choice ${index + 1} text`} />
+                                        {choicePreviews[index] ? (
+                                            <div className="relative aspect-video w-full overflow-hidden rounded-md border bg-muted">
+                                                <Image src={choicePreviews[index]} alt={`Choice ${index + 1} attachment preview`} fill className="object-contain" />
+                                                <Button variant="destructive" size="icon-sm" className="absolute right-1.5 top-1.5" onClick={() => removeMedia(index)} aria-label={`Remove image from choice ${index + 1}`}><X className="size-4" /></Button>
                                             </div>
-                                        ) : (
-                                            <div className="flex items-center">
-                                                <Label htmlFor={`c-img-${index}-${question?.id || 'new'}`} className="cursor-pointer text-xs flex items-center text-muted-foreground hover:text-foreground">
-                                                    <ImageIcon className="mr-1 h-3 w-3" />
-                                                    Add Image
-                                                </Label>
-                                                <Input
-                                                    id={`c-img-${index}-${question?.id || 'new'}`}
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={(e) => handleImageSelect(e, index)}
-                                                    disabled={isUploading}
-                                                />
-                                            </div>
-                                        )}
+                                        ) : <AttachmentLabel htmlFor={`c-img-${index}-${identity}`} icon={ImageIcon} label="Add image" compact />}
+                                        <Input id={`c-img-${index}-${identity}`} type="file" accept="image/*" className="hidden" onChange={(event) => handleFileSelect(event, index)} disabled={isUploading} />
                                     </div>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeChoice(index)}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
+                                    <Button variant="ghost" size="icon-sm" onClick={() => removeChoice(index)} className="text-muted-foreground hover:text-destructive" aria-label={`Remove choice ${index + 1}`}><X className="size-4" /></Button>
                                 </div>
                             </div>
                         ))}
-                        {choices.length < 6 && (
-                            <Button variant="outline" className="h-full min-h-[100px] border-dashed" onClick={addChoice}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Choice
-                            </Button>
-                        )}
                     </div>
+                </section>
+
+                <section className="grid gap-3 border-t pt-4 md:grid-cols-[8rem_minmax(0,1fr)]">
+                    <div className="space-y-2">
+                        <Label htmlFor={`points-${identity}`}>Points</Label>
+                        <Input id={`points-${identity}`} type="number" min="1" value={points} onChange={(event) => setPoints(Math.max(1, parseInt(event.target.value) || 1))} />
+                    </div>
+                    {correctCount > 1 && (
+                        <div className="space-y-2">
+                            <Label>Multiple-answer grading</Label>
+                            <Select value={gradingType} onValueChange={(value) => setGradingType(value as "ALL_OR_NOTHING" | "RIGHT_MINUS_WRONG")}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL_OR_NOTHING">All or nothing</SelectItem>
+                                    <SelectItem value="RIGHT_MINUS_WRONG">Partial credit (right minus wrong)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                    <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor={`explanation-${identity}`}>Answer explanation <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                        <Textarea id={`explanation-${identity}`} value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Shown during review when grades are available." className="min-h-20 resize-y" />
+                    </div>
+                </section>
+            </div>
+
+            <footer className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t bg-card/95 px-3 py-2.5 backdrop-blur-sm sm:px-4">
+                <p className="hidden text-xs text-muted-foreground sm:block">This question is saved independently.</p>
+                <div className="ml-auto flex gap-2">
+                    {isNew && <Button variant="ghost" onClick={onCancelNew} disabled={busy}>Cancel</Button>}
+                    <Button onClick={handleSave} disabled={busy}>
+                        {busy ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                        {busy ? "Saving…" : "Save question"}
+                    </Button>
                 </div>
-            </CardContent>
-            <CardFooter className="justify-end gap-2 bg-muted/20 py-3">
-                {isNew && (
-                    <Button variant="ghost" onClick={onCancelNew}>Cancel</Button>
-                )}
-                <Button onClick={handleSave} disabled={isPending || isUploading}>
-                    {isPending || isUploading ? "Saving..." : "Save Question"}
-                </Button>
-            </CardFooter>
-        </Card >
+            </footer>
+
+            {!isNew && (
+                <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete question {questionNumber}?</AlertDialogTitle>
+                            <AlertDialogDescription>This permanently removes the question, its choices, and attached media.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}Delete question
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+        </article>
     )
+}
+
+function AttachmentLabel({ htmlFor, icon: Icon, label, compact = false }: { htmlFor: string; icon: React.ElementType; label: string; compact?: boolean }) {
+    return (
+        <Label htmlFor={htmlFor} className={compact
+            ? "inline-flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            : "inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+        }>
+            <Icon className={compact ? "size-3" : "size-4"} />{label}
+        </Label>
+    )
+}
+
+function shiftIndexedRecord<T>(record: Record<number, T>, removedIndex: number) {
+    const next: Record<number, T> = {}
+    Object.entries(record).forEach(([key, value]) => {
+        const index = Number(key)
+        if (index < removedIndex) next[index] = value
+        if (index > removedIndex) next[index - 1] = value
+    })
+    return next
 }

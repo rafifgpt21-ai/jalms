@@ -1,7 +1,12 @@
 import { auth } from "@/auth"
 import { getCourseAttendance } from "@/lib/actions/attendance.actions"
 import { AttendanceForm } from "@/components/teacher/attendance/attendance-form"
+import { Button } from "@/components/ui/button"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
+import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { format } from "date-fns"
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
@@ -17,10 +22,10 @@ export default async function CourseAttendancePage({
 
     const { courseId } = await params
     const resolvedSearchParams = await searchParams
-    const dateParam = typeof resolvedSearchParams.date === 'string' ? resolvedSearchParams.date : undefined
+    const dateParam = typeof resolvedSearchParams.date === "string" ? resolvedSearchParams.date : undefined
     const date = dateParam ? new Date(dateParam) : new Date()
     const periodParam = resolvedSearchParams.period
-    const period = typeof periodParam === 'string' ? parseInt(periodParam) : 1
+    const period = typeof periodParam === "string" ? parseInt(periodParam) : 1
 
     const { course, students, topic, error } = await getCourseAttendance(courseId, date, period)
 
@@ -29,11 +34,22 @@ export default async function CourseAttendancePage({
         return <div>Error: {error}</div>
     }
 
+    const returnHref = `/teacher/attendance?date=${format(date, "yyyy-MM-dd")}`
+
     return (
-        <div className="space-y-6">
+        <WorkspacePage>
             <MobileHeaderSetter
                 title={`${course.name} attendance`}
-                subtitle={`${course.class?.name || "Course"} · ${format(date, "MMM d, yyyy")}`}
+                subtitle={`${getPeriodLabel(period)} · ${course.class?.name || "Course"} · ${format(date, "MMM d, yyyy")}`}
+                backLink={returnHref}
+                rightAction={
+                    <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
+                        <Link href={returnHref}>
+                            <ArrowLeft className="size-4" />
+                            Daily schedule
+                        </Link>
+                    </Button>
+                }
             />
 
             <AttendanceForm
@@ -42,7 +58,8 @@ export default async function CourseAttendancePage({
                 period={period}
                 initialStudents={students}
                 initialTopic={topic || ""}
+                completionHref={returnHref}
             />
-        </div>
+        </WorkspacePage>
     )
 }

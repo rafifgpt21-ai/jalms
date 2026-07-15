@@ -5,6 +5,7 @@ import { getPeriodLabel } from "@/lib/helpers/period-label"
 import { format } from "date-fns"
 import { notFound } from "next/navigation"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
 
 export default async function CourseAttendanceSessionPage({
     params,
@@ -31,7 +32,7 @@ export default async function CourseAttendanceSessionPage({
     }
 
     return (
-        <div className="space-y-6">
+        <WorkspacePage>
             <MobileHeaderSetter
                 title={`${course.name} attendance`}
                 subtitle={`${getPeriodLabel(period)} · ${course.class?.name || "Course"} · ${format(date, "MMM d, yyyy")}`}
@@ -44,6 +45,6 @@ export default async function CourseAttendanceSessionPage({
                 initialStudents={students}
                 initialTopic={topic || ""}
             />
-        </div>
+        </WorkspacePage>
     )
 }

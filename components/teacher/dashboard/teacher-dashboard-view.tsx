@@ -72,7 +72,7 @@ export function AssignmentsWidget({ allAssignments }: { allAssignments: TeacherA
     <WorkspacePanel className="overflow-hidden">
       <PanelHeading title="Assignment progress" description={`${allAssignments.length} most recent assignment${allAssignments.length === 1 ? "" : "s"}`} />
       {allAssignments.length ? (
-        <div className="max-h-[30rem] divide-y overflow-y-auto">
+        <div className="divide-y">
           {allAssignments.map((assignment) => {
             const graded = assignment.submissions.length
             const students = new Set([

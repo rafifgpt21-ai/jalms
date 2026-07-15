@@ -43,59 +43,39 @@ export async function getDailySchedule(teacherId: string, date: Date) {
             return targetDate >= term.startDate && targetDate <= term.endDate
         })
 
-        // 2. Check attendance status for each schedule
-        // We need to see if attendance records exist for this course on this date
         const startOfDay = new Date(date)
         startOfDay.setHours(0, 0, 0, 0)
         const endOfDay = new Date(date)
         endOfDay.setHours(23, 59, 59, 999)
 
-        const schedulesWithStatus = await Promise.all(validSchedules.map(async (schedule) => {
-            const attendanceCount = await prisma.attendance.count({
+        const attendanceRecords = validSchedules.length > 0
+            ? await prisma.attendance.findMany({
                 where: {
-                    courseId: schedule.courseId,
-                    period: schedule.period,
-                    date: {
-                        gte: startOfDay,
-                        lte: endOfDay
-                    },
-                    deletedAt: { isSet: false },
-                    status: { not: "PENDING" }
-                }
-            })
-
-            const skippedCount = await prisma.attendance.count({
-                where: {
-                    courseId: schedule.courseId,
-                    period: schedule.period,
-                    date: {
-                        gte: startOfDay,
-                        lte: endOfDay
-                    },
-                    status: "SKIPPED",
-                    deletedAt: { isSet: false }
-                }
-            })
-
-            const topicRecord = await prisma.attendance.findFirst({
-                where: {
-                    courseId: schedule.courseId,
-                    period: schedule.period,
-                    date: {
-                        gte: startOfDay,
-                        lte: endOfDay
-                    },
+                    courseId: { in: [...new Set(validSchedules.map(schedule => schedule.courseId))] },
+                    date: { gte: startOfDay, lte: endOfDay },
                     deletedAt: { isSet: false }
                 },
-                select: { topic: true }
+                select: { courseId: true, period: true, status: true, topic: true }
             })
+            : []
 
-            return {
-                ...schedule,
-                isAttendanceTaken: attendanceCount > 0,
-                isSkipped: skippedCount > 0,
-                topic: topicRecord?.topic || null
-            }
+        const statusBySession = new Map<string, { isAttendanceTaken: boolean, isSkipped: boolean, topic: string | null }>()
+        for (const record of attendanceRecords) {
+            const key = `${record.courseId}:${record.period}`
+            const current = statusBySession.get(key) || { isAttendanceTaken: false, isSkipped: false, topic: null }
+            if (record.status !== "PENDING" && record.status !== "SKIPPED") current.isAttendanceTaken = true
+            if (record.status === "SKIPPED") current.isSkipped = true
+            if (!current.topic && record.topic) current.topic = record.topic
+            statusBySession.set(key, current)
+        }
+
+        const schedulesWithStatus = validSchedules.map(schedule => ({
+            ...schedule,
+            ...(statusBySession.get(`${schedule.courseId}:${schedule.period}`) || {
+                isAttendanceTaken: false,
+                isSkipped: false,
+                topic: null
+            })
         }))
 
         return { schedules: schedulesWithStatus, error: undefined }
@@ -438,44 +418,33 @@ export async function skipSession(courseId: string, date: Date, period: number) 
     }
 }
 
-import fs from 'fs'
-import path from 'path'
-
 export async function skipAllSessions(teacherId: string, date: Date) {
-    const logFile = path.join(process.cwd(), 'attendance-debug.log')
-    const log = (msg: string) => {
-        fs.appendFileSync(logFile, `${new Date().toISOString()}: ${msg}\n`)
-    }
-
     try {
-        log(`skipAllSessions called for: ${teacherId}, ${date}`)
         const { schedules, error } = await getDailySchedule(teacherId, date)
 
         if (error) {
-            log(`skipAllSessions: Error fetching schedule: ${error}`)
             return { error, message: "Error fetching schedule" }
         }
 
         if (!schedules || schedules.length === 0) {
-            log(`skipAllSessions: No schedules found for date: ${date}`)
             return { success: false, message: "No class sessions found for this date." }
         }
 
-        log(`skipAllSessions: Found ${schedules.length} schedules to skip`)
+        const pendingSchedules = schedules.filter(schedule => !schedule.isAttendanceTaken && !schedule.isSkipped)
+        if (pendingSchedules.length === 0) {
+            return { success: false, message: "There are no pending sessions to skip." }
+        }
 
         let skippedCount = 0
-        for (const schedule of schedules) {
-            log(`skipAllSessions: Skipping session for course ${schedule.courseId} period ${schedule.period}`)
+        for (const schedule of pendingSchedules) {
             const result = await skipSession(schedule.courseId, date, schedule.period)
             if (result.success) skippedCount++
-            else log(`skipAllSessions: Failed to skip session: ${result.error}`)
         }
 
         revalidatePath("/teacher/attendance")
-        log(`skipAllSessions: Successfully skipped ${skippedCount} sessions`)
-        return { success: true, message: `Skipped ${skippedCount} sessions.` }
+        return { success: true, message: `Skipped ${skippedCount} pending ${skippedCount === 1 ? "session" : "sessions"}.` }
     } catch (error) {
-        log(`Error skipping all sessions: ${error}`)
+        console.error("Error skipping pending sessions:", error)
         return { error: "Failed to skip all sessions", message: "Unexpected error occurred." }
     }
 }
