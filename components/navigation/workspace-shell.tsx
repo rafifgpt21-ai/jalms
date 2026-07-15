@@ -21,6 +21,19 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { UserSettings } from "@/components/user-settings"
 import { useMobileHeader } from "@/components/mobile-header-context"
+import {
+  CourseRouteSkeleton,
+  DashboardRouteSkeleton,
+  GridRouteSkeleton,
+  TableRouteSkeleton,
+} from "@/components/navigation/route-skeletons"
+
+function PendingDestinationSkeleton({ pathname }: { pathname: string }) {
+  if (/^\/(teacher|student)\/courses\/[^/]+/.test(pathname)) return <CourseRouteSkeleton />
+  if (pathname === "/student/courses" || pathname === "/homeroom") return <GridRouteSkeleton />
+  if (/^\/admin\/(users|classes|courses|subjects|semesters|schedule|grading|rollover)/.test(pathname)) return <TableRouteSkeleton />
+  return <DashboardRouteSkeleton />
+}
 
 function CourseMark({ course, className }: { course: NavigationCourse; className?: string }) {
   const identity = resolveCourseIdentity(course)
@@ -193,10 +206,10 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
                   if (context.kind === "course") void rememberCourseSection(context.course.id, context.course.roleContext, section.id)
                   onNavigate?.(section.href)
                 }} className={cn(
-                  "flex min-h-8 items-center gap-2 rounded-md px-2.5 text-sm transition-colors",
+                  "flex min-h-11 items-center gap-3 rounded-md px-3 text-base transition-colors md:min-h-8 md:gap-2 md:px-2.5 md:text-sm",
                   active ? "bg-indigo-500/12 font-medium text-indigo-700 dark:text-indigo-300" : "text-muted-foreground hover:bg-[var(--workspace-row-hover)] hover:text-foreground",
                 )}>
-                  <Icon className="size-4" />
+                  <Icon className="size-[18px] shrink-0 md:size-4" />
                   <span className="truncate">{section.label}</span>
                   {section.actionHref && <span className="ml-auto text-base text-muted-foreground">+</span>}
                 </Link>
@@ -225,9 +238,10 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
   const [mobileNavigatorOpen, setMobileNavigatorOpen] = React.useState(false)
   const [browseContext, setBrowseContext] = React.useState<BrowseContext>(routeContext)
   const [mobileReorder, setMobileReorder] = React.useState(false)
-  const isSocials = pathname.startsWith("/socials")
   const displayPath = pendingPath ?? pathname
   const displayContext = contextFromPath(displayPath, courses)
+  const isSocials = displayPath.startsWith("/socials")
+  const isNavigating = pendingPath !== null && pendingPath !== pathname
 
   React.useEffect(() => {
     setPendingPath(null)
@@ -306,19 +320,19 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
         <header className="workspace-topbar flex h-14 min-h-14 shrink-0 items-center gap-2 border-b bg-[var(--workspace-header)] px-4 py-1.5">
           <Button variant="ghost" size="icon" className="hidden size-8 md:inline-flex lg:hidden" onClick={() => setTabletSectionsOpen(true)} aria-label="Open sections"><PanelLeftOpen className="size-4" /></Button>
           {collapsed && <Button variant="ghost" size="icon" className="hidden size-8 lg:inline-flex" onClick={toggleCollapsed} aria-label="Show sections"><PanelLeftOpen className="size-4" /></Button>}
-          {mobileHeader.leftAction && <div className="md:hidden">{mobileHeader.leftAction}</div>}
+          {!isNavigating && mobileHeader.leftAction && <div className="md:hidden">{mobileHeader.leftAction}</div>}
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">{pageTitle}</div>
-            {mobileHeader.subtitle && <div className="truncate text-xs text-muted-foreground">{mobileHeader.subtitle}</div>}
+            {!isNavigating && mobileHeader.subtitle && <div className="truncate text-xs text-muted-foreground">{mobileHeader.subtitle}</div>}
           </div>
-          {mobileHeader.rightAction && <div className="flex items-center gap-2">{mobileHeader.rightAction}</div>}
+          {!isNavigating && mobileHeader.rightAction && <div className="flex items-center gap-2">{mobileHeader.rightAction}</div>}
           <Button variant="outline" size="sm" className="md:hidden" onClick={openMobileNavigator} aria-label="Open workspace navigation">
             <PanelLeftOpen className="size-4" /><span className="hidden min-[380px]:inline">Menu</span>
           </Button>
         </header>
 
         <main className={cn("workspace-content min-h-0 flex-1 overflow-y-auto", isSocials && "p-0")}>
-          {children}
+          {isNavigating ? <PendingDestinationSkeleton pathname={displayPath} /> : children}
         </main>
       </div>
 
