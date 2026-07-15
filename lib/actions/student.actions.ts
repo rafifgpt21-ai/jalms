@@ -27,10 +27,37 @@ export async function getStudentCourses() {
             include: {
                 teacher: true,
                 term: true,
-                    subject: true,
-                    class: true,
+                subject: true,
+                class: true,
+                assignments: {
+                    where: {
+                        deletedAt: { isSet: false },
+                        OR: [
+                            { status: { isSet: false } },
+                            { status: null },
+                            { status: { not: "ARCHIVED" } }
+                        ],
+                        dueDate: { gte: new Date() }
+                    },
+                    select: { id: true }
+                },
+                materialAssignments: {
+                    where: { material: { deletedAt: { isSet: false } } },
+                    select: { id: true }
+                },
                 _count: {
-                    select: { assignments: true }
+                    select: {
+                        assignments: {
+                            where: {
+                                deletedAt: { isSet: false },
+                                OR: [
+                                    { status: { isSet: false } },
+                                    { status: null },
+                                    { status: { not: "ARCHIVED" } }
+                                ]
+                            }
+                        }
+                    }
                 }
             },
             orderBy: {

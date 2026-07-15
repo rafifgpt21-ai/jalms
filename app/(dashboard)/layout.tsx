@@ -50,6 +50,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
     teacherName: session.user.name,
     iconImageUrl: course.iconImageUrl,
     lastSectionKey: stateByKey.get(`teacher:${course.id}`),
+    summary: {
+      studentCount: new Set([
+        ...course.studentIds,
+        ...course.courseEnrollments.map((enrollment: { studentId: string }) => enrollment.studentId),
+      ]).size,
+      taskCount: course._count.assignments,
+      materialCount: course.materialAssignments.length,
+      upcomingCount: course.assignments.length,
+    },
   }))
   const studentCourses: NavigationCourse[] = (studentResult.courses ?? []).map((course: any) => ({
     id: course.id,
@@ -61,6 +70,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     teacherName: course.teacher?.name,
     iconImageUrl: course.iconImageUrl,
     lastSectionKey: stateByKey.get(`student:${course.id}`),
+    summary: {
+      taskCount: course._count.assignments,
+      materialCount: course.materialAssignments.length,
+      upcomingCount: course.assignments.length,
+    },
   }))
   const courses = [
     ...orderCourses(teacherCourses, workspacePreference.teachingCourseOrder),

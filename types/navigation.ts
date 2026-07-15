@@ -2,6 +2,13 @@ import type { ClassColor, Role } from "@prisma/client"
 
 export type CourseRoleContext = "teacher" | "student"
 
+export interface CourseNavigationSummary {
+  taskCount: number
+  materialCount: number
+  upcomingCount: number
+  studentCount?: number
+}
+
 export interface NavigationCourse {
   id: string
   name: string
@@ -12,6 +19,7 @@ export interface NavigationCourse {
   teacherName?: string | null
   iconImageUrl?: string | null
   lastSectionKey?: string | null
+  summary?: CourseNavigationSummary
 }
 
 export interface WorkspaceUser {
@@ -22,4 +30,3 @@ export interface WorkspaceUser {
   image?: string | null
   roles: Role[]
 }
-

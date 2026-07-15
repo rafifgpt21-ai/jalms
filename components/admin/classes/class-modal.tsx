@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Class, Term, AcademicYear, ClassColor } from "@prisma/client";
+import {
+  Class,
+  Term,
+  AcademicYear,
+  ClassColor,
+  GradeLevel,
+} from "@prisma/client";
 import {
   Dialog,
   DialogContent,
@@ -52,12 +58,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import {
+  educationStage,
+  GRADE_LEVELS,
+  gradeLevelNumber,
+  inferGradeLevelFromName,
+} from "@/lib/grade-level";
 
 const formSchema = z.object({
   name: z.string().min(1, "Class name is required"),
   termId: z.string().min(1, "Semester is required"),
   homeroomTeacherId: z.string().optional(),
   color: z.nativeEnum(ClassColor),
+  gradeLevel: z.nativeEnum(GradeLevel, {
+    error: "Grade level is required",
+  }),
 });
 
 const CLASS_COLORS: { value: ClassColor; label: string; swatch: string }[] = [
@@ -117,6 +132,7 @@ export function ClassModal({
       termId: "",
       homeroomTeacherId: "",
       color: "INDIGO",
+      gradeLevel: undefined,
     },
   });
 
@@ -128,6 +144,10 @@ export function ClassModal({
         termId: (initialData as any).termId, // Cast because initialData might be stale type
         homeroomTeacherId: initialData.homeroomTeacherId || "",
         color: initialData.color || "INDIGO",
+        gradeLevel:
+          initialData.gradeLevel ||
+          inferGradeLevelFromName(initialData.name) ||
+          undefined,
       });
 
       // Check if term exists in current list
@@ -150,6 +170,7 @@ export function ClassModal({
         termId: activeTerm?.id || "",
         homeroomTeacherId: "",
         color: "INDIGO",
+        gradeLevel: undefined,
       });
     }
   }, [initialData, terms, activeTerm, form, extraTerms]);
@@ -162,6 +183,7 @@ export function ClassModal({
         termId: values.termId,
         homeroomTeacherId: values.homeroomTeacherId || undefined,
         color: values.color,
+        gradeLevel: values.gradeLevel,
       };
 
       let result;
@@ -215,6 +237,34 @@ export function ClassModal({
                   <FormControl>
                     <Input placeholder="e.g. 10 Science A" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="gradeLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grade level</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select grade 7–12" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {GRADE_LEVELS.map((gradeLevel) => (
+                        <SelectItem key={gradeLevel} value={gradeLevel}>
+                          Grade {gradeLevelNumber(gradeLevel)} · {educationStage(gradeLevel)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Used for semester continuation and annual promotion.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

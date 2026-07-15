@@ -70,8 +70,44 @@ export async function getTeacherActiveCourses(teacherId: string) {
                 term: true,
                 class: true,
                 subject: true,
+                assignments: {
+                    where: {
+                        deletedAt: { isSet: false },
+                        OR: [
+                            { status: { isSet: false } },
+                            { status: null },
+                            { status: { not: "ARCHIVED" } }
+                        ],
+                        dueDate: { gte: new Date() }
+                    },
+                    select: { id: true }
+                },
+                materialAssignments: {
+                    where: { material: { deletedAt: { isSet: false } } },
+                    select: { id: true }
+                },
+                courseEnrollments: {
+                    where: {
+                        OR: [
+                            { deletedAt: null },
+                            { deletedAt: { isSet: false } }
+                        ]
+                    },
+                    select: { studentId: true }
+                },
                 _count: {
-                    select: { students: true, assignments: true }
+                    select: {
+                        assignments: {
+                            where: {
+                                deletedAt: { isSet: false },
+                                OR: [
+                                    { status: { isSet: false } },
+                                    { status: null },
+                                    { status: { not: "ARCHIVED" } }
+                                ]
+                            }
+                        }
+                    }
                 }
             },
             orderBy: {
@@ -130,8 +166,13 @@ export async function getCourseAssignments(courseId: string) {
                 courseId,
                 deletedAt: { isSet: false }
             },
+            include: {
+                _count: {
+                    select: { submissions: true }
+                }
+            },
             orderBy: {
-                id: "asc"
+                dueDate: "asc"
             }
         })
         return { assignments }

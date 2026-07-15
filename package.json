@@ -13,6 +13,9 @@
     "db:populate": "npx tsx prisma/populate-db.ts",
     "db:redesign:audit": "npx tsx scripts/migrate-redesign.ts",
     "db:redesign:migrate": "npx tsx scripts/migrate-redesign.ts --apply",
+    "db:grade-level:audit": "npx tsx scripts/migrate-grade-level.ts",
+    "db:grade-level:migrate": "npx tsx scripts/migrate-grade-level.ts --apply",
+    "test:grade-level": "npx tsx --test lib/grade-level.test.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

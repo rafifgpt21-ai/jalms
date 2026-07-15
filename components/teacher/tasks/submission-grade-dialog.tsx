@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
-import { Download, FileText, Loader2, Save, Link as LinkIcon, ExternalLink } from "lucide-react"
+import { Download, FileText, Loader2, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -17,19 +17,30 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { updateSubmissionScore } from "@/lib/actions/teacher.actions"
 import { cn } from "@/lib/utils"
 
 interface SubmissionGradeDialogProps {
-    student: any
-    submission: any
-    assignment: any
+    student: { id: string; name: string }
+    submission: {
+        submittedAt: Date | string
+        submissionUrl?: string | null
+        attachmentUrl?: string | null
+        link?: string | null
+    }
+    assignment: {
+        id: string
+        dueDate: Date | string
+        maxPoints: number
+        isExtraCredit: boolean
+        latePenalty: number
+    }
     currentScore?: number
     onScoreUpdate: (studentId: string, score: number) => void
-    trigger?: React.ReactNode
+    trigger?: React.ReactNode | null
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }
 
 export function SubmissionGradeDialog({
@@ -38,11 +49,19 @@ export function SubmissionGradeDialog({
     assignment,
     currentScore,
     onScoreUpdate,
-    trigger
+    trigger,
+    open: controlledOpen,
+    onOpenChange,
 }: SubmissionGradeDialogProps) {
-    const [open, setOpen] = useState(false)
+    const [internalOpen, setInternalOpen] = useState(false)
     const [score, setScore] = useState<string>(currentScore?.toString() || "")
     const [isSaving, setIsSaving] = useState(false)
+    const open = controlledOpen ?? internalOpen
+
+    const setOpen = (nextOpen: boolean) => {
+        if (controlledOpen === undefined) setInternalOpen(nextOpen)
+        onOpenChange?.(nextOpen)
+    }
 
     const submittedAt = submission?.submittedAt ? new Date(submission.submittedAt) : null
     const dueDate = assignment.dueDate ? new Date(assignment.dueDate) : null
@@ -65,7 +84,7 @@ export function SubmissionGradeDialog({
             } else {
                 toast.error(res.error || "Failed to update score")
             }
-        } catch (error) {
+        } catch {
             toast.error("An error occurred while saving")
         } finally {
             setIsSaving(false)
@@ -74,13 +93,15 @@ export function SubmissionGradeDialog({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                {trigger || <Button variant="ghost" size="sm">View</Button>}
-            </DialogTrigger>
+            {trigger !== null && (
+                <DialogTrigger asChild>
+                    {trigger || <Button variant="ghost" size="sm">View</Button>}
+                </DialogTrigger>
+            )}
             <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <div className="flex items-center justify-between mr-8">
-                        <DialogTitle className="text-xl">{student.name}'s Submission</DialogTitle>
+                        <DialogTitle className="text-xl">{student.name}&apos;s Submission</DialogTitle>
                         {isLate && <StatusBadge status="LATE" label="Late" />}
                     </div>
                     <DialogDescription>

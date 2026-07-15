@@ -1,5 +1,5 @@
 
-import { PrismaClient, Role, SemesterType, AcademicDomain, AttendanceStatus, AssignmentType, QuizGradingType } from "@prisma/client"
+import { PrismaClient, Role, SemesterType, AcademicDomain, AttendanceStatus, AssignmentType, QuizGradingType, GradeLevel } from "@prisma/client"
 import * as bcrypt from "bcryptjs"
 import { faker } from "@faker-js/faker"
 
@@ -288,6 +288,7 @@ async function main() {
                 const cls = await prisma.class.create({
                     data: {
                         name: className,
+                        gradeLevel: GradeLevel[`GRADE_${gradeLevel}` as keyof typeof GradeLevel],
                         termId: currentTerm.id,
                         homeroomTeacherId: homeroomTeacher.id
                     }

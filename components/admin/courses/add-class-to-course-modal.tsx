@@ -15,7 +15,6 @@ import {
 import {
     Command,
     CommandEmpty,
-    CommandGroup,
     CommandInput,
     CommandItem,
     CommandList,
@@ -31,6 +30,8 @@ import { cn } from "@/lib/utils"
 import { getAvailableClassesForDropdown } from "@/lib/actions/class.actions"
 import { enrollClassToCourse } from "@/lib/actions/enrollment.actions"
 import { toast } from "sonner"
+import { GradeLevel } from "@prisma/client"
+import { educationStage, gradeLevelNumber } from "@/lib/grade-level"
 
 // Simple debounce hook implementation
 function useDebounceValue<T>(value: T, delay: number): T {
@@ -51,7 +52,7 @@ export function AddClassToCourseModal({ courseId }: AddClassToCourseModalProps) 
     const [popoverOpen, setPopoverOpen] = useState(false)
     const [selectedClassId, setSelectedClassId] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
-    const [classes, setClasses] = useState<{ id: string; name: string; term: { name: string; type: string; academicYear: { name: string } } }[]>([])
+    const [classes, setClasses] = useState<{ id: string; name: string; gradeLevel: GradeLevel; term: { type: string; academicYear: { name: string } } }[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [isEnrolling, setIsEnrolling] = useState(false)
     const [activeSemesterOnly, setActiveSemesterOnly] = useState(true)
@@ -63,7 +64,7 @@ export function AddClassToCourseModal({ courseId }: AddClassToCourseModalProps) 
             setIsLoading(true)
             const result = await getAvailableClassesForDropdown(debouncedSearch, activeSemesterOnly)
             if (result.classes) {
-                setClasses(result.classes as any)
+                setClasses(result.classes)
             }
             setIsLoading(false)
         }
@@ -98,7 +99,7 @@ export function AddClassToCourseModal({ courseId }: AddClassToCourseModalProps) 
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline">
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                     Add by Class
                 </Button>
             </DialogTrigger>
@@ -163,7 +164,7 @@ export function AddClassToCourseModal({ courseId }: AddClassToCourseModalProps) 
                                             <div className="flex flex-col">
                                                 <span>{c.name}</span>
                                                 <span className="text-xs text-muted-foreground">
-                                                    {c.term.academicYear.name} - {c.term.type}
+                                                    Grade {gradeLevelNumber(c.gradeLevel)} · {educationStage(c.gradeLevel)} · {c.term.academicYear.name} - {c.term.type}
                                                 </span>
                                             </div>
                                         </CommandItem>

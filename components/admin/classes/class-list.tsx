@@ -1,6 +1,6 @@
 "use client"
 
-import { Class, User, Term, AcademicYear } from "@prisma/client"
+import { Class, User, Term, AcademicYear, GradeLevel } from "@prisma/client"
 import {
     Table,
     TableBody,
@@ -26,8 +26,10 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CLASS_COLOR_STYLES } from "@/lib/course-identity"
 import { cn } from "@/lib/utils"
+import { educationStage, GRADE_LEVELS, gradeLevelNumber } from "@/lib/grade-level"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -55,11 +57,13 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
     const [showActiveOnly, setShowActiveOnly] = useState(true)
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
+    const [gradeFilter, setGradeFilter] = useState<"all" | GradeLevel>("all")
 
     const filteredClasses = classes.filter(cls => {
         const matchesActive = showActiveOnly ? cls.term.isActive : true
         const matchesSearch = cls.name.toLowerCase().includes(searchQuery.toLowerCase())
-        return matchesActive && matchesSearch
+        const matchesGrade = gradeFilter === "all" || cls.gradeLevel === gradeFilter
+        return matchesActive && matchesSearch && matchesGrade
     })
 
     async function handleDelete(id: string) {
@@ -96,6 +100,19 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                         />
                         <Label htmlFor="active-filter">Active Classes</Label>
                     </div>
+                    <Select value={gradeFilter} onValueChange={(value) => setGradeFilter(value as typeof gradeFilter)}>
+                        <SelectTrigger className="w-full sm:w-[155px]">
+                            <SelectValue placeholder="All grades" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All grades</SelectItem>
+                            {GRADE_LEVELS.map((gradeLevel) => (
+                                <SelectItem key={gradeLevel} value={gradeLevel}>
+                                    Grade {gradeLevelNumber(gradeLevel)} · {educationStage(gradeLevel)}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <div className="flex w-full items-center gap-2 sm:w-auto">
                         <div className="relative flex-1 sm:flex-initial">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
@@ -116,6 +133,7 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                     <TableHeader>
                         <TableRow className="hover:bg-transparent">
                             <TableHead>Class Name</TableHead>
+                            <TableHead>Grade</TableHead>
                             <TableHead className="max-lg:hidden">Semester</TableHead>
                             <TableHead className="max-md:hidden">Homeroom Teacher</TableHead>
                             <TableHead className="max-sm:hidden">Students</TableHead>
@@ -125,7 +143,7 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                     <TableBody>
                         {filteredClasses.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center h-32 text-slate-500 dark:text-slate-400">
+                                <TableCell colSpan={6} className="text-center h-32 text-slate-500 dark:text-slate-400">
                                     No classes found.
                                 </TableCell>
                             </TableRow>
@@ -135,6 +153,11 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                                     <TableCell className="font-medium text-slate-700 dark:text-slate-200">
                                         <div className="flex items-center gap-2"><span className={cn("size-3 rounded-full", cls.color ? CLASS_COLOR_STYLES[cls.color].swatch : "bg-slate-400")} />{cls.name}</div>
                                         <div className="mt-1 text-xs text-muted-foreground">{cls._count.courses} linked courses</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">
+                                            {gradeLevelNumber(cls.gradeLevel)} · {educationStage(cls.gradeLevel)}
+                                        </Badge>
                                     </TableCell>
                                     <TableCell className="max-lg:hidden text-slate-600 dark:text-slate-300">
                                         {cls.term.academicYear.name} - {cls.term.type === "ODD" ? "Odd" : "Even"}

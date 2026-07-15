@@ -44,10 +44,10 @@ export function contextFromPath(pathname: string, courses: NavigationCourse[]): 
 export function defaultCourseHref(course: NavigationCourse) {
   const base = `/${course.roleContext}/courses/${course.id}`
   const allowed = course.roleContext === "teacher"
-    ? new Set(["overview", "announcements", "tasks", "materials", "tasks-summary", "attendance", "gradebook", "settings"])
-    : new Set(["overview", "announcements", "tasks", "materials", "grades", "attendance"])
-  const key = course.lastSectionKey && allowed.has(course.lastSectionKey) ? course.lastSectionKey : "overview"
-  return key === "overview" ? base : `${base}/${key}`
+    ? new Set(["announcements", "tasks", "materials", "tasks-summary", "attendance", "gradebook", "settings"])
+    : new Set(["announcements", "tasks", "materials", "grades", "attendance"])
+  const key = course.lastSectionKey && allowed.has(course.lastSectionKey) ? course.lastSectionKey : "tasks"
+  return `${base}/${key}`
 }
 
 export function groupsForContext(context: BrowseContext, roles: Role[]): NavigationGroup[] {
@@ -55,7 +55,6 @@ export function groupsForContext(context: BrowseContext, roles: Role[]): Navigat
     const base = `/${context.course.roleContext}/courses/${context.course.id}`
     if (context.course.roleContext === "teacher") return [
       { id: "course", sections: [
-        { id: "overview", label: "Overview", href: base, icon: Home },
         { id: "announcements", label: "Announcements", href: `${base}/announcements`, icon: MessageSquare },
       ] },
       { id: "classroom", label: "Classroom", sections: [
@@ -71,7 +70,6 @@ export function groupsForContext(context: BrowseContext, roles: Role[]): Navigat
     ]
     return [
       { id: "course", sections: [
-        { id: "overview", label: "Overview", href: base, icon: Home },
         { id: "announcements", label: "Announcements", href: `${base}/announcements`, icon: MessageSquare },
       ] },
       { id: "learn", label: "Learn", sections: [
@@ -114,6 +112,6 @@ export function contextLabel(context: BrowseContext) {
 }
 
 export function isSectionActive(pathname: string, section: NavigationSection) {
-  if (["overview", "dashboard", "teacher", "student", "home"].includes(section.id)) return pathname === section.href
+  if (["dashboard", "teacher", "student", "home"].includes(section.id)) return pathname === section.href
   return pathname === section.href || pathname.startsWith(`${section.href}/`)
 }

@@ -1,5 +1,5 @@
 
-import { PrismaClient, Role, SemesterType, AttendanceStatus, AssignmentType } from "@prisma/client"
+import { PrismaClient, Role, SemesterType, AttendanceStatus, AssignmentType, GradeLevel } from "@prisma/client"
 import { faker } from "@faker-js/faker"
 import bcrypt from "bcryptjs"
 import { addDays, isWeekend, eachDayOfInterval } from "date-fns"
@@ -132,6 +132,7 @@ async function simulateTermData(term: any, teachers: any[], students: any[]) {
         const cls = await prisma.class.create({
             data: {
                 name,
+                gradeLevel: gradeLevel === 10 ? GradeLevel.GRADE_10 : GradeLevel.GRADE_11,
                 termId: term.id,
                 homeroomTeacherId: homeroomTeacher.id
             }

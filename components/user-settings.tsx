@@ -79,7 +79,7 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
                         </Button>
                     )}
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side={side} align={align} className="w-56">
+                <DropdownMenuContent side={side} align={align} className="z-[110] w-56">
                     <DropdownMenuLabel>
                         <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">

@@ -96,38 +96,158 @@ export async function getTeacherMaterials() {
         const user = await getUser()
         console.log("getTeacherMaterials: User", user?.id, user?.email)
 
-        if (!user) return { materials: [], error: "Unauthorized" }
+        if (!user) return { materials: [], folders: [], error: "Unauthorized" }
 
-        const materials = await prisma.material.findMany({
-            where: {
-                teacherId: user.id,
-                deletedAt: { isSet: false } as any
-            },
-            include: {
-                assignments: {
-                    include: {
-                        course: {
-                            include: {
-                                term: {
-                                    include: {
-                                        academicYear: true
+        const [materials, folders] = await Promise.all([
+            prisma.material.findMany({
+                where: {
+                    teacherId: user.id,
+                    deletedAt: { isSet: false } as any
+                },
+                include: {
+                    folder: true,
+                    assignments: {
+                        include: {
+                            course: {
+                                include: {
+                                    term: {
+                                        include: {
+                                            academicYear: true
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+                },
+                orderBy: {
+                    uploadedAt: "desc"
                 }
-            },
-            orderBy: {
-                uploadedAt: "desc"
-            }
-        })
+            }),
+            prisma.materialFolder.findMany({
+                where: { teacherId: user.id },
+                include: {
+                    _count: {
+                        select: {
+                            materials: {
+                                where: { deletedAt: { isSet: false } as any }
+                            }
+                        }
+                    }
+                },
+                orderBy: { name: "asc" }
+            })
+        ])
 
         console.log("getTeacherMaterials: Found", materials.length, "materials")
-        return { materials, error: undefined }
+        return { materials, folders, error: undefined }
     } catch (error) {
         console.error("Error fetching teacher materials:", error)
-        return { materials: [], error: "Failed to fetch materials" }
+        return { materials: [], folders: [], error: "Failed to fetch materials" }
+    }
+}
+
+const MATERIAL_FOLDER_COLORS = new Set(["indigo", "sky", "emerald", "amber", "rose", "violet"])
+
+export async function createMaterialFolder(name: string, color = "indigo") {
+    try {
+        const user = await getUser()
+        if (!user?.id) return { folder: null, error: "Unauthorized" }
+
+        const cleanName = name.trim()
+        if (!cleanName) return { folder: null, error: "Folder name is required" }
+        if (cleanName.length > 60) return { folder: null, error: "Folder name is too long" }
+
+        const existing = await prisma.materialFolder.findFirst({
+            where: { teacherId: user.id, name: { equals: cleanName, mode: "insensitive" } }
+        })
+        if (existing) return { folder: null, error: "A folder with this name already exists" }
+
+        const folder = await prisma.materialFolder.create({
+            data: {
+                name: cleanName,
+                color: MATERIAL_FOLDER_COLORS.has(color) ? color : "indigo",
+                teacherId: user.id
+            }
+        })
+        revalidatePath("/teacher/materials")
+        return { folder, error: undefined }
+    } catch (error) {
+        console.error("Error creating material folder:", error)
+        return { folder: null, error: "Failed to create folder" }
+    }
+}
+
+export async function renameMaterialFolder(folderId: string, name: string) {
+    try {
+        const user = await getUser()
+        if (!user) return { success: false, error: "Unauthorized" }
+
+        const cleanName = name.trim()
+        if (!cleanName) return { success: false, error: "Folder name is required" }
+        if (cleanName.length > 60) return { success: false, error: "Folder name is too long" }
+
+        const folder = await prisma.materialFolder.findUnique({ where: { id: folderId } })
+        if (!folder || folder.teacherId !== user.id) return { success: false, error: "Folder not found" }
+
+        const duplicate = await prisma.materialFolder.findFirst({
+            where: {
+                teacherId: user.id,
+                id: { not: folderId },
+                name: { equals: cleanName, mode: "insensitive" }
+            }
+        })
+        if (duplicate) return { success: false, error: "A folder with this name already exists" }
+
+        await prisma.materialFolder.update({ where: { id: folderId }, data: { name: cleanName } })
+        revalidatePath("/teacher/materials")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error renaming material folder:", error)
+        return { success: false, error: "Failed to rename folder" }
+    }
+}
+
+export async function deleteMaterialFolder(folderId: string) {
+    try {
+        const user = await getUser()
+        if (!user) return { success: false, error: "Unauthorized" }
+
+        const folder = await prisma.materialFolder.findUnique({ where: { id: folderId } })
+        if (!folder || folder.teacherId !== user.id) return { success: false, error: "Folder not found" }
+
+        // Deleting a folder never deletes its resources; they return to Unfiled.
+        await prisma.material.updateMany({ where: { teacherId: user.id, folderId }, data: { folderId: null } })
+        await prisma.materialFolder.delete({ where: { id: folderId } })
+        revalidatePath("/teacher/materials")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error deleting material folder:", error)
+        return { success: false, error: "Failed to delete folder" }
+    }
+}
+
+export async function moveMaterialToFolder(materialId: string, folderId: string | null) {
+    try {
+        const user = await getUser()
+        if (!user) return { success: false, error: "Unauthorized" }
+
+        const material = await prisma.material.findUnique({ where: { id: materialId } })
+        if (!material || material.teacherId !== user.id) {
+            return { success: false, error: "Material not found" }
+        }
+
+        if (folderId) {
+            const folder = await prisma.materialFolder.findUnique({ where: { id: folderId } })
+            if (!folder || folder.teacherId !== user.id) return { success: false, error: "Folder not found" }
+        }
+
+        await prisma.material.update({ where: { id: materialId }, data: { folderId } })
+        revalidatePath("/teacher/materials")
+        return { success: true, error: undefined }
+    } catch (error) {
+        console.error("Error moving material:", error)
+        return { success: false, error: "Failed to move material" }
     }
 }
 
@@ -143,6 +263,14 @@ export async function assignMaterialToCourse(materialId: string, courseId: strin
 
         if (!material || material.teacherId !== user.id) {
             return { assignment: null, error: "Unauthorized or material not found" }
+        }
+
+        const course = await prisma.course.findUnique({
+            where: { id: courseId },
+            select: { teacherId: true }
+        })
+        if (!course || course.teacherId !== user.id) {
+            return { assignment: null, error: "Course not found" }
         }
 
         // Check if already assigned
@@ -165,6 +293,8 @@ export async function assignMaterialToCourse(materialId: string, courseId: strin
         })
 
         revalidatePath("/teacher/materials")
+        revalidatePath(`/teacher/courses/${courseId}/materials`)
+        revalidatePath(`/student/courses/${courseId}/materials`)
         return { assignment, error: undefined }
     } catch (error) {
         console.error("Error assigning material:", error)
@@ -194,6 +324,8 @@ export async function removeMaterialFromCourse(materialId: string, courseId: str
         })
 
         revalidatePath("/teacher/materials")
+        revalidatePath(`/teacher/courses/${courseId}/materials`)
+        revalidatePath(`/student/courses/${courseId}/materials`)
         return { success: true, error: undefined }
     } catch (error) {
         console.error("Error removing material assignment:", error)

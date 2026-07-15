@@ -25,10 +25,14 @@ import {
   CourseRouteSkeleton,
   DashboardRouteSkeleton,
   GridRouteSkeleton,
+  TaskGradingRouteSkeleton,
+  TaskRouteSkeleton,
   TableRouteSkeleton,
 } from "@/components/navigation/route-skeletons"
 
 function PendingDestinationSkeleton({ pathname }: { pathname: string }) {
+  if (/^\/teacher\/courses\/[^/]+\/tasks\/?$/.test(pathname)) return <TaskRouteSkeleton />
+  if (/^\/teacher\/courses\/[^/]+\/tasks\/[^/]+\/?$/.test(pathname) && !pathname.endsWith("/new")) return <TaskGradingRouteSkeleton />
   if (/^\/(teacher|student)\/courses\/[^/]+/.test(pathname)) return <CourseRouteSkeleton />
   if (pathname === "/student/courses" || pathname === "/homeroom") return <GridRouteSkeleton />
   if (/^\/admin\/(users|classes|courses|subjects|semesters|schedule|grading|rollover)/.test(pathname)) return <TableRouteSkeleton />
@@ -40,13 +44,13 @@ function CourseMark({ course, className }: { course: NavigationCourse; className
   const [failed, setFailed] = React.useState(false)
   return (
     <span aria-hidden className={cn(
-      "course-code-mark relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl text-sm font-extrabold transition-[border-radius,transform] group-hover:rounded-lg",
+      "course-code-mark relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl text-sm font-extrabold transition-[border-radius,transform] group-hover:rounded-lg md:size-10",
       identity.background, identity.foreground,
       identity.imageUrl && !failed && `ring-2 ${identity.ring}`,
       className,
     )}>
       {identity.imageUrl && !failed
-        ? <Image src={identity.imageUrl} alt="" fill sizes="40px" className="object-cover" onError={() => setFailed(true)} />
+        ? <Image src={identity.imageUrl} alt="" fill sizes="(min-width: 768px) 40px, 44px" className="object-cover" onError={() => setFailed(true)} />
         : identity.label}
     </span>
   )
@@ -61,7 +65,7 @@ function SortableCourse({ course, active, reorderEnabled, onSelect }: {
   const sortableId = `${course.roleContext}:${course.id}`
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId, disabled: !reorderEnabled })
   const content = (
-    <span className="group relative flex h-12 w-full items-center justify-center">
+    <span className="group relative flex h-14 w-full items-center justify-center md:h-12">
       <CourseMark course={course} className={cn(active && "rounded-lg ring-2 ring-[var(--workspace-rail-active)]", isDragging && "opacity-60")} />
     </span>
   )
@@ -90,15 +94,15 @@ function RailDestination({ label, href, active, icon: Icon, onSelect }: {
   onSelect?: () => void
 }) {
   const mark = <span className={cn(
-    "flex size-10 items-center justify-center rounded-xl transition-all group-hover:rounded-lg",
+    "flex size-11 items-center justify-center rounded-xl transition-all group-hover:rounded-lg md:size-10",
     active ? "rounded-lg bg-indigo-500 text-white" : "bg-[var(--workspace-rail-icon)] text-[var(--workspace-rail-foreground)] group-hover:bg-indigo-500 group-hover:text-white",
-  )}><Icon className="size-[18px]" /></span>
+  )}><Icon className="size-5 md:size-[18px]" /></span>
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         {onSelect
-          ? <button type="button" onClick={onSelect} aria-label={label} className="group flex h-11 w-full items-center justify-center">{mark}</button>
-          : <Link href={href} prefetch aria-label={label} className="group flex h-11 w-full items-center justify-center">{mark}</Link>}
+          ? <button type="button" onClick={onSelect} aria-label={label} className="group flex h-14 w-full items-center justify-center md:h-11">{mark}</button>
+          : <Link href={href} prefetch aria-label={label} className="group flex h-14 w-full items-center justify-center md:h-11">{mark}</Link>}
       </TooltipTrigger>
       <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
@@ -145,7 +149,7 @@ function CourseRail({ user, courses, activeContext, onSelect, reorderEnabled = t
   return (
     <TooltipProvider delayDuration={100}>
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <aside className="flex h-full w-14 shrink-0 flex-col border-r border-[var(--workspace-rail-divider)] bg-[var(--workspace-rail)] text-[var(--workspace-rail-foreground)] md:w-16">
+        <aside className="flex h-full w-16 shrink-0 flex-col border-r border-[var(--workspace-rail-divider)] bg-[var(--workspace-rail)] text-[var(--workspace-rail-foreground)]">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
             <RailDestination label="Home" href="/home" icon={Home} active={activeContext.kind === "home"} onSelect={onSelect ? () => select({ kind: "home" }) : undefined} />
             <RailDestination label="Messages" href="/socials" icon={MessageSquare} active={activeContext.kind === "messages"} onSelect={onSelect ? () => select({ kind: "messages" }) : undefined} />
@@ -177,6 +181,57 @@ function CourseRail({ user, courses, activeContext, onSelect, reorderEnabled = t
   )
 }
 
+function CourseSidebarSummary({ course, onCollapse }: {
+  course: NavigationCourse
+  onCollapse?: () => void
+}) {
+  const summary = course.summary ?? { taskCount: 0, materialCount: 0, upcomingCount: 0 }
+  const stats = course.roleContext === "teacher"
+    ? [
+        [summary.studentCount ?? 0, "Students"],
+        [summary.taskCount, "Tasks"],
+        [summary.materialCount, "Materials"],
+        [summary.upcomingCount, "Upcoming"],
+      ]
+    : [
+        [summary.taskCount, "Tasks"],
+        [summary.materialCount, "Materials"],
+        [summary.upcomingCount, "Upcoming"],
+      ]
+  const className = course.class?.name
+
+  return (
+    <div className="shrink-0 border-b p-3">
+      <div className="flex min-w-0 items-start gap-2.5">
+        <CourseMark course={course} className="size-10 md:size-10" />
+        <div className="min-w-0 flex-1 pt-0.5">
+          <div className="truncate text-sm font-semibold">{course.reportName || course.name}</div>
+          {className && <div className="truncate text-[11px] text-muted-foreground">{className}</div>}
+        </div>
+        {onCollapse && (
+          <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={onCollapse} aria-label="Collapse sections">
+            <PanelLeftClose className="size-4" />
+          </Button>
+        )}
+      </div>
+
+      <div className={cn("mt-3 grid overflow-hidden rounded-md border bg-background/45", course.roleContext === "teacher" ? "grid-cols-2" : "grid-cols-3")}>
+        {stats.map(([value, label], index) => (
+          <div key={label} className={cn(
+            "min-w-0 px-2 py-1.5",
+            course.roleContext === "teacher" && index < 2 && "border-b",
+            index % (course.roleContext === "teacher" ? 2 : 3) !== 0 && "border-l",
+          )}>
+            <div className="truncate text-sm font-semibold tabular-nums">{value}</div>
+            <div className="truncate text-[10px] text-muted-foreground">{label}</div>
+          </div>
+        ))}
+      </div>
+
+    </div>
+  )
+}
+
 function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
   context: BrowseContext
   roles: WorkspaceUser["roles"]
@@ -187,13 +242,16 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
   const groups = groupsForContext(context, roles)
   return (
     <aside className="flex h-full w-full min-w-0 flex-col bg-[var(--workspace-sidebar)] text-foreground">
-      <div className="workspace-topbar flex h-14 min-h-14 shrink-0 items-center gap-2 border-b px-4 py-1.5">
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">{contextLabel(context)}</div>
-          {context.kind === "course" && context.course.class?.name && <div className="truncate text-[11px] text-muted-foreground">{context.course.class.name}</div>}
+      {context.kind === "course" ? (
+        <CourseSidebarSummary course={context.course} onCollapse={onCollapse} />
+      ) : (
+        <div className="workspace-topbar flex h-14 min-h-14 shrink-0 items-center gap-2 border-b px-4 py-1.5">
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold">{contextLabel(context)}</div>
+          </div>
+          {onCollapse && <Button variant="ghost" size="icon" className="size-8" onClick={onCollapse} aria-label="Collapse sections"><PanelLeftClose className="size-4" /></Button>}
         </div>
-        {onCollapse && <Button variant="ghost" size="icon" className="size-8" onClick={onCollapse} aria-label="Collapse sections"><PanelLeftClose className="size-4" /></Button>}
-      </div>
+      )}
       <nav className="flex-1 space-y-3 overflow-y-auto p-2">
         {groups.map((group) => (
           <div key={group.id}>

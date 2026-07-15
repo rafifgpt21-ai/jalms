@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, ChevronsUpDown, Plus, Search } from "lucide-react"
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -15,7 +15,6 @@ import {
 import {
     Command,
     CommandEmpty,
-    CommandGroup,
     CommandInput,
     CommandItem,
     CommandList,
@@ -91,7 +90,7 @@ export function AddStudentModal({ classId }: AddStudentModalProps) {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button>
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                     Add Student
                 </Button>
             </DialogTrigger>

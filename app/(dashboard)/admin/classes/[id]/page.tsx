@@ -6,6 +6,7 @@ import { AddStudentModal } from "@/components/admin/classes/add-student-modal"
 import { AddClassToClassModal } from "@/components/admin/classes/add-class-to-class-modal"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 import { WorkspaceActions, WorkspaceHeader, WorkspacePage } from "@/components/workspace/workspace-page"
+import { educationStage, gradeLevelLabel } from "@/lib/grade-level"
 
 interface ClassWorkspacePageProps {
     params: {
@@ -40,12 +41,12 @@ export default async function ClassWorkspacePage({ params }: ClassWorkspacePageP
         <WorkspacePage>
             <MobileHeaderSetter
                 title={classData.name}
-                subtitle={`${classData.term.academicYear.name} - ${classData.term.type === "ODD" ? "Odd" : "Even"}`}
+                subtitle={`${gradeLevelLabel(classData.gradeLevel)}${classData.gradeLevel ? ` · ${educationStage(classData.gradeLevel)}` : ""} · ${classData.term.academicYear.name} - ${classData.term.type === "ODD" ? "Odd" : "Even"}`}
                 backLink="/admin/classes"
             />
             <WorkspaceHeader>
-                <h2 className="text-xl font-semibold">Enrolled Students ({students?.length || 0})</h2>
-                <WorkspaceActions>
+                <h2 className="sr-only text-xl font-semibold md:not-sr-only">Enrolled Students</h2>
+                <WorkspaceActions className="max-md:grid max-md:grid-cols-2">
                     <AddClassToClassModal classId={id} />
                     <AddStudentModal classId={id} />
                 </WorkspaceActions>

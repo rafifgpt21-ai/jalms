@@ -2,8 +2,13 @@
 
 import { db as prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { ClassColor } from "@prisma/client";
+import { ClassColor, GradeLevel } from "@prisma/client";
 import { recordManagementChange } from "@/lib/management-audit";
+import { GRADE_LEVELS } from "@/lib/grade-level";
+
+function validGradeLevel(value: GradeLevel) {
+  return GRADE_LEVELS.includes(value);
+}
 
 export async function getClasses() {
   try {
@@ -35,14 +40,19 @@ export async function createClass(data: {
   termId: string;
   homeroomTeacherId?: string;
   color: ClassColor;
+  gradeLevel: GradeLevel;
 }) {
   try {
+    const name = data.name.trim();
+    if (!name) return { error: "Class name is required" };
+    if (!validGradeLevel(data.gradeLevel)) return { error: "Choose a valid grade from 7 to 12" };
+
     // Check for duplicate name in same term
     const existing = await prisma.class.findFirst({
       where: {
-        name: data.name,
+        name: { equals: name, mode: "insensitive" },
         termId: data.termId,
-        // deletedAt filter removed
+        deletedAt: { isSet: false },
       },
     });
 
@@ -52,10 +62,11 @@ export async function createClass(data: {
 
     const newClass = await prisma.class.create({
       data: {
-        name: data.name,
+        name,
         termId: data.termId,
         homeroomTeacherId: data.homeroomTeacherId || null,
         color: data.color,
+        gradeLevel: data.gradeLevel,
       },
     });
     await recordManagementChange({ entityType: "CLASS", entityId: newClass.id, action: "CREATE", after: newClass });
@@ -74,21 +85,39 @@ export async function updateClass(
     name: string;
     homeroomTeacherId?: string;
     color: ClassColor;
+    gradeLevel: GradeLevel;
   },
 ) {
   try {
     const before = await prisma.class.findUnique({ where: { id } });
+    if (!before) return { error: "Class not found" };
+    const name = data.name.trim();
+    if (!name) return { error: "Class name is required" };
+    if (!validGradeLevel(data.gradeLevel)) return { error: "Choose a valid grade from 7 to 12" };
+    const duplicate = await prisma.class.findFirst({
+      where: {
+        id: { not: id },
+        termId: before.termId,
+        name: { equals: name, mode: "insensitive" },
+        deletedAt: { isSet: false },
+      },
+      select: { id: true },
+    });
+    if (duplicate) return { error: "Class name already exists in this semester" };
+
     const updated = await prisma.class.update({
       where: { id },
       data: {
-        name: data.name,
+        name,
         homeroomTeacherId: data.homeroomTeacherId || null,
         color: data.color,
+        gradeLevel: data.gradeLevel,
       },
     });
     await recordManagementChange({ entityType: "CLASS", entityId: id, action: "UPDATE", before, after: updated });
 
     revalidatePath("/admin/classes");
+    revalidatePath(`/admin/classes/${id}`);
     return { success: true };
   } catch (error) {
     console.error("Error updating class:", error);

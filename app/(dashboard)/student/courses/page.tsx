@@ -56,7 +56,7 @@ async function StudentCoursesContent() {
                     const progress = getProgress(course.id)
 
                     return (
-                        <Link href={`/student/courses/${course.id}`} key={course.id} className="group block h-full">
+                        <Link href={`/student/courses/${course.id}/tasks`} key={course.id} className="group block h-full">
                             <div className="relative h-full flex flex-col overflow-hidden rounded-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1">
 
                                 {/* Poster Image Area - Taller aspect ratio */}

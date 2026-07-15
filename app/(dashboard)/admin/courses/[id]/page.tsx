@@ -30,8 +30,8 @@ export default async function CourseWorkspacePage({ params }: CourseWorkspacePag
                 backLink="/admin/courses"
             />
             <WorkspaceHeader>
-                <h2 className="text-lg md:text-xl font-semibold">Enrolled Students ({students.length})</h2>
-                <WorkspaceActions>
+                <h2 className="sr-only text-xl font-semibold md:not-sr-only">Enrolled Students</h2>
+                <WorkspaceActions className="max-md:grid max-md:grid-cols-2">
                     <AddClassToCourseModal courseId={id} />
                     <AddCourseStudentModal courseId={id} />
                 </WorkspaceActions>
