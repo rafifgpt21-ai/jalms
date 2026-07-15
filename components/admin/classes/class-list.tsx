@@ -182,7 +182,7 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" size="icon">
-                                                        <span className="sr-only">Open menu</span>
+                                                        <span className="sr-only">Open actions for {cls.name}</span>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
@@ -192,11 +192,11 @@ export function ClassList({ classes, teachers, terms }: ClassListProps) {
                                                         setEditingClass(cls)
                                                         setIsModalOpen(true)
                                                     }}>
-                                                        <Edit className="mr-2 h-4 w-4" />
+                                                        <Edit className="h-4 w-4" />
                                                         Edit
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleDelete(cls.id)} className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20">
-                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                    <DropdownMenuItem onClick={() => handleDelete(cls.id)} variant="destructive">
+                                                        <Trash2 className="h-4 w-4" />
                                                         Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>

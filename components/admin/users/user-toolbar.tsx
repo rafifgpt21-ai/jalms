@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-    DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import { Search, Filter, ArrowUpDown, X } from "lucide-react"
 import { useState, useEffect } from "react"
@@ -147,7 +147,7 @@ export function UserToolbar() {
                 {/* Filter Button */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 gap-1">
+                        <Button variant="outline" size="sm" className="h-9 gap-1" aria-label="Filter users">
                             <Filter className="h-3.5 w-3.5" />
                             <span className="hidden sm:inline-block">Filter</span>
                             {(currentRole !== "ALL" || currentStatus !== "ALL") && (
@@ -157,91 +157,41 @@ export function UserToolbar() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuCheckboxItem
-                            checked={currentRole === "ALL"}
-                            onCheckedChange={() => handleFilterChange("role", "ALL")}
-                        >
-                            All Roles
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={currentRole === "ADMIN"}
-                            onCheckedChange={() => handleFilterChange("role", "ADMIN")}
-                        >
-                            Admin
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={currentRole === "SUBJECT_TEACHER"}
-                            onCheckedChange={() => handleFilterChange("role", "SUBJECT_TEACHER")}
-                        >
-                            Subject Teacher
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={currentRole === "HOMEROOM_TEACHER"}
-                            onCheckedChange={() => handleFilterChange("role", "HOMEROOM_TEACHER")}
-                        >
-                            Homeroom Teacher
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={currentRole === "STUDENT"}
-                            onCheckedChange={() => handleFilterChange("role", "STUDENT")}
-                        >
-                            Student
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={currentRole === "PARENT"}
-                            onCheckedChange={() => handleFilterChange("role", "PARENT")}
-                        >
-                            Parent
-                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuRadioGroup value={currentRole} onValueChange={(value) => handleFilterChange("role", value)}>
+                            <DropdownMenuRadioItem value="ALL">All roles</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="ADMIN">Admin</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="SUBJECT_TEACHER">Subject Teacher</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="HOMEROOM_TEACHER">Homeroom Teacher</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="STUDENT">Student</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="PARENT">Parent</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
 
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuCheckboxItem
-                            checked={currentStatus === "ALL"}
-                            onCheckedChange={() => handleFilterChange("status", "ALL")}
-                        >
-                            All Status
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={currentStatus === "ACTIVE"}
-                            onCheckedChange={() => handleFilterChange("status", "ACTIVE")}
-                        >
-                            Active
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                            checked={currentStatus === "INACTIVE"}
-                            onCheckedChange={() => handleFilterChange("status", "INACTIVE")}
-                        >
-                            Inactive
-                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuRadioGroup value={currentStatus} onValueChange={(value) => handleFilterChange("status", value)}>
+                            <DropdownMenuRadioItem value="ALL">All statuses</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="ACTIVE">Active</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="INACTIVE">Inactive</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
                 {/* Sort Button */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 gap-1">
+                        <Button variant="outline" size="sm" className="h-9 gap-1" aria-label="Sort users">
                             <ArrowUpDown className="h-3.5 w-3.5" />
                             <span className="hidden sm:inline-block">Sort</span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleSortChange("newest")}>
-                            Newest First
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSortChange("oldest")}>
-                            Oldest First
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSortChange("name_asc")}>
-                            Name (A-Z)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSortChange("name_desc")}>
-                            Name (Z-A)
-                        </DropdownMenuItem>
+                        <DropdownMenuRadioGroup value={currentSort} onValueChange={handleSortChange}>
+                            <DropdownMenuRadioItem value="newest">Newest first</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="oldest">Oldest first</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="name_asc">Name (A–Z)</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="name_desc">Name (Z–A)</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -252,6 +202,7 @@ export function UserToolbar() {
                         size="sm"
                         onClick={clearFilters}
                         className="h-9 px-2 text-muted-foreground hover:text-foreground"
+                        aria-label="Clear user filters"
                     >
                         <X className="h-4 w-4" />
                     </Button>

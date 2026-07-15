@@ -258,9 +258,9 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                         <BookOpen className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
+                                <DropdownMenuContent side="right" className="w-56">
                                     <DropdownMenuLabel>Select Course</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-sidebar-border" />
+                                    <DropdownMenuSeparator />
                                     {teacherCourses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
@@ -290,16 +290,16 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
-                                    className="w-(--radix-dropdown-menu-trigger-width) bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-xl"
+                                    className="w-(--radix-dropdown-menu-trigger-width)"
                                     align="start"
                                 >
                                     <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1.5">Switch Course</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700" />
+                                    <DropdownMenuSeparator />
                                     {teacherCourses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
-                                            className="flex items-center justify-between p-2 cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800 rounded-md"
+                                            className="flex items-center justify-between p-2"
                                         >
                                             <div className="flex items-center gap-2 overflow-hidden">
                                                 <div className={cn(
@@ -471,9 +471,9 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                         <BookOpen className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent side="right" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
+                                <DropdownMenuContent side="right" className="w-56">
                                     <DropdownMenuLabel>Select Course</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-sidebar-border" />
+                                    <DropdownMenuSeparator />
                                     {studentCourses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
@@ -503,16 +503,16 @@ export function SidebarNav({ userRoles, isCollapsed = false, onNavigate, teacher
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
-                                    className="w-(--radix-dropdown-menu-trigger-width) bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-xl"
+                                    className="w-(--radix-dropdown-menu-trigger-width)"
                                     align="start"
                                 >
                                     <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1.5">Switch Course</DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700" />
+                                    <DropdownMenuSeparator />
                                     {studentCourses.map(course => (
                                         <DropdownMenuItem
                                             key={course.id}
                                             onClick={() => setSelectedCourseId(course.id)}
-                                            className="flex items-center justify-between p-2 cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-800 rounded-md"
+                                            className="flex items-center justify-between p-2"
                                         >
                                             <div className="flex items-center gap-2 overflow-hidden">
                                                 <div className={cn(

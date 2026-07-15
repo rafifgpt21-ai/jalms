@@ -428,6 +428,10 @@ Use shared table primitives for structured collections.
 ### Dialogs, menus, tooltips, and toasts
 
 - Use the existing Radix-backed primitives.
+- Dropdowns, submenus, selects, command lists, and popovers share one token-based `popover` surface: an 8px radius, semantic border, restrained elevation, compact spacing, and a short directional entrance. Do not restore hardcoded white/slate surfaces, glass blur, large radii, or decorative shadows in individual menus.
+- Menu and select rows are 32px or taller on desktop and 44px on mobile. Keep item icons at 16px, use the shared highlighted state, and mark destructive items with the primitive's `destructive` variant.
+- Use radio items for mutually exclusive choices, checkbox items for independent toggles, and visible indicators for the current choice. Icon-only menu triggers need a contextual accessible name.
+- Floating content keeps at least 8px of viewport collision padding and should match or slightly exceed the trigger width when that helps scanning.
 - Use dialogs for focused creation/editing and confirmation, not for full application pages.
 - Use alert dialogs for destructive or irreversible confirmation.
 - Tooltips support unfamiliar icons; they do not replace visible labels for primary actions.

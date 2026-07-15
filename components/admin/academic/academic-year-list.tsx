@@ -112,7 +112,7 @@ export function AcademicYearList({ years }: AcademicYearListProps) {
                                         Set as Active
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => handleDelete(year.id)} disabled={isPending} className="text-red-600">
+                                    <DropdownMenuItem onClick={() => handleDelete(year.id)} disabled={isPending} variant="destructive">
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Archive
                                     </DropdownMenuItem>

@@ -144,7 +144,7 @@ export function SemesterList({ terms }: SemesterListProps) {
                                             )}
                                             <SemesterModal semester={term as any} />
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => setSemesterToDelete(term.id)} className="text-red-600">
+                                            <DropdownMenuItem onClick={() => setSemesterToDelete(term.id)} variant="destructive">
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 Archive
                                             </DropdownMenuItem>

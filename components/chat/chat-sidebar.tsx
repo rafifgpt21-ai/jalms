@@ -74,12 +74,12 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
         <>
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Search conversations">
                         <Search className="h-5 w-5" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="end" className="w-[calc(100vw-32px)] p-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl mt-2">
-                    <div className="p-4 space-y-4">
+                <PopoverContent side="bottom" align="end" className="w-[calc(100vw-32px)] p-0">
+                    <div className="space-y-3 p-3">
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                             <Input
@@ -103,7 +103,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             <Link
                                                 key={conv.id}
                                                 href={`/socials/${conv.id}`}
-                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors"
+                                                className="flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground"
                                             >
                                                 <Avatar>
                                                     <AvatarImage src={otherParticipant?.image || undefined} />
@@ -124,7 +124,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                     </div>
                 </PopoverContent>
             </Popover>
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setIsNewChatOpen(true)}>
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setIsNewChatOpen(true)} aria-label="Start a new conversation">
                 <Plus className="h-5 w-5" />
             </Button>
         </>
@@ -146,7 +146,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                             <TooltipProvider>
                                 <Tooltip delayDuration={0}>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400" onClick={() => setIsNewChatOpen(true)}>
+                                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400" onClick={() => setIsNewChatOpen(true)} aria-label="Start a new conversation">
                                             <Plus className="w-5 h-5" />
                                         </Button>
                                     </TooltipTrigger>
@@ -156,13 +156,13 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
 
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400">
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400" aria-label="Search conversations">
                                         <Search className="w-5 h-5" />
                                     </Button>
                                 </PopoverTrigger>
                                 {/* Search Popover Content */}
-                                <PopoverContent side="right" className="w-80 p-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl ml-2">
-                                    <div className="p-4 space-y-4">
+                                <PopoverContent side="right" className="w-80 p-0">
+                                    <div className="space-y-3 p-3">
                                         <div className="relative">
                                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                             <Input
@@ -177,7 +177,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                             {filteredConversations.map(conv => {
                                                 const otherParticipant = conv.participants.find(p => p.id !== userId);
                                                 return (
-                                                    <Link key={conv.id} href={`/socials/${conv.id}`} className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
+                                                    <Link key={conv.id} href={`/socials/${conv.id}`} className="flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                                                         <Avatar className="h-8 w-8">
                                                             <AvatarImage src={otherParticipant?.image || undefined} />
                                                             <AvatarFallback>{(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -198,17 +198,17 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                 {/* Search Trigger (Standard View) */}
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" aria-label="Search conversations">
                                             <Search className="w-4 h-4" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent side="bottom" align="end" className="w-80 p-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
-                                        <div className="p-4 space-y-4">
+                                    <PopoverContent side="bottom" align="end" className="w-80 p-0">
+                                        <div className="space-y-3 p-3">
                                             <div className="relative">
                                                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                                 <Input
                                                     placeholder="Search chats..."
-                                                    className="pl-9 bg-white/40 dark:bg-slate-800/40 border-white/20 dark:border-slate-700/30 backdrop-blur-md focus-visible:ring-indigo-500/20 rounded-xl"
+                                                    className="border-input bg-background pl-9"
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
                                                     autoFocus
@@ -219,7 +219,7 @@ export function ChatSidebar({ initialConversations, userId, variant = "default",
                                                 {filteredConversations.map(conv => {
                                                     const otherParticipant = conv.participants.find(p => p.id !== userId);
                                                     return (
-                                                        <Link key={conv.id} href={`/socials/${conv.id}`} className="flex items-center gap-3 p-3 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
+                                                        <Link key={conv.id} href={`/socials/${conv.id}`} className="flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground">
                                                             <Avatar className="h-8 w-8">
                                                                 <AvatarImage src={otherParticipant?.image || undefined} />
                                                                 <AvatarFallback>{(otherParticipant?.nickname || otherParticipant?.name)?.slice(0, 2).toUpperCase()}</AvatarFallback>

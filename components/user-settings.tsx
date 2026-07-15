@@ -80,7 +80,7 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
                     )}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side={side} align={align} className="z-[110] w-56">
-                    <DropdownMenuLabel>
+                    <DropdownMenuLabel className="py-2 text-sm font-normal tracking-normal text-popover-foreground">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
                                 <AvatarImage src={image || undefined} alt={name || "User"} />
@@ -96,31 +96,31 @@ export function UserSettings({ email, name, nickname, image, side = "bottom", al
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setShowAvatarDialog(true)}>
-                        <User className="mr-2 h-4 w-4" />
+                        <User className="h-4 w-4" />
                         <span>Customize Avatar</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowAppearanceDialog(true)}>
-                        <Palette className="mr-2 h-4 w-4" />
+                        <Palette className="h-4 w-4" />
                         <span>Appearance</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowNicknameDialog(true)}>
-                        <Pencil className="mr-2 h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                         <span>Edit Nickname</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowEmailDialog(true)}>
-                        <Mail className="mr-2 h-4 w-4" />
+                        <Mail className="h-4 w-4" />
                         <span>Change Email</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowPasswordDialog(true)}>
-                        <KeyRound className="mr-2 h-4 w-4" />
+                        <KeyRound className="h-4 w-4" />
                         <span>Change Password</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600"
+                        variant="destructive"
                         onClick={() => setShowLogoutDialog(true)}
                     >
-                        <LogOut className="mr-2 h-4 w-4" />
+                        <LogOut className="h-4 w-4" />
                         <span>Log out</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>

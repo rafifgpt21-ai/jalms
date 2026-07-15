@@ -496,6 +496,15 @@ html[data-density="comfortable"] {
     min-height: 2.75rem;
   }
 
+  [data-slot="dropdown-menu-item"],
+  [data-slot="dropdown-menu-checkbox-item"],
+  [data-slot="dropdown-menu-radio-item"],
+  [data-slot="dropdown-menu-sub-trigger"],
+  [data-slot="select-item"],
+  [data-slot="command-item"] {
+    min-height: 2.75rem !important;
+  }
+
   .workspace-topbar {
     height: 3.5rem;
     min-height: 3.5rem;
