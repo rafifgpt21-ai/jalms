@@ -47,3 +47,5 @@ next-env.d.ts
 note.txt
 
 build_er
+
+.agents/

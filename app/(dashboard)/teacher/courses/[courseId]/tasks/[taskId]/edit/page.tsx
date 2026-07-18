@@ -2,6 +2,7 @@ import { TaskForm } from "@/components/teacher/task-form"
 import { getAssignmentDetails } from "@/lib/actions/teacher.actions"
 import { getQuizzes } from "@/lib/actions/quiz.actions"
 import { notFound } from "next/navigation"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 
 interface EditTaskPageProps {
     params: Promise<{
@@ -19,19 +20,29 @@ export default async function EditTaskPage(props: EditTaskPageProps) {
     } = params;
 
     // getAssignmentDetails includes course and subject
-    const { assignment } = await getAssignmentDetails(taskId)
-    const { quizzes } = await getQuizzes()
+    const [{ assignment }, { quizzes, folders }] = await Promise.all([
+        getAssignmentDetails(taskId),
+        getQuizzes(),
+    ])
 
     if (!assignment) {
         notFound()
     }
 
     return (
-        <TaskForm
-            courseId={courseId}
-            initialData={assignment as any}
-            course={assignment.course as any}
-            quizzes={quizzes || []}
-        />
+        <>
+            <MobileHeaderSetter
+                title="Edit task"
+                subtitle={assignment.title}
+                backLink={`/teacher/courses/${courseId}/tasks/${taskId}`}
+            />
+            <TaskForm
+                courseId={courseId}
+                initialData={assignment}
+                course={assignment.course}
+                quizzes={quizzes || []}
+                quizFolders={folders || []}
+            />
+        </>
     )
 }

@@ -1,11 +1,16 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useState, useTransition } from "react"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
-import { Loader2, Trash2, ArrowLeft } from "lucide-react"
+import {
+    ChevronDown,
+    HelpCircle,
+    Loader2,
+    Trash2,
+} from "lucide-react"
 import { AssignmentType, AcademicDomain } from "@prisma/client"
 import { format } from "date-fns"
 import { useRouter } from "next/navigation"
@@ -26,14 +31,13 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+    QuizLibraryPicker,
+    type QuizPickerFolder,
+    type QuizPickerItem,
+} from "@/components/teacher/quiz/quiz-library-picker"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -45,7 +49,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { createAssignment, updateAssignment, deleteAssignment } from "@/lib/actions/teacher.actions"
 
 const DOMAIN_LABELS: Record<AcademicDomain, string> = {
@@ -57,8 +60,23 @@ const DOMAIN_LABELS: Record<AcademicDomain, string> = {
     SPIRITUALITY_ETHICS: "Spirituality & Ethics",
 }
 
+const TASK_TYPE_OPTIONS = [
+    {
+        value: "SUBMISSION",
+        label: "Submission",
+    },
+    {
+        value: "NON_SUBMISSION",
+        label: "In-class",
+    },
+    {
+        value: "QUIZ",
+        label: "Quiz",
+    },
+] as const
+
 const formSchema = z.object({
-    title: z.string().min(1, "Title is required"),
+    title: z.string().trim().min(1, "Task name is required"),
     description: z.string().optional(),
     type: z.enum(["SUBMISSION", "NON_SUBMISSION", "QUIZ"]),
     dueDate: z.string().optional(),
@@ -67,18 +85,53 @@ const formSchema = z.object({
     latePenalty: z.coerce.number().min(0).max(100).default(0),
     academicDomains: z.array(z.nativeEnum(AcademicDomain)).optional(),
     quizId: z.string().optional(),
-    showGradeAfterSubmission: z.boolean().default(true)
+    showGradeAfterSubmission: z.boolean().default(true),
+}).superRefine((values, ctx) => {
+    if (values.type === "QUIZ" && !values.quizId) {
+        ctx.addIssue({
+            code: "custom",
+            message: "Choose a quiz to continue",
+            path: ["quizId"],
+        })
+    }
 })
+
+type TaskFormInput = z.input<typeof formSchema>
+type TaskFormValues = z.output<typeof formSchema>
 
 interface TaskFormProps {
     courseId?: string
-    initialData?: any // Assignment
-    course?: any // Course with Subject
-    assignment?: any // Legacy alias for initialData
-    quizzes?: any[] // List of quizzes for selection
+    initialData?: TaskFormAssignment
+    course?: TaskFormCourse
+    assignment?: TaskFormAssignment // Legacy alias for initialData
+    quizzes?: QuizPickerItem[]
+    quizFolders?: QuizPickerFolder[]
 }
 
-export function TaskForm({ courseId, initialData, assignment, course, quizzes = [] }: TaskFormProps) {
+interface TaskFormCourse {
+    id?: string
+    name?: string
+    subject?: {
+        academicDomains?: AcademicDomain[]
+    } | null
+}
+
+interface TaskFormAssignment {
+    id: string
+    courseId: string
+    title: string
+    description?: string | null
+    type: AssignmentType
+    dueDate?: Date | string | null
+    maxPoints: number
+    isExtraCredit: boolean
+    latePenalty?: number | null
+    academicDomains?: AcademicDomain[]
+    quizId?: string | null
+    showGradeAfterSubmission?: boolean
+}
+
+export function TaskForm({ courseId, initialData, assignment, course, quizzes = [], quizFolders = [] }: TaskFormProps) {
     // Handle alias
     const data = initialData || assignment
     const effectiveCourseId = courseId || data?.courseId
@@ -88,13 +141,15 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
     const isEditMode = !!data
 
     // State for customizing domains
-    const [customizeDomains, setCustomizeDomains] = useState(false)
+    const [customizeDomains, setCustomizeDomains] = useState(
+        () => (data?.academicDomains?.length || 0) > 0
+    )
 
     // Determine default tags from course subject
     const subjectDomains: AcademicDomain[] = course?.subject?.academicDomains || []
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema) as any,
+    const form = useForm<TaskFormInput, unknown, TaskFormValues>({
+        resolver: zodResolver(formSchema),
         defaultValues: {
             title: data?.title || "",
             description: data?.description || "",
@@ -115,15 +170,23 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
     // So if data.academicDomains is valid and length > 0, we turn on customize.
     // If length is 0, we can assume it's inheriting (unless user explicitly cleared them, but for now 0 means inherit).
 
-    useEffect(() => {
-        if (data?.academicDomains && data.academicDomains.length > 0) {
-            setCustomizeDomains(true)
+    const watchType = useWatch({ control: form.control, name: "type" })
+    const selectedDomains = useWatch({ control: form.control, name: "academicDomains" }) || []
+    const acceptsStudentWork = watchType === "SUBMISSION" || watchType === "QUIZ"
+    const selectedDomainSummary = selectedDomains.length === 0
+        ? "Choose domains"
+        : selectedDomains.length === 1
+            ? DOMAIN_LABELS[selectedDomains[0]]
+            : `${selectedDomains.length} domains selected`
+
+    const handleDomainCustomization = (checked: boolean) => {
+        if (checked && selectedDomains.length === 0 && subjectDomains.length > 0) {
+            form.setValue("academicDomains", subjectDomains, { shouldDirty: true })
         }
-    }, [data])
+        setCustomizeDomains(checked)
+    }
 
-    const watchType = form.watch("type")
-
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    function onSubmit(values: TaskFormValues) {
         // If customization is OFF, send empty array (or undefined handled by backend?)
         // Backend logic: "stores tags". Profile calculation logic will check Assignment tags first.
         // If customization is turned OFF by user, we should clear the tags in the submission.
@@ -133,23 +196,27 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
         // So saving [] means "Inherit". That works.
 
         const academicDomainsPayload = customizeDomains ? values.academicDomains : []
+        const hasOnlineSubmission = values.type === "SUBMISSION" || values.type === "QUIZ"
+        const dueDate = hasOnlineSubmission && values.dueDate ? new Date(values.dueDate) : undefined
+        const latePenalty = hasOnlineSubmission ? values.latePenalty : 0
+        const quizId = values.type === "QUIZ" ? values.quizId : undefined
 
         startTransition(async () => {
             try {
                 let result;
 
-                if (isEditMode) {
+                if (data) {
                     result = await updateAssignment({
                         assignmentId: data.id,
                         title: values.title,
                         description: values.description,
                         type: values.type as AssignmentType,
-                        dueDate: values.dueDate ? new Date(values.dueDate) : undefined,
+                        dueDate,
                         maxPoints: values.maxPoints,
                         isExtraCredit: values.isExtraCredit,
-                        latePenalty: values.latePenalty,
+                        latePenalty,
                         academicDomains: academicDomainsPayload,
-                        quizId: values.quizId,
+                        quizId,
                         showGradeAfterSubmission: values.showGradeAfterSubmission,
                     })
                 } else {
@@ -162,12 +229,12 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                         title: values.title,
                         description: values.description,
                         type: values.type as AssignmentType,
-                        dueDate: values.dueDate ? new Date(values.dueDate) : undefined,
+                        dueDate,
                         maxPoints: values.maxPoints,
                         isExtraCredit: values.isExtraCredit,
-                        latePenalty: values.latePenalty,
+                        latePenalty,
                         academicDomains: academicDomainsPayload,
-                        quizId: values.quizId,
+                        quizId,
                         showGradeAfterSubmission: values.showGradeAfterSubmission,
                     })
                 }
@@ -189,6 +256,8 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
     }
 
     const handleDelete = async () => {
+        if (!data) return
+
         startTransition(async () => {
             try {
                 const result = await deleteAssignment(data.id)
@@ -199,69 +268,150 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                     router.push(`/teacher/courses/${result.courseId}`)
                     router.refresh()
                 }
-            } catch (error) {
+            } catch {
                 toast.error("Failed to delete task")
             }
         })
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <Card>
-                <CardContent>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <FormField
-                                control={form.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Task Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. Chapter 1 Quiz" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+        <div className="mx-auto w-full max-w-5xl pb-20 sm:pb-4">
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit, () => toast.error("Please review the highlighted fields"))}>
+                    <div className="rounded-md border bg-card shadow-xs">
+                        <div className="grid lg:grid-cols-[minmax(0,1fr)_22rem]">
+                            <section className="space-y-4 p-4 lg:border-r">
+                                <div className="flex items-center justify-between gap-3">
+                                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Content</h2>
+                                    <TaskFormHelp />
+                                </div>
 
-                            <FormField
-                                control={form.control}
-                                name="description"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Description</FormLabel>
-                                        <FormControl>
-                                            <Editor
-                                                value={field.value || ""}
-                                                onChange={field.onChange}
-                                                className="min-h-[200px]"
+                                <FormField
+                                    control={form.control}
+                                    name="title"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Task name</FormLabel>
+                                            <FormControl>
+                                                <Input autoFocus placeholder="e.g. Chapter 1 reflection" maxLength={160} {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="description"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <div className="flex items-center justify-between gap-3">
+                                                <FormLabel>Instructions</FormLabel>
+                                                <span className="text-xs text-muted-foreground">Optional</span>
+                                            </div>
+                                            <FormControl>
+                                                <Editor value={field.value || ""} onChange={field.onChange} className="min-h-[160px]" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="space-y-3 border-t pt-4">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium">Learning profile</span>
+                                            {!customizeDomains && <Badge variant="secondary">Subject defaults</Badge>}
+                                        </div>
+                                        <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs font-medium sm:min-h-8">
+                                            Customize
+                                            <Switch
+                                                checked={customizeDomains}
+                                                onCheckedChange={handleDomainCustomization}
+                                                aria-label="Customize academic domains"
                                             />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                        </label>
+                                    </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {!customizeDomains ? (
+                                        <div className="flex min-h-8 flex-wrap items-center gap-1.5">
+                                            {subjectDomains.length > 0 ? subjectDomains.map((domain) => (
+                                                <Badge key={domain} variant="outline">{DOMAIN_LABELS[domain]}</Badge>
+                                            )) : (
+                                                <span className="text-xs text-muted-foreground">No subject domains</span>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <FormField
+                                            control={form.control}
+                                            name="academicDomains"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <Button type="button" variant="outline" className="w-full justify-between font-normal">
+                                                                <span className="truncate">{selectedDomainSummary}</span>
+                                                                <ChevronDown className="size-4 text-muted-foreground" />
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent align="start" className="w-[22rem] p-2">
+                                                            <div className="border-b px-2 pb-2 text-xs font-semibold">Academic domains</div>
+                                                            <div className="grid gap-1 pt-2">
+                                                                {(Object.keys(DOMAIN_LABELS) as AcademicDomain[]).map((domain) => {
+                                                                    const checked = field.value?.includes(domain) ?? false
+                                                                    return (
+                                                                        <label
+                                                                            key={domain}
+                                                                            className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 text-sm hover:bg-muted sm:min-h-9"
+                                                                        >
+                                                                            <Checkbox
+                                                                                checked={checked}
+                                                                                onCheckedChange={(nextChecked) => {
+                                                                                    const current = field.value || []
+                                                                                    field.onChange(
+                                                                                        nextChecked
+                                                                                            ? [...current, domain]
+                                                                                            : current.filter((value) => value !== domain)
+                                                                                    )
+                                                                                }}
+                                                                            />
+                                                                            <span>{DOMAIN_LABELS[domain]}</span>
+                                                                        </label>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
+                                </div>
+                            </section>
+
+                            <aside className="space-y-4 border-t p-4 lg:border-t-0">
+                                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Settings</h2>
+
                                 <FormField
                                     control={form.control}
                                     name="type"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Type</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select type" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="SUBMISSION">Submission</SelectItem>
-                                                    <SelectItem value="NON_SUBMISSION">Non-Submission</SelectItem>
-                                                    <SelectItem value="QUIZ">Quiz</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <FormLabel>Task type</FormLabel>
+                                            <FormControl>
+                                                <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-3 gap-1 rounded-md bg-muted p-1">
+                                                    {TASK_TYPE_OPTIONS.map((option) => (
+                                                        <label
+                                                            key={option.value}
+                                                            className={`flex min-h-11 cursor-pointer items-center justify-center rounded-sm px-2 text-xs font-medium transition-colors sm:min-h-8 ${field.value === option.value ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+                                                        >
+                                                            <RadioGroupItem value={option.value} className="sr-only" />
+                                                            {option.label}
+                                                        </label>
+                                                    ))}
+                                                </RadioGroup>
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -273,76 +423,87 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                                         name="quizId"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Select Quiz</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Choose a quiz" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {quizzes.map((q) => (
-                                                            <SelectItem key={q.id} value={q.id}>
-                                                                {q.title}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormDescription>
-                                                    Choose a quiz from your Quiz Manager.
-                                                </FormDescription>
+                                                <FormLabel>Quiz</FormLabel>
+                                                <FormControl>
+                                                    <QuizLibraryPicker
+                                                        quizzes={quizzes}
+                                                        folders={quizFolders}
+                                                        value={field.value}
+                                                        onValueChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                                {quizzes.length === 0 && (
+                                                    <FormDescription>
+                                                        Create a quiz in the <Link href="/teacher/quiz-manager" className="font-medium text-primary hover:underline">Quiz Manager</Link> first.
+                                                    </FormDescription>
+                                                )}
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                 )}
 
-                                {watchType === "QUIZ" && (
+                                <div className="grid grid-cols-2 gap-3">
                                     <FormField
                                         control={form.control}
-                                        name="showGradeAfterSubmission"
+                                        name="maxPoints"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel>Show Grade Immediately</FormLabel>
-                                                    <FormDescription>
-                                                        Show score to students after submission.
-                                                    </FormDescription>
+                                            <FormItem>
+                                                <FormLabel>Points</FormLabel>
+                                                <div className="relative">
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            className="pr-12"
+                                                            {...field}
+                                                            value={typeof field.value === "string" || typeof field.value === "number" ? field.value : ""}
+                                                        />
+                                                    </FormControl>
+                                                    <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-xs text-muted-foreground">pts</span>
                                                 </div>
-                                                <FormControl>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                    />
-                                                </FormControl>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
-                                )}
 
-                                <FormField
-                                    control={form.control}
-                                    name="maxPoints"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Max Points</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
+                                    {acceptsStudentWork && (
+                                        <FormField
+                                            control={form.control}
+                                            name="latePenalty"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Late penalty</FormLabel>
+                                                    <div className="relative">
+                                                        <FormControl>
+                                                            <Input
+                                                                type="number"
+                                                                min="0"
+                                                                max="100"
+                                                                className="pr-9"
+                                                                {...field}
+                                                                value={typeof field.value === "string" || typeof field.value === "number" ? field.value : ""}
+                                                            />
+                                                        </FormControl>
+                                                        <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-xs text-muted-foreground">%</span>
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     )}
-                                />
-                            </div>
+                                </div>
 
-                            {(watchType === "SUBMISSION" || watchType === "QUIZ") && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {acceptsStudentWork && (
                                     <FormField
                                         control={form.control}
                                         name="dueDate"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Due Date & Time</FormLabel>
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <FormLabel>Due date</FormLabel>
+                                                    <span className="text-xs text-muted-foreground">Optional</span>
+                                                </div>
                                                 <FormControl>
                                                     <Input type="datetime-local" {...field} />
                                                 </FormControl>
@@ -350,178 +511,131 @@ export function TaskForm({ courseId, initialData, assignment, course, quizzes = 
                                             </FormItem>
                                         )}
                                     />
+                                )}
+
+                                <div className="divide-y border-y">
                                     <FormField
                                         control={form.control}
-                                        name="latePenalty"
+                                        name="isExtraCredit"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Late Penalty (%)</FormLabel>
+                                            <FormItem className="flex min-h-11 grid-cols-none items-center justify-between gap-3 py-2">
+                                                <FormLabel>Extra credit</FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" min="0" max="100" {...field} />
+                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                                                 </FormControl>
-                                                <FormDescription>
-                                                    Percentage deducted if submitted late (0-100).
-                                                </FormDescription>
-                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
-                                </div>
-                            )}
 
-                            <FormField
-                                control={form.control}
-                                name="isExtraCredit"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>
-                                                Extra Credit
-                                            </FormLabel>
-                                            <FormDescription>
-                                                Check this box if this task is for extra credit.
-                                            </FormDescription>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Learning Profile Section */}
-                            <div className="space-y-4 rounded-md border p-4">
-                                <div className="flex flex-row items-center justify-between">
-                                    <div className="space-y-0.5">
-                                        <FormLabel className="text-base">Learning Profile</FormLabel>
-                                        <FormDescription>
-                                            Tag this assignment with Academic Domains for student learning profiles.
-                                        </FormDescription>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Switch
-                                            checked={customizeDomains}
-                                            onCheckedChange={setCustomizeDomains}
-                                        />
-                                        <span className="text-sm font-medium">Customize</span>
-                                    </div>
-                                </div>
-
-                                {!customizeDomains ? (
-                                    <div className="mt-2 text-sm text-muted-foreground">
-                                        Using Subject Defaults:{" "}
-                                        {subjectDomains.length > 0 ? (
-                                            <div className="flex flex-wrap gap-1 mt-1">
-                                                {subjectDomains.map(tag => (
-                                                    <Badge key={tag} variant="secondary">
-                                                        {DOMAIN_LABELS[tag] || tag}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="italic">No subject tags set.</span>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="mt-4">
+                                    {watchType === "QUIZ" && (
                                         <FormField
                                             control={form.control}
-                                            name="academicDomains"
-                                            render={() => (
-                                                <FormItem>
-                                                    <ScrollArea className="h-[200px] border rounded-md p-4">
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                            {Object.entries(DOMAIN_LABELS).map(([key, label]) => (
-                                                                <FormField
-                                                                    key={key}
-                                                                    control={form.control}
-                                                                    name="academicDomains"
-                                                                    render={({ field }) => {
-                                                                        return (
-                                                                            <FormItem
-                                                                                key={key}
-                                                                                className="flex flex-row items-start space-x-3 space-y-0"
-                                                                            >
-                                                                                <FormControl>
-                                                                                    <Checkbox
-                                                                                        checked={field.value?.includes(key as AcademicDomain)}
-                                                                                        onCheckedChange={(checked) => {
-                                                                                            const current = field.value || []
-                                                                                            return checked
-                                                                                                ? field.onChange([...current, key])
-                                                                                                : field.onChange(
-                                                                                                    current.filter(
-                                                                                                        (value) => value !== key
-                                                                                                    )
-                                                                                                )
-                                                                                        }}
-                                                                                    />
-                                                                                </FormControl>
-                                                                                <FormLabel className="font-normal cursor-pointer">
-                                                                                    {label}
-                                                                                </FormLabel>
-                                                                            </FormItem>
-                                                                        )
-                                                                    }}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    </ScrollArea>
-                                                    <FormMessage />
+                                            name="showGradeAfterSubmission"
+                                            render={({ field }) => (
+                                                <FormItem className="flex min-h-11 grid-cols-none items-center justify-between gap-3 py-2">
+                                                    <FormLabel>Show grade immediately</FormLabel>
+                                                    <FormControl>
+                                                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                    </FormControl>
                                                 </FormItem>
                                             )}
                                         />
-                                    </div>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            </aside>
+                        </div>
 
-                            <div className="flex items-center justify-between pt-4 border-t">
-                                {isEditMode ? (
+                        <div className="sticky bottom-0 z-20 flex flex-col-reverse gap-2 rounded-b-md border-t bg-card p-2.5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center">
+                                {isEditMode && (
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" type="button" disabled={isPending}>
-                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                Delete Task
+                                            <Button variant="destructive" type="button" disabled={isPending} className="w-full sm:w-auto">
+                                                <Trash2 className="size-4" />
+                                                Delete task
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogTitle>Delete this task?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete the assignment and all associated submissions.
+                                                    This permanently deletes the task and all associated submissions. This action cannot be undone.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogCancel>Keep task</AlertDialogCancel>
                                                 <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                                    Delete
+                                                    Delete task
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
-                                ) : (
-                                    <div /> // Spacer
                                 )}
-
-                                <div className="flex gap-2">
-                                    <Button type="button" variant="outline" asChild>
-                                        <Link href={isEditMode ? `/teacher/courses/${effectiveCourseId}/tasks/${data.id}` : `/teacher/courses/${effectiveCourseId}`}>
-                                            Cancel
-                                        </Link>
-                                    </Button>
-                                    <Button type="submit" disabled={isPending}>
-                                        {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        {isEditMode ? "Save Changes" : "Create Task"}
-                                    </Button>
-                                </div>
                             </div>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" asChild className="flex-1 sm:flex-none">
+                                    <Link href={isEditMode ? `/teacher/courses/${effectiveCourseId}/tasks/${data?.id}` : `/teacher/courses/${effectiveCourseId}/tasks`}>
+                                        Cancel
+                                    </Link>
+                                </Button>
+                                <Button type="submit" disabled={isPending} className="flex-1 sm:min-w-28 sm:flex-none">
+                                    {isPending && <Loader2 className="size-4 animate-spin" />}
+                                    {isEditMode ? "Save changes" : "Create task"}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </Form>
         </div>
+    )
+}
+
+function TaskFormHelp() {
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button type="button" variant="ghost" size="sm">
+                    <HelpCircle className="size-4" />
+                    Help
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[23rem] p-0">
+                <div className="border-b px-3 py-2.5">
+                    <p className="text-sm font-semibold">Task setup help</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">How each setting affects students and grading.</p>
+                </div>
+                <div className="max-h-[min(28rem,70dvh)] space-y-3 overflow-y-auto p-3 text-xs">
+                    <HelpSection title="Task types">
+                        <strong>Submission</strong> collects student work. <strong>In-class</strong> records an offline activity. <strong>Quiz</strong> assigns an item from the quiz library.
+                    </HelpSection>
+                    <HelpSection title="Instructions">
+                        Add the expected outcome, useful resources, and submission requirements. This field is optional.
+                    </HelpSection>
+                    <HelpSection title="Grading and deadline">
+                        Points set the maximum score. A late penalty deducts a percentage from late work. Leave the due date empty when there is no deadline.
+                    </HelpSection>
+                    <HelpSection title="Extra credit">
+                        Extra-credit points can raise a student’s score but are excluded from the normal course-point total.
+                    </HelpSection>
+                    <HelpSection title="Quiz grade visibility">
+                        “Show grade immediately” reveals the quiz score as soon as a student submits.
+                    </HelpSection>
+                    <HelpSection title="Learning profile">
+                        By default, the task inherits academic domains from its subject. Turn on Customize to choose task-specific domains.
+                    </HelpSection>
+                </div>
+            </PopoverContent>
+        </Popover>
+    )
+}
+
+function HelpSection({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <section>
+            <h3 className="font-semibold text-foreground">{title}</h3>
+            <p className="mt-1 leading-5 text-muted-foreground">{children}</p>
+        </section>
     )
 }

@@ -14,8 +14,10 @@ export default async function AddTaskPage(props: AddTaskPageProps) {
     const params = await props.params;
     const { courseId } = params;
 
-    const { course } = await getCourse(courseId)
-    const { quizzes } = await getQuizzes()
+    const [{ course }, { quizzes, folders }] = await Promise.all([
+        getCourse(courseId),
+        getQuizzes(),
+    ])
 
     if (!course) {
         notFound()
@@ -23,8 +25,17 @@ export default async function AddTaskPage(props: AddTaskPageProps) {
 
     return (
         <>
-            <MobileHeaderSetter title="Create New Task" />
-            <TaskForm courseId={courseId} course={course as any} quizzes={quizzes || []} />
+            <MobileHeaderSetter
+                title="Create new task"
+                subtitle={`${course.name} · New assignment`}
+                backLink={`/teacher/courses/${courseId}/tasks`}
+            />
+            <TaskForm
+                courseId={courseId}
+                course={course}
+                quizzes={quizzes || []}
+                quizFolders={folders || []}
+            />
         </>
     )
 }

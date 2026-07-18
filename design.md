@@ -1,7 +1,7 @@
 # ARSync Current Design System
 
 Status: current implementation reference  
-Updated: 2026-07-15  
+Updated: 2026-07-16<br>
 Audience: agents and developers making UI changes, adding components, or creating pages
 
 ## 1. Purpose and authority
@@ -23,7 +23,7 @@ The governing principles are:
 2. **Context stays visible.** The rail answers which workspace or course is active. The section sidebar answers which tool inside that context is active. The top bar names the current page.
 3. **Hierarchy comes from structure.** Use spacing, typography, borders, surface color, and alignment before using large shadows, oversized headings, gradients, or ornament.
 4. **Solid layered surfaces.** The implemented workspace intentionally normalizes glass panels, excessive blur, giant radii, and heavy shadows into restrained cards and panels.
-5. **Dense but touch-safe.** Desktop defaults are compact. Mobile controls are at least 44px high and navigation rows are enlarged for touch.
+5. **Dense but touch-safe.** Prefer the smallest practical vertical footprint on operational screens. Desktop defaults are compact, while mobile controls retain at least 44px touch targets without automatically forcing every action onto its own row.
 6. **Color has meaning.** Indigo is the main action and active-navigation accent. Semantic colors communicate status. Course color never carries identity alone.
 7. **Perceived speed is part of the design.** Active states respond immediately, the retained shell never flashes stale content, and dynamic content appears through stable structural skeletons.
 8. **Dark mode is first-class.** Every new surface and state must work in light, dark, and system themes.
@@ -142,11 +142,22 @@ At widths below 768px:
 - page padding is 8px;
 - section gap is 10px;
 - buttons, inputs, and select triggers have a minimum height of 44px;
-- workspace action groups become full-width vertical stacks;
+- workspace action groups stack only when controls cannot remain readable in a shared row; a familiar icon-only action may stay inline when it retains a 44px target and an accessible name;
 - page scrollbars are visually hidden while scrolling remains available;
 - overscroll is contained inside the workspace content area.
 
 Prefer the shared CSS variables and primitives over embedding large spacing values in individual pages. The workspace stylesheet also normalizes legacy `gap-6`, `gap-8`, and large padding classes.
+
+### Operational density preference
+
+Management, grading, attendance, and other repetitive work screens should expose the useful collection or workspace as high in the viewport as possible.
+
+- First reduce structural height by merging related panels and removing redundant rows. Do not rely only on smaller text or cramped controls.
+- Short metrics, immediate actions, search, filters, and result context should share one operational surface whenever they remain readable.
+- Target one compact row for this operational surface on desktop. On mobile, target no more than two short rows: a metric/action strip and a search/filter row.
+- Keep secondary context such as long descriptions collapsed by default when it is not required for the user's next decision.
+- Preserve 44px mobile touch targets inside a compact grid; touch safety does not require a full-width button or a separate card.
+- Avoid standalone statistic cards when the values fit in a divided strip. Every extra panel, gap, and border must earn its vertical cost.
 
 ## 8. Authenticated workspace anatomy
 
@@ -351,9 +362,13 @@ The retained top bar owns page identity by default. Use `MobileHeaderSetter` for
 
 When a page begins with short metrics or record metadata, combine them and their immediate action into one bordered `WorkspacePanel` instead of separate cards, a repeated content header, and an independent action row.
 
-- Keep summary cells and actions on one horizontal desktop row, with dividers inside one shared surface.
+- On desktop, keep metrics on the left, search and filters in the middle, and the primary create/edit action at the far right when these elements share a strip.
 - Put the desktop detail Back action beside Edit or the relevant primary action in the final action segment.
-- On mobile, keep a small set of short summary cells in one row when they remain readable, then place the primary action as a full-width segment beneath them.
+- On mobile, keep a small set of short summary cells in one row when readable. Prefer a 44px icon action in the final cell over adding a full-width action row; retain a visible label only when the icon or context is ambiguous.
+- Integrate the search/filter toolbar into the same panel. It may occupy a second short row on mobile, but should share the summary row on a wide desktop.
+- Do not show a standalone result count when it merely repeats the total, such as “6 of 6.” When filtering changes the count, integrate “shown / total” into the relevant metric or a purposeful compact badge.
+- If a description immediately follows the strip, place its disclosure row inside the same surface and keep it collapsed by default on management and grading screens.
+- A compact operational header should normally use one desktop row and no more than two mobile rows before the collection begins.
 - Hide decorative icons before removing meaningful labels or values. Truncate secondary context deliberately and preserve accessible names.
 - Mobile action segments and icon-only controls must retain 44px touch targets.
 - If content length, accessibility, or localization makes the horizontal pattern unreadable, use a deliberate responsive alternative without reintroducing duplicated page identity.
@@ -391,6 +406,7 @@ Desktop heights are 28-36px depending on size; mobile global rules raise non-ico
 - Default desktop input height is 32px; mobile minimum is 44px.
 - Use semantic focus rings and `aria-invalid` states already supplied by primitives.
 - Labels must remain visible for forms; placeholder text is not a label.
+- Do not use a basic `Select` for a library-backed relationship that can grow to many items or folders. Use a searchable picker with folder/category navigation, useful item metadata, a bounded scrolling result area, a clear selected-item summary, and a route to manage the source library.
 
 ### Cards and panels
 
@@ -470,12 +486,13 @@ Metrics should support decisions, not exist as decoration. Each async dashboard 
 Recommended composition:
 
 1. retained top-bar title and optional subtitle;
-2. an optional compact summary/action strip for metrics and create/import actions;
-3. toolbar with search, filters, sorting, archive visibility, and counts;
-4. a full-width table or compact operational list;
-5. pagination or result summary near the collection.
+2. a compact operational strip combining optional metrics, search, filters, and create/import actions;
+3. a full-width table or compact operational list;
+4. pagination or a result summary near the collection when it adds information not already visible in the strip.
 
 Do not add a content header solely to repeat the top-bar title or to hold an action that fits naturally in the summary strip or toolbar.
+
+Do not split metrics, the toolbar, and the primary action into separate vertically stacked surfaces by default. On desktop, the primary action belongs at the far right of the combined strip. On mobile, keep search and its primary filter side by side when they fit at 360px; hide or relocate redundant result text instead of creating another row.
 
 Search and filters that define a shareable view should be URL-backed. During a route-backed filter change, keep the stable toolbar visible and skeleton only the changing results when possible.
 
@@ -494,14 +511,17 @@ Recommended composition:
 - Put record identity and parent Back navigation in the retained top bar.
 - Begin content with a compact metadata/action strip when the record has short facts such as due date, score, status, or lifecycle state.
 - Keep desktop Back and Edit actions together in the strip's action segment; rely on the retained top-bar Back control on mobile.
+- Keep optional descriptions collapsed and attach their disclosure row to the metadata surface when doing so removes an otherwise separate panel.
 - Group related fields and records into a small number of clear panels.
 - Keep critical save or submission actions reachable on long pages.
 - Avoid the redundant sequence of content identity header, separate metric cards, and separate action row when one strip communicates the same information.
 
 ### Forms
 
-- Group related fields under concise headings and supporting copy.
+- Group related fields under concise headings. Use supporting copy only when it changes the user's immediate decision; do not explain every field in the default layout.
+- Consolidate longer guidance in one contextual Help popover or dialog. Keep validation, destructive consequences, empty-state recovery, and other critical warnings inline where action is required.
 - Put common fields before advanced or exceptional options.
+- Move advanced multi-select choices into a compact popover when showing every option would dominate the form.
 - Show inline validation close to the field.
 - Use optimistic success only when rollback/error handling is clear.
 - For long forms, use a sticky action region rather than duplicating save buttons throughout the page.
@@ -521,7 +541,7 @@ Chat, schedule grids, gradebooks, and other full-height tools may own their inte
 
 Design and test mobile first, then verify tablet and desktop hierarchy.
 
-- Below 768px: one-column content by default, full-width action stacks, 44px controls, Navigator/Page mobile model. Compact summary strips may retain short metrics in one row, with their action moved to a full-width segment below.
+- Below 768px: one-column content by default, 44px controls, and the Navigator/Page mobile model. Stack long or ambiguous action groups, but keep compact summary metrics, familiar icon actions, search, and a primary filter inline when they remain readable at 360px. Do not create a full-width action row by habit.
 - At 768px (`md`): persistent rail, tablet section overlay, multi-column layouts where content supports them.
 - At 1024px (`lg`): persistent section sidebar and denser desktop layouts.
 - At 1280px (`xl`): use extra columns only when they improve scanning; do not stretch text or forms across the full width without reason.
@@ -644,10 +664,17 @@ A UI change is ready when:
 - mobile navigation does not expose stale page content;
 - mobile targets and layouts are usable at 360px width;
 - desktop density remains efficient;
+- operational headers use the minimum practical number of rows: normally one on desktop and no more than two on mobile;
 - light, dark, compact, and comfortable modes remain coherent;
 - keyboard focus and accessible names are intact;
 - the retained top bar and page content do not duplicate titles, subtitles, identity tiles, or mobile Back controls;
 - related summary metadata and immediate actions use a compact shared strip when the content remains readable;
+- redundant result counts, standalone metric cards, and avoidable full-width mobile action rows have been removed;
 - no artificial delay, route spinner, or new navigation duplication was introduced;
 - relevant TypeScript, lint, and build checks pass;
 - this file is updated if the change modifies a system-level design rule.
+
+
+## Agent Memory & Dynamic Updates
+- **Preference Tracking:** Whenever you learn a new explicit user preference, coding standard, design rule, or workflow constraint during our session, **proactively update this `design.md` file** to reflect it.
+- **Maintain Scannability:** Keep updates concise, well-formatted, and placed under the appropriate section of this document.

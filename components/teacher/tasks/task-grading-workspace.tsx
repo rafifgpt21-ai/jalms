@@ -124,7 +124,7 @@ export function TaskGradingWorkspace({ assignment }: { assignment: GradingAssign
         return initialScores
     })
     const [dirty, setDirty] = useState<Record<string, boolean>>({})
-    const [showDescription, setShowDescription] = useState(true)
+    const [showDescription, setShowDescription] = useState(false)
     const [unGradeId, setUnGradeId] = useState<string | null>(null)
     const [query, setQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState("ALL")
@@ -289,89 +289,94 @@ export function TaskGradingWorkspace({ assignment }: { assignment: GradingAssign
                 backLink={backLink}
             />
 
-            <WorkspacePanel className="grid grid-cols-3 overflow-hidden sm:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
-                    <div className="flex min-w-0 items-center gap-2 border-r px-3 py-2.5 sm:gap-3">
+            <WorkspacePanel className="overflow-hidden">
+                <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_2.75rem] sm:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
+                    <div className="flex min-w-0 items-center gap-2 border-r px-2 py-1.5 sm:px-3">
                         <CalendarClock className="hidden size-4 shrink-0 text-primary min-[430px]:block" />
                         <div className="min-w-0">
-                            <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Due</div>
-                            <div className="truncate text-sm font-medium">
+                            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Due</div>
+                            <div className="truncate text-xs font-medium sm:text-sm">
                                 {format(new Date(assignment.dueDate), "MMM d, yyyy")}
-                                <span className="block text-xs text-muted-foreground sm:inline sm:text-sm sm:text-foreground"> <span className="hidden sm:inline">· </span>{format(new Date(assignment.dueDate), "h:mm a")}</span>
+                                <span className="block text-[10px] text-muted-foreground sm:inline sm:text-sm sm:text-foreground"> <span className="hidden sm:inline">· </span>{format(new Date(assignment.dueDate), "h:mm a")}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex min-w-0 items-center gap-2 border-r px-3 py-2.5 sm:gap-3">
+                    <div className="flex min-w-0 items-center gap-2 border-r px-2 py-1.5 sm:px-3">
                         <FileCheck2 className="hidden size-4 shrink-0 text-primary min-[430px]:block" />
                         <div className="min-w-0">
-                            <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Maximum</div>
-                            <div className="truncate text-sm font-medium">{assignment.maxPoints} points</div>
+                            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Maximum</div>
+                            <div className="truncate text-xs font-medium sm:text-sm">{assignment.maxPoints} points</div>
                         </div>
                     </div>
-                    <div className="flex min-w-0 items-center gap-2 px-3 py-2.5 sm:gap-3 sm:border-r">
+                    <div className="flex min-w-0 items-center gap-2 border-r px-2 py-1.5 sm:px-3">
                         <CheckCircle2 className="hidden size-4 shrink-0 text-primary min-[430px]:block" />
                         <div className="min-w-0">
-                            <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Grading</div>
-                            <div className="truncate text-sm font-medium">{assignment.latePenalty > 0 ? `${assignment.latePenalty}% penalty` : "No penalty"}</div>
+                            <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Grading</div>
+                            <div className="truncate text-xs font-medium sm:text-sm">{assignment.latePenalty > 0 ? `${assignment.latePenalty}% penalty` : "No penalty"}</div>
                         </div>
                     </div>
-                    <div className="col-span-3 gap-2 border-t p-2 sm:col-span-1 sm:flex sm:items-center sm:border-t-0 sm:px-3">
+                    <div className="flex items-center justify-center gap-1 p-1 sm:px-2">
                         <Button asChild variant="ghost" size="sm" className="hidden lg:inline-flex">
                             <Link href={backLink}>
                                 <ArrowLeft /> Back to tasks
                             </Link>
                         </Button>
-                        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                            <Link href={`/teacher/courses/${assignment.courseId}/tasks/${assignment.id}/edit`}>
-                                <Edit3 /> Edit task
+                        <Button asChild variant="outline" size="icon" className="size-8 sm:w-auto sm:px-3">
+                            <Link
+                                href={`/teacher/courses/${assignment.courseId}/tasks/${assignment.id}/edit`}
+                                aria-label="Edit task"
+                            >
+                                <Edit3 /> <span className="hidden sm:inline">Edit task</span>
                             </Link>
                         </Button>
                     </div>
-            </WorkspacePanel>
+                </div>
 
-            {assignment.description && (
-                <WorkspacePanel className="overflow-hidden">
+                {assignment.description && (
+                    <div className="border-t">
                     <button
                         type="button"
                         onClick={() => setShowDescription((current) => !current)}
-                        className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-[var(--workspace-row-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                        className="flex min-h-9 w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm transition-colors hover:bg-[var(--workspace-row-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                         aria-expanded={showDescription}
                     >
                         <span className="font-medium">Task description</span>
                         {showDescription ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
                     </button>
                     {showDescription && (
-                        <div className="border-t px-3 py-3">
+                        <div className="border-t px-3 py-2">
                             <div
                                 className="prose prose-sm max-w-none text-muted-foreground dark:prose-invert"
                                 dangerouslySetInnerHTML={{ __html: assignment.description }}
                             />
                         </div>
                     )}
-                </WorkspacePanel>
-            )}
-
-            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-                {[
-                    { icon: Users, value: rows.length, label: "Students" },
-                    { icon: FileCheck2, value: submittedCount, label: "Submitted" },
-                    { icon: CheckCircle2, value: gradedCount, label: `Graded · ${completion}%` },
-                    { icon: ClipboardCheck, value: needsGradingCount, label: "Needs grading" },
-                ].map(({ icon: Icon, value, label }) => (
-                    <WorkspacePanel key={label} className="flex min-w-0 items-center gap-2 p-3">
-                        <Icon className="size-4 shrink-0 text-primary" />
-                        <div className="min-w-0">
-                            <div className="font-semibold tabular-nums">{value}</div>
-                            <div className="truncate text-xs text-muted-foreground">{label}</div>
-                        </div>
-                    </WorkspacePanel>
-                ))}
-            </div>
+                    </div>
+                )}
+            </WorkspacePanel>
 
             <div className="space-y-2">
-                <WorkspaceToolbar className="justify-between">
-                    <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
-                        <div className="relative min-w-0 flex-1 sm:max-w-xs">
-                            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <WorkspacePanel className="overflow-hidden lg:flex">
+                    <div className="grid grid-cols-4 divide-x border-b lg:w-[46%] lg:shrink-0 lg:border-b-0 lg:border-r">
+                        {[
+                            { icon: Users, value: rows.length, label: "Students" },
+                            { icon: FileCheck2, value: submittedCount, label: "Submitted" },
+                            { icon: CheckCircle2, value: gradedCount, label: `Graded · ${completion}%` },
+                            { icon: ClipboardCheck, value: needsGradingCount, label: "Needs grading" },
+                        ].map(({ icon: Icon, value, label }) => (
+                            <div key={label} className="flex min-w-0 items-center justify-center gap-1.5 px-1.5 py-1.5 sm:justify-start sm:px-3 sm:py-2">
+                                <Icon className="hidden size-3.5 shrink-0 text-primary min-[400px]:block" />
+                                <div className="min-w-0 text-center sm:text-left">
+                                    <div className="text-sm font-semibold leading-4 tabular-nums">{value}</div>
+                                    <div className="truncate text-[10px] leading-4 text-muted-foreground sm:text-[11px]">{label}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <WorkspaceToolbar className="min-h-0 flex-1 flex-nowrap gap-1.5 p-1.5">
+                        <div className="relative min-w-0 flex-1">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
@@ -384,7 +389,7 @@ export function TaskGradingWorkspace({ assignment }: { assignment: GradingAssign
                             value={statusFilter}
                             onChange={(event) => setStatusFilter(event.target.value)}
                             aria-label="Filter grading status"
-                            className="h-8 w-full rounded-md border border-input bg-background px-2.5 text-sm text-foreground shadow-xs outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 sm:w-44"
+                            className="h-11 w-32 shrink-0 rounded-md border border-input bg-background px-2 text-xs text-foreground shadow-xs outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 sm:h-8 sm:w-40 sm:text-sm"
                         >
                             <option value="ALL">All statuses</option>
                             <option value="NEEDS_GRADING">Needs grading</option>
@@ -392,9 +397,9 @@ export function TaskGradingWorkspace({ assignment }: { assignment: GradingAssign
                             <option value="MISSING">Missing</option>
                             <option value="LATE">Late</option>
                         </select>
-                    </div>
-                    <div className="text-xs text-muted-foreground" aria-live="polite">{visibleRows.length} students</div>
-                </WorkspaceToolbar>
+                        <div className="hidden shrink-0 px-1 text-xs text-muted-foreground sm:block" aria-live="polite">{visibleRows.length} students</div>
+                    </WorkspaceToolbar>
+                </WorkspacePanel>
 
                 {visibleRows.length ? (
                     <>

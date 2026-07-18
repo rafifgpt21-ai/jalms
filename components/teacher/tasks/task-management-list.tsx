@@ -3,7 +3,16 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { format, isPast, isToday } from "date-fns"
-import { ArrowRight, Calendar, ClipboardList, Search } from "lucide-react"
+import {
+    ArrowRight,
+    Calendar,
+    CalendarClock,
+    ClipboardCheck,
+    ClipboardList,
+    FileText,
+    Plus,
+    Search,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -46,7 +55,14 @@ function DueStatus({ task }: { task: TaskListItem }) {
     return <StatusBadge status="SUBMITTED" label="Scheduled" />
 }
 
-export function TaskManagementList({ assignments, courseId }: { assignments: TaskListItem[]; courseId: string }) {
+interface TaskManagementListProps {
+    assignments: TaskListItem[]
+    courseId: string
+    dueSoon: number
+    overdue: number
+}
+
+export function TaskManagementList({ assignments, courseId, dueSoon, overdue }: TaskManagementListProps) {
     const [query, setQuery] = useState("")
     const [type, setType] = useState("ALL")
 
@@ -58,13 +74,42 @@ export function TaskManagementList({ assignments, courseId }: { assignments: Tas
             return matchesQuery && matchesType
         })
     }, [assignments, query, type])
+    const hasActiveFilters = query.trim().length > 0 || type !== "ALL"
 
     return (
         <div className="space-y-2">
-            <WorkspaceToolbar className="justify-between">
-                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
-                    <div className="relative min-w-0 flex-1 sm:max-w-xs">
-                        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <WorkspacePanel className="overflow-hidden lg:flex">
+                <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_2.75rem] border-b sm:grid-cols-[repeat(3,minmax(0,1fr))_auto] lg:w-[40%] lg:shrink-0 lg:grid-cols-3 lg:border-b-0 lg:border-r">
+                    {[
+                        {
+                            icon: FileText,
+                            value: hasActiveFilters ? `${visibleAssignments.length}/${assignments.length}` : assignments.length,
+                            label: hasActiveFilters ? "Tasks shown" : "All tasks",
+                        },
+                        { icon: CalendarClock, value: dueSoon, label: "Due in 7 days" },
+                        { icon: ClipboardCheck, value: overdue, label: "Past due" },
+                    ].map(({ icon: Icon, value, label }) => (
+                        <div key={label} className="flex min-w-0 items-center gap-1.5 border-r px-2 py-1.5 sm:gap-2 sm:px-3">
+                            <Icon className="hidden size-3.5 shrink-0 text-primary min-[430px]:block" />
+                            <div className="min-w-0">
+                                <div className="text-sm font-semibold leading-4 tabular-nums">{value}</div>
+                                <div className="truncate text-[10px] leading-4 text-muted-foreground sm:text-[11px]">{label}</div>
+                            </div>
+                        </div>
+                    ))}
+                    <div className="flex items-center justify-center p-1 sm:px-2 lg:hidden">
+                        <Button asChild size="icon" className="size-8 sm:w-auto sm:px-3">
+                            <Link href={`/teacher/courses/${courseId}/tasks/new`} aria-label="Create task">
+                                <Plus className="size-4" />
+                                <span className="hidden sm:inline">Create task</span>
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+
+                <WorkspaceToolbar className="min-h-0 flex-1 flex-nowrap gap-1.5 p-1.5">
+                    <div className="relative min-w-0 flex-1">
+                        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
@@ -77,18 +122,24 @@ export function TaskManagementList({ assignments, courseId }: { assignments: Tas
                         value={type}
                         onChange={(event) => setType(event.target.value)}
                         aria-label="Filter task type"
-                        className="h-8 w-full rounded-md border border-input bg-background px-2.5 text-sm text-foreground shadow-xs outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 sm:w-40"
+                        className="h-11 w-32 shrink-0 rounded-md border border-input bg-background px-2 text-xs text-foreground shadow-xs outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 sm:h-8 sm:w-40 sm:text-sm"
                     >
                         <option value="ALL">All task types</option>
                         <option value="SUBMISSION">Assignments</option>
                         <option value="NON_SUBMISSION">In-class</option>
                         <option value="QUIZ">Quizzes</option>
                     </select>
-                </div>
-                <div className="text-xs text-muted-foreground" aria-live="polite">
-                    {visibleAssignments.length} of {assignments.length} tasks
-                </div>
-            </WorkspaceToolbar>
+                    <span className="sr-only" aria-live="polite">
+                        {visibleAssignments.length} of {assignments.length} tasks
+                    </span>
+                    <Button asChild className="hidden shrink-0 lg:inline-flex">
+                        <Link href={`/teacher/courses/${courseId}/tasks/new`}>
+                            <Plus className="size-4" />
+                            Create task
+                        </Link>
+                    </Button>
+                </WorkspaceToolbar>
+            </WorkspacePanel>
 
             {visibleAssignments.length === 0 ? (
                 <WorkspacePanel className="flex flex-col items-center px-4 py-10 text-center">
