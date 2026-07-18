@@ -1,5 +1,5 @@
-import { GridRouteSkeleton } from "@/components/navigation/route-skeletons"
+import { StudentCoursesRouteSkeleton } from "@/components/navigation/route-skeletons"
 
 export default function CoursesLoading() {
-  return <GridRouteSkeleton />
+  return <StudentCoursesRouteSkeleton />
 }

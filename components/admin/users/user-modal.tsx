@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, type ReactNode } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { User, Role } from "@prisma/client"
+import { User } from "@prisma/client"
 import {
     Dialog,
     DialogContent,
@@ -45,6 +45,7 @@ interface UserModalProps {
     open?: boolean
     onOpenChange?: (open: boolean) => void
     showTrigger?: boolean
+    trigger?: ReactNode
 }
 
 const ROLES = [
@@ -55,7 +56,7 @@ const ROLES = [
     { id: "PARENT", label: "Parent" },
 ] as const
 
-export function UserModal({ initialData, open: controlledOpen, onOpenChange, showTrigger = true }: UserModalProps) {
+export function UserModal({ initialData, open: controlledOpen, onOpenChange, showTrigger = true, trigger }: UserModalProps) {
     const [internalOpen, setInternalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
 
@@ -81,7 +82,7 @@ export function UserModal({ initialData, open: controlledOpen, onOpenChange, sho
                 name: initialData.name,
                 email: initialData.email,
                 password: "", // Don't populate password
-                roles: initialData.roles as any,
+                roles: initialData.roles as z.infer<typeof formSchema>["roles"],
                 nip: initialData.nip || "",
                 nis: initialData.nis || "",
                 nisn: initialData.nisn || "",
@@ -126,7 +127,7 @@ export function UserModal({ initialData, open: controlledOpen, onOpenChange, sho
                 setOpen(false)
                 if (!initialData) form.reset()
             }
-        } catch (error) {
+        } catch {
             toast.error("Something went wrong")
         } finally {
             setIsLoading(false)
@@ -137,10 +138,12 @@ export function UserModal({ initialData, open: controlledOpen, onOpenChange, sho
         <Dialog open={isOpen} onOpenChange={setOpen}>
             {showTrigger && !initialData && (
                 <DialogTrigger asChild>
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create User
-                    </Button>
+                    {trigger ?? (
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create User
+                        </Button>
+                    )}
                 </DialogTrigger>
             )}
             <DialogContent className="sm:max-w-[425px]">

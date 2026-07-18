@@ -1,141 +1,130 @@
 import { Suspense } from "react"
-import { getStudentCourses } from "@/lib/actions/student.actions"
-import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 import Link from "next/link"
+import { ArrowRight, BookOpen, CalendarClock, ClipboardList, FolderOpen, GraduationCap, UserRound } from "lucide-react"
+import { getStudentCourses } from "@/lib/actions/student.actions"
+import { CourseIdentityBadge } from "@/components/course/course-identity-badge"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { StudentCoursesContentSkeleton } from "@/components/navigation/route-skeletons"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, GraduationCap, ArrowRight } from "lucide-react"
-import { GridContentSkeleton } from "@/components/navigation/route-skeletons"
+import { WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
 
-export const dynamic = 'force-dynamic'
-
-const gradients = [
-    "from-rose-500 to-orange-500",
-    "from-violet-600 to-indigo-600",
-    "from-cyan-500 to-blue-500",
-    "from-emerald-500 to-teal-500",
-    "from-fuchsia-500 to-pink-500",
-    "from-amber-500 to-orange-600"
-]
-
-function getGradient(id: string) {
-    let hash = 0
-    for (let i = 0; i < id.length; i++) {
-        hash = id.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    const index = Math.abs(hash) % gradients.length
-    return gradients[index]
-}
-
-function getProgress(id: string) {
-    return 20 + Math.abs(Array.from(id).reduce((hash, character) => character.charCodeAt(0) + ((hash << 5) - hash), 0)) % 80
-}
+export const dynamic = "force-dynamic"
 
 async function StudentCoursesContent() {
-    const { courses, error } = await getStudentCourses()
+  const { courses, error } = await getStudentCourses()
 
-    if (error || !courses) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-red-50/50 dark:bg-red-900/10 rounded-3xl border border-red-100 dark:border-red-900/20">
-                <div className="h-12 w-12 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full flex items-center justify-center mb-4">
-                    <BookOpen className="h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-bold text-red-900 dark:text-red-200">Failed to load courses</h3>
-                <p className="text-red-600 dark:text-red-400 max-w-sm mt-2">
-                    We couldn&apos;t fetch your learning dashboard at the moment. Please try again later.
-                </p>
-            </div>
-        )
-    }
-
+  if (error || !courses) {
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Course Grid - Poster Style */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {courses.length > 0 ? courses.map((course) => {
-                    const gradient = getGradient(course.id)
-                    const progress = getProgress(course.id)
-
-                    return (
-                        <Link href={`/student/courses/${course.id}/tasks`} key={course.id} className="group block h-full">
-                            <div className="relative h-full flex flex-col overflow-hidden rounded-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1">
-
-                                {/* Poster Image Area - Taller aspect ratio */}
-                                <div className={`aspect-4/3 bg-linear-to-br ${gradient} relative overflow-hidden`}>
-                                    <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-20 mix-blend-overlay" />
-                                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
-
-                                    {/* Glass Badge */}
-                                    <div className="absolute top-4 left-4">
-                                        <Badge variant="secondary" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }} className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 py-1 font-medium shadow-sm">
-                                            {course.term.type}
-                                        </Badge>
-                                    </div>
-
-                                    {/* Icon Container */}
-                                    <div className="absolute -bottom-6 right-6 w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-500 z-10">
-                                        <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                                    </div>
-                                </div>
-
-                                {/* Content Area */}
-                                <div className="p-6 pt-8 flex-1 flex flex-col justify-between">
-                                    <div>
-                                        <h3 className="font-heading text-xl font-bold text-slate-900 dark:text-white leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                            {course.reportName || course.name}
-                                        </h3>
-                                        <div className="flex items-center gap-2 mt-2 text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                            <GraduationCap className="w-4 h-4" />
-                                            <span>{course.teacher.name}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-6 space-y-4">
-                                        {/* Progress Bar */}
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                                                <span>Progress</span>
-                                                <span>{progress}%</span>
-                                            </div>
-                                            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full bg-linear-to-r ${gradient} opacity-80`}
-                                                    style={{ width: `${progress}%` }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-sm">
-                                            <span className="text-slate-600 dark:text-slate-300 font-medium">
-                                                {course._count.assignments} Active Tasks
-                                            </span>
-                                            <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold group-hover:translate-x-1 transition-transform">
-                                                Open <ArrowRight className="w-4 h-4" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </Link>
-                    )
-                }) : (
-                    <div className="col-span-full py-20 text-center">
-                        <div className="w-24 h-24 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <BookOpen className="w-10 h-10 text-slate-300" />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No courses found</h3>
-                        <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                            You haven&apos;t been enrolled in any courses yet. Check back later or contact your administrator.
-                        </p>
-                    </div>
-                )}
-            </div>
+      <WorkspacePanel className="flex min-h-52 flex-col items-center justify-center p-6 text-center">
+        <div className="flex size-10 items-center justify-center rounded-md border border-destructive/20 bg-destructive/10 text-destructive">
+          <BookOpen className="size-5" />
         </div>
+        <h2 className="mt-3 text-sm font-semibold">Courses could not be loaded</h2>
+        <p className="mt-1 max-w-sm text-sm text-muted-foreground">Refresh the page to try again. If the issue continues, contact your administrator.</p>
+      </WorkspacePanel>
     )
+  }
+
+  const upcomingTasks = courses.reduce((total, course) => total + course.assignments.length, 0)
+  const materials = courses.reduce((total, course) => total + course.materialAssignments.length, 0)
+
+  return (
+    <>
+      <WorkspacePanel className="grid grid-cols-3 overflow-hidden">
+        <div className="flex min-w-0 items-center gap-2.5 border-r px-3 py-2.5">
+          <GraduationCap className="hidden size-4 shrink-0 text-primary min-[430px]:block" />
+          <div className="min-w-0"><p className="text-base font-semibold leading-none">{courses.length}</p><p className="mt-1 truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Courses</p></div>
+        </div>
+        <div className="flex min-w-0 items-center gap-2.5 border-r px-3 py-2.5">
+          <CalendarClock className="hidden size-4 shrink-0 text-primary min-[430px]:block" />
+          <div className="min-w-0"><p className="text-base font-semibold leading-none">{upcomingTasks}</p><p className="mt-1 truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Upcoming</p></div>
+        </div>
+        <div className="flex min-w-0 items-center gap-2.5 px-3 py-2.5">
+          <FolderOpen className="hidden size-4 shrink-0 text-primary min-[430px]:block" />
+          <div className="min-w-0"><p className="text-base font-semibold leading-none">{materials}</p><p className="mt-1 truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Materials</p></div>
+        </div>
+      </WorkspacePanel>
+
+      {courses.length > 0 ? (
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          {courses.map((course) => {
+            const courseName = course.reportName || course.name
+            const subjectLabel = course.subject ? `${course.subject.code} · ${course.subject.name}` : "Course workspace"
+            const termLabel = course.term.type === "ODD" ? "Odd term" : "Even term"
+
+            return (
+              <Link
+                href={`/student/courses/${course.id}`}
+                key={course.id}
+                prefetch
+                className="group rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                aria-label={`Open ${courseName}`}
+              >
+                <WorkspacePanel className="flex h-full min-h-40 flex-col overflow-hidden transition-[border-color,box-shadow] duration-150 group-hover:border-primary/35 group-hover:shadow-sm">
+                  <div className="flex items-start gap-3 p-3">
+                    <CourseIdentityBadge
+                      course={{
+                        id: course.id,
+                        name: course.name,
+                        reportName: course.reportName,
+                        iconImageUrl: course.iconImageUrl,
+                        subject: course.subject ? { code: course.subject.code, name: course.subject.name } : null,
+                        class: course.class ? { name: course.class.name, color: course.class.color } : null,
+                        roleContext: "student",
+                      }}
+                      className="size-10 rounded-md text-sm"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h2 className="truncate text-base font-semibold leading-5 group-hover:text-primary">{courseName}</h2>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">{subjectLabel}</p>
+                        </div>
+                        <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <span className="inline-flex min-w-0 items-center gap-1.5"><UserRound className="size-3.5 shrink-0" /><span className="truncate">{course.teacher.name}</span></span>
+                        {course.class && <Badge variant="outline" className="max-w-full font-normal"><span className="truncate">{course.class.name}</span></Badge>}
+                        <span>{termLabel}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-auto grid grid-cols-3 divide-x border-t bg-muted/20">
+                    <div className="flex min-w-0 items-center gap-2 px-3 py-2">
+                      <CalendarClock className="hidden size-3.5 shrink-0 text-muted-foreground min-[430px]:block" />
+                      <div className="min-w-0"><p className="text-sm font-semibold leading-none">{course.assignments.length}</p><p className="mt-1 truncate text-[10px] uppercase tracking-wide text-muted-foreground">Upcoming</p></div>
+                    </div>
+                    <div className="flex min-w-0 items-center gap-2 px-3 py-2">
+                      <ClipboardList className="hidden size-3.5 shrink-0 text-muted-foreground min-[430px]:block" />
+                      <div className="min-w-0"><p className="text-sm font-semibold leading-none">{course._count.assignments}</p><p className="mt-1 truncate text-[10px] uppercase tracking-wide text-muted-foreground">Tasks</p></div>
+                    </div>
+                    <div className="flex min-w-0 items-center gap-2 px-3 py-2">
+                      <FolderOpen className="hidden size-3.5 shrink-0 text-muted-foreground min-[430px]:block" />
+                      <div className="min-w-0"><p className="text-sm font-semibold leading-none">{course.materialAssignments.length}</p><p className="mt-1 truncate text-[10px] uppercase tracking-wide text-muted-foreground">Materials</p></div>
+                    </div>
+                  </div>
+                </WorkspacePanel>
+              </Link>
+            )
+          })}
+        </div>
+      ) : (
+        <WorkspacePanel className="flex min-h-52 flex-col items-center justify-center p-6 text-center">
+          <div className="flex size-10 items-center justify-center rounded-md border bg-muted/30 text-muted-foreground"><BookOpen className="size-5" /></div>
+          <h2 className="mt-3 text-sm font-semibold">No active courses</h2>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">Your enrolled courses will appear here when an active term begins.</p>
+        </WorkspacePanel>
+      )}
+    </>
+  )
 }
 
 export default function StudentCoursesPage() {
-    return <div className="space-y-8">
-        <MobileHeaderSetter title="My Courses" subtitle="Your active learning spaces" />
-        <Suspense fallback={<GridContentSkeleton />}><StudentCoursesContent /></Suspense>
-    </div>
+  return (
+    <WorkspacePage>
+      <MobileHeaderSetter title="My Courses" subtitle="Your active learning spaces" />
+      <Suspense fallback={<StudentCoursesContentSkeleton />}><StudentCoursesContent /></Suspense>
+    </WorkspacePage>
+  )
 }

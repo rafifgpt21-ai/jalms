@@ -1,169 +1,145 @@
-
+import { Suspense } from "react"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import { ArrowRight, CalendarDays, Clock3, UserRound } from "lucide-react"
 import { getUser } from "@/lib/actions/user.actions"
 import { getStudentSchedule } from "@/lib/actions/schedule.actions"
-import { MobileHeaderSetter } from "@/components/mobile-header-setter"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { redirect } from "next/navigation"
+import { CLASS_COLOR_SURFACE_STYLES } from "@/lib/course-identity"
 import { getPeriodLabel } from "@/lib/helpers/period-label"
+import { cn } from "@/lib/utils"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { StudentScheduleContentSkeleton } from "@/components/navigation/route-skeletons"
+import { WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-export default async function StudentSchedulePage() {
-    const user = await getUser()
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const
 
-    if (!user?.id) {
-        redirect("/sign-in")
-    }
+async function ScheduleContent() {
+  const user = await getUser()
+  if (!user?.id) redirect("/login")
 
-    const result = await getStudentSchedule(user.id)
-
-    if ('error' in result) {
-        console.error(result.error)
-        return <div className="p-6 text-red-500">Error loading schedule</div>
-    }
-
-    const { courses } = result
-
-    // Days map
-    const days = [
-        "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
-    ]
-
-    // Initialize grid [day][period] -> Course | null
-    // periods 0-7 (0=Morning, 1-6=Periods, 7=Night)
-    const periods = Array.from({ length: 8 }, (_, i) => i)
-
-    // Helper to find course at specific slot
-    const getCourseAtSlot = (dayIdx: number, period: number) => {
-        if (!courses) return null;
-        for (const course of courses) {
-            const schedule = course.schedules.find((s: any) => s.dayOfWeek === dayIdx && s.period === period)
-            if (schedule) return course
-        }
-        return null
-    }
-
+  const result = await getStudentSchedule(user.id)
+  if ("error" in result) {
     return (
-        <div className="space-y-6 ">
-            <MobileHeaderSetter title="My Weekly Schedule" />
-
-            {/* Main Glass Card */}
-            <Card style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }} className="overflow-hidden border-none shadow-xl bg-white/60 dark:bg-slate-900/40 ring-1 ring-black/5 dark:ring-white/10">
-                <CardHeader className="border-b border-black/5 dark:border-white/5 pb-4">
-                    <CardTitle className="font-heading text-2xl font-bold bg-linear-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-                        Weekly Schedule
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-2 sm:p-6">
-                    <div className="overflow-x-auto">
-                        <div className="max-xl:hidden min-w-[800px]">
-                            {/* Header Row */}
-                            <div className="grid grid-cols-8 gap-2 mb-2">
-                                <div className="p-3 font-heading font-bold text-center rounded-xl text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-800/50">
-                                    Period
-                                </div>
-                                {days.map((day) => (
-                                    <div key={day} className="p-3 font-heading font-bold text-center rounded-xl text-white bg-indigo-600/90 shadow-lg shadow-indigo-600/20">
-                                        {day}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Rows */}
-                            {periods.map((period) => (
-                                <div key={period} className="grid grid-cols-8 gap-2 mb-2">
-                                    {/* Period Label */}
-                                    <div className="bg-slate-50/80 dark:bg-slate-800/40 p-3 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 rounded-xl border border-white/50 dark:border-white/5 shadow-sm">
-                                        {getPeriodLabel(period)}
-                                    </div>
-
-                                    {/* Days */}
-                                    {days.map((_, dayIdx) => {
-                                        const course = getCourseAtSlot(dayIdx, period)
-                                        return (
-                                            <div
-                                                key={`${dayIdx}-${period}`}
-                                                className={`relative p-3 min-h-[70px] rounded-2xl flex flex-col justify-center items-center text-center ${course
-                                                    ? "bg-white/80 dark:bg-slate-800/60 border border-indigo-100 dark:border-indigo-500/20 shadow-md shadow-indigo-500/5"
-                                                    : "bg-slate-50/30 dark:bg-slate-900/20 border border-dashed border-slate-200 dark:border-slate-800"
-                                                    }`}
-                                            >
-                                                {course ? (
-                                                    <>
-                                                        <div className="font-heading font-bold text-indigo-900 dark:text-indigo-100 line-clamp-2 px-1 text-sm sm:text-base">
-                                                            {course.subject?.reportName || course.reportName || course.name}
-                                                        </div>
-                                                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                                                            {course.teacher.name}
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-slate-300 dark:text-slate-700 select-none text-xl font-light">·</span>
-                                                )}
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Mobile View */}
-                        <div className="xl:hidden space-y-8">
-                            {days.map((day, dayIdx) => {
-                                // Check if day has any classes
-                                const hasClasses = periods.some(p => getCourseAtSlot(dayIdx, p));
-
-                                return (
-                                    <div key={day} className="space-y-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-8 w-1 rounded-full bg-indigo-500" />
-                                            <h3 className="text-xl font-heading font-bold text-slate-800 dark:text-white">
-                                                {day}
-                                            </h3>
-                                        </div>
-
-                                        <div className="grid gap-3">
-                                            {periods.map((period) => {
-                                                const course = getCourseAtSlot(dayIdx, period);
-                                                if (!course) return null; // Only show active periods on mobile to save space
-
-                                                return (
-                                                    <div key={period} className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-slate-800/60 border border-indigo-100 dark:border-indigo-500/20 p-4 shadow-sm">
-                                                        <div className="flex justify-between items-start gap-4">
-                                                            <div>
-                                                                <div className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">
-                                                                    {getPeriodLabel(period)}
-                                                                </div>
-                                                                <div className="font-heading font-bold text-slate-800 dark:text-white text-lg">
-                                                                    {course.subject?.reportName || course.reportName || course.name}
-                                                                </div>
-                                                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-                                                                    {course.teacher.name}
-                                                                </div>
-                                                            </div>
-                                                            {course.subject?.code && (
-                                                                <div className="text-xs font-mono bg-slate-100 dark:bg-slate-900 text-slate-500 px-2 py-1 rounded-md">
-                                                                    {course.subject.code}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-
-                                            {!hasClasses && (
-                                                <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 text-center">
-                                                    <p className="text-slate-400 dark:text-slate-600 text-sm">No classes scheduled</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+      <WorkspacePanel className="flex min-h-52 flex-col items-center justify-center p-6 text-center">
+        <CalendarDays className="size-6 text-destructive" />
+        <h2 className="mt-3 text-sm font-semibold">Schedule could not be loaded</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Refresh the page to try again.</p>
+      </WorkspacePanel>
     )
+  }
+
+  const entries = result.courses.flatMap((course) => course.schedules.map((schedule) => ({ course, schedule })))
+  const scheduleByDay = DAYS.map((day, dayIndex) => ({
+    day,
+    dayIndex,
+    entries: entries
+      .filter(({ schedule }) => schedule.dayOfWeek === dayIndex)
+      .sort((a, b) => a.schedule.period - b.schedule.period),
+  }))
+  const scheduledDays = scheduleByDay.filter(({ entries: dayEntries }) => dayEntries.length > 0)
+  const todayName = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "Asia/Jakarta" }).format(new Date())
+  const todayIndex = DAYS.findIndex((day) => day === todayName)
+
+  return (
+    <>
+      <WorkspacePanel className="grid grid-cols-7 overflow-hidden" aria-label="Classes scheduled by day">
+        {scheduleByDay.map(({ day, dayIndex, entries: dayEntries }) => {
+          const isToday = dayIndex === todayIndex
+          return (
+            <div
+              key={day}
+              className={cn(
+                "min-w-0 border-l px-1.5 py-2 text-center first:border-l-0 sm:px-3",
+                isToday && "bg-indigo-50 dark:bg-indigo-950/35",
+              )}
+            >
+              <div className={cn("truncate text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-[11px]", isToday && "text-indigo-700 dark:text-indigo-300")}>
+                <span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span>
+              </div>
+              <div className={cn("mt-0.5 text-base font-semibold tabular-nums", dayEntries.length === 0 && "text-muted-foreground", isToday && "text-indigo-700 dark:text-indigo-300")}>{dayEntries.length}</div>
+              <span className="sr-only">{dayEntries.length === 1 ? "class" : "classes"}{isToday ? ", today" : ""}</span>
+            </div>
+          )
+        })}
+      </WorkspacePanel>
+
+      <WorkspacePanel className="overflow-hidden">
+        <div className="flex min-h-12 items-center justify-between gap-3 border-b px-3 py-2">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold">Weekly agenda</h2>
+            <p className="truncate text-xs text-muted-foreground">
+              {entries.length} scheduled {entries.length === 1 ? "class" : "classes"} across {scheduledDays.length} active {scheduledDays.length === 1 ? "day" : "days"}
+            </p>
+          </div>
+          <div className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex"><CalendarDays className="size-3.5" />Active semester</div>
+        </div>
+
+        {scheduledDays.length === 0 ? (
+          <div className="flex min-h-52 flex-col items-center justify-center px-4 py-10 text-center">
+            <CalendarDays className="size-6 text-muted-foreground" />
+            <h3 className="mt-3 text-sm font-semibold">No classes scheduled</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">Your weekly timetable will appear here when classes are added to an active course.</p>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {scheduledDays.map(({ day, dayIndex, entries: dayEntries }) => {
+              const isToday = dayIndex === todayIndex
+              return (
+                <section key={day} className={cn("grid gap-2 p-3 lg:grid-cols-[7.5rem_minmax(0,1fr)]", isToday && "bg-indigo-50/45 dark:bg-indigo-950/15")}>
+                  <div className="flex items-center justify-between gap-2 lg:block">
+                    <div>
+                      <h3 className={cn("text-sm font-semibold", isToday && "text-indigo-700 dark:text-indigo-300")}>{day}</h3>
+                      <p className="text-xs text-muted-foreground">{dayEntries.length} {dayEntries.length === 1 ? "class" : "classes"}</p>
+                    </div>
+                    {isToday && <span className="rounded-md border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">Today</span>}
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {dayEntries.map(({ course, schedule }) => {
+                      const courseName = course.subject?.reportName || course.reportName || course.name
+                      const teacherName = course.teacher.nickname || course.teacher.name || "Teacher"
+                      const surface = course.class?.color ? CLASS_COLOR_SURFACE_STYLES[course.class.color] : "bg-background"
+                      return (
+                        <Link
+                          key={`${course.id}-${schedule.id}`}
+                          href={`/student/courses/${course.id}`}
+                          prefetch
+                          className={cn(
+                            "group flex min-h-20 items-start gap-3 rounded-md border p-3 transition-colors hover:border-indigo-300 hover:bg-[var(--workspace-row-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:border-indigo-700",
+                            surface,
+                          )}
+                        >
+                          <span className="flex min-w-14 shrink-0 flex-col items-center justify-center rounded-md border bg-background/70 px-2 py-1.5 text-center dark:bg-background/45">
+                            <Clock3 className="size-3.5 text-muted-foreground" />
+                            <span className="mt-0.5 text-[10px] font-semibold leading-4 text-muted-foreground">{getPeriodLabel(schedule.period)}</span>
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="line-clamp-2 text-sm font-semibold leading-5">{courseName}</span>
+                            <span className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"><UserRound className="size-3.5 shrink-0" /><span className="truncate">{teacherName}</span></span>
+                            {(course.class?.name || course.subject?.code) && <span className="mt-1 block truncate text-[10px] text-muted-foreground">{[course.class?.name, course.subject?.code].filter(Boolean).join(" · ")}</span>}
+                          </span>
+                          <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        )}
+      </WorkspacePanel>
+    </>
+  )
+}
+
+export default function StudentSchedulePage() {
+  return (
+    <WorkspacePage>
+      <MobileHeaderSetter title="My Schedule" subtitle="Weekly classes for the active semester" />
+      <Suspense fallback={<StudentScheduleContentSkeleton />}><ScheduleContent /></Suspense>
+    </WorkspacePage>
+  )
 }

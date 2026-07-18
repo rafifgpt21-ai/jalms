@@ -87,7 +87,7 @@ export function AnnouncementRouteSkeleton({ canManage = false }: { canManage?: b
   return (
     <WorkspacePage aria-label="Loading announcements" aria-busy="true">
       <WorkspacePanel className="grid overflow-hidden lg:grid-cols-[auto_minmax(24rem,1fr)]">
-        <div className={`grid ${canManage ? "grid-cols-3" : "grid-cols-2"} divide-x border-b lg:border-r lg:border-b-0`}>
+        <div className={`hidden ${canManage ? "grid-cols-3" : "grid-cols-2"} divide-x lg:grid lg:border-r`}>
           {Array.from({ length: canManage ? 3 : 2 }, (_, index) => <div key={index} className="space-y-1.5 px-3 py-2.5"><Skeleton className="h-5 w-8" /><Skeleton className="h-3 w-16" /></div>)}
         </div>
         <div className="flex items-center gap-2 p-2"><Skeleton className="h-8 flex-1" /><Skeleton className="h-8 w-[8.5rem]" />{canManage && <Skeleton className="hidden h-8 w-36 sm:block" />}</div>
@@ -352,5 +352,175 @@ export function GridContentSkeleton() {
           </WorkspacePanel>
         ))}
       </div>
+  )
+}
+
+export function MaterialFormRouteSkeleton() {
+  return (
+    <WorkspacePage className="mx-auto max-w-4xl" aria-label="Loading material form" aria-busy="true">
+      <WorkspacePanel className="overflow-hidden">
+        <div className="space-y-2 border-b px-4 py-3 sm:px-5">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-80 max-w-full" />
+        </div>
+
+        <div className="grid gap-4 border-b px-4 py-4 sm:px-5 md:grid-cols-[10rem_minmax(0,1fr)] md:gap-6">
+          <div className="space-y-2"><Skeleton className="h-4 w-16" /><Skeleton className="h-3 w-32" /></div>
+          <div className="space-y-4">
+            <div className="space-y-2"><Skeleton className="h-3 w-12" /><Skeleton className="h-8 w-full" /></div>
+            <div className="space-y-2"><Skeleton className="h-3 w-20" /><Skeleton className="h-24 w-full" /></div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 px-4 py-4 sm:px-5 md:grid-cols-[10rem_minmax(0,1fr)] md:gap-6">
+          <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-3 w-28" /></div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {Array.from({ length: 2 }, (_, index) => (
+              <div key={index} className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-28 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t bg-muted/20 px-4 py-3 sm:px-5">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-32" />
+        </div>
+      </WorkspacePanel>
+    </WorkspacePage>
+  )
+}
+
+export function StudentCoursesRouteSkeleton() {
+  return (
+    <WorkspacePage aria-label="Loading courses" aria-busy="true">
+      <StudentCoursesContentSkeleton />
+    </WorkspacePage>
+  )
+}
+
+export function StudentCoursesContentSkeleton() {
+  return (
+    <>
+      <WorkspacePanel className="grid grid-cols-3 overflow-hidden">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className={`flex items-center gap-2.5 px-3 py-2.5 ${index < 2 ? "border-r" : ""}`}>
+            <Skeleton className="hidden size-4 min-[430px]:block" />
+            <div className="space-y-1.5"><Skeleton className="h-4 w-8" /><Skeleton className="h-3 w-16" /></div>
+          </div>
+        ))}
+      </WorkspacePanel>
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, index) => (
+          <WorkspacePanel key={index} className="flex min-h-40 flex-col overflow-hidden">
+            <div className="flex gap-3 p-3">
+              <Skeleton className="size-10 shrink-0" />
+              <div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-1/2" /><div className="flex gap-2"><Skeleton className="h-5 w-24" /><Skeleton className="h-5 w-16" /></div></div>
+              <Skeleton className="size-4" />
+            </div>
+            <div className="mt-auto grid grid-cols-3 divide-x border-t bg-muted/20">
+              {Array.from({ length: 3 }, (_, metricIndex) => <div key={metricIndex} className="space-y-1.5 px-3 py-2"><Skeleton className="h-4 w-7" /><Skeleton className="h-3 w-14" /></div>)}
+            </div>
+          </WorkspacePanel>
+        ))}
+      </div>
+    </>
+  )
+}
+
+export function LearningProfileRouteSkeleton() {
+  return <WorkspacePage aria-label="Loading learning profile" aria-busy="true"><LearningProfileContentSkeleton /></WorkspacePage>
+}
+
+export function LearningProfileContentSkeleton() {
+  return (
+    <>
+      <WorkspacePanel className="grid grid-cols-3 overflow-hidden">
+        {Array.from({ length: 3 }, (_, index) => <div key={index} className={`flex items-center gap-2.5 px-3 py-2.5 ${index < 2 ? "border-r" : ""}`}><Skeleton className="hidden size-4 min-[430px]:block" /><div className="space-y-1.5"><Skeleton className="h-4 w-9" /><Skeleton className="h-3 w-16" /></div></div>)}
+      </WorkspacePanel>
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(18rem,.6fr)]">
+        <WorkspacePanel className="h-[21rem] p-3"><Skeleton className="size-full" /></WorkspacePanel>
+        <WorkspacePanel className="h-[21rem] space-y-3 p-3"><Skeleton className="h-4 w-28" /><Skeleton className="h-20 w-full" /><Skeleton className="h-4 w-36" /><Skeleton className="h-2 w-full" /><Skeleton className="h-12 w-full" /></WorkspacePanel>
+      </div>
+      <WorkspacePanel className="overflow-hidden">
+        <div className="flex h-12 items-center justify-between border-b px-3"><div className="space-y-1.5"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-64 max-w-[60vw]" /></div><Skeleton className="hidden h-3 w-24 sm:block" /></div>
+        <div className="divide-y">{Array.from({ length: 6 }, (_, index) => <div key={index} className="grid min-h-14 grid-cols-[minmax(0,1fr)_30%_5rem] items-center gap-4 px-3"><Skeleton className="h-4 w-3/4" /><div className="flex gap-2"><Skeleton className="h-2 flex-1" /><Skeleton className="h-4 w-8" /></div><Skeleton className="ml-auto h-5 w-8" /></div>)}</div>
+      </WorkspacePanel>
+    </>
+  )
+}
+
+export function StudentGradesRouteSkeleton() {
+  return <WorkspacePage aria-label="Loading grades" aria-busy="true"><StudentGradesContentSkeleton /></WorkspacePage>
+}
+
+export function StudentGradesContentSkeleton() {
+  return (
+    <>
+      <WorkspacePanel className="grid overflow-hidden lg:grid-cols-[auto_minmax(0,1fr)]">
+        <div className="grid grid-cols-3 divide-x border-b lg:border-r lg:border-b-0">
+          {Array.from({ length: 3 }, (_, index) => <div key={index} className="flex items-center gap-2.5 px-3 py-2.5"><Skeleton className="hidden size-4 min-[430px]:block" /><div className="space-y-1.5"><Skeleton className="h-4 w-10" /><Skeleton className="h-3 w-14" /></div></div>)}
+        </div>
+        <div className="flex items-center justify-end gap-3 p-2"><Skeleton className="h-8 flex-1 sm:w-52 sm:flex-none" /><Skeleton className="h-8 w-28" /></div>
+      </WorkspacePanel>
+      <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,.65fr)]">
+        <WorkspacePanel className="overflow-hidden"><div className="h-12 border-b p-3"><Skeleton className="h-4 w-28" /></div><div className="divide-y">{Array.from({ length: 5 }, (_, index) => <div key={index} className="grid min-h-14 grid-cols-[minmax(0,1fr)_1fr_28%_6rem] items-center gap-4 px-3"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-2/3" /><Skeleton className="h-2 w-full" /><Skeleton className="ml-auto h-5 w-10" /></div>)}</div></WorkspacePanel>
+        <WorkspacePanel className="h-72 p-3"><Skeleton className="size-full" /></WorkspacePanel>
+      </div>
+    </>
+  )
+}
+
+export function StudentAttendanceRouteSkeleton() {
+  return <WorkspacePage aria-label="Loading attendance" aria-busy="true"><StudentAttendanceContentSkeleton /></WorkspacePage>
+}
+
+export function StudentAttendanceContentSkeleton() {
+  return (
+    <>
+      <WorkspacePanel className="grid grid-cols-2 overflow-hidden sm:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index} className={`flex min-h-16 items-center gap-2.5 px-3 py-2.5 ${index % 2 !== 0 ? "border-l" : ""} ${index >= 2 ? "border-t sm:border-t-0" : ""} ${index > 0 ? "sm:border-l" : ""}`}>
+            <Skeleton className="size-8 shrink-0" /><div className="space-y-1.5"><Skeleton className="h-4 w-10" /><Skeleton className="h-3 w-16" /></div>
+          </div>
+        ))}
+      </WorkspacePanel>
+      <WorkspacePanel className="overflow-hidden">
+        <div className="flex min-h-12 items-center justify-between border-b px-3 py-2"><div className="space-y-1.5"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-48" /></div><Skeleton className="h-5 w-14" /></div>
+        <div className="divide-y md:hidden">
+          {Array.from({ length: 4 }, (_, index) => <div key={index} className="p-3"><div className="flex justify-between gap-3"><div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-1/2" /></div><Skeleton className="h-5 w-16" /></div><div className="mt-3 flex gap-3"><Skeleton className="h-1.5 flex-1" /><Skeleton className="h-4 w-9" /></div><div className="mt-3 grid grid-cols-3 gap-px"><Skeleton className="h-10" /><Skeleton className="h-10" /><Skeleton className="h-10" /></div></div>)}
+        </div>
+        <div className="hidden md:block"><div className="h-9 bg-muted/45" /><div className="divide-y">{Array.from({ length: 6 }, (_, index) => <div key={index} className="grid min-h-14 grid-cols-[minmax(14rem,1.25fr)_7rem_minmax(11rem,.65fr)_6.5rem_2rem] items-center gap-4 px-3"><div className="space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-1/3" /></div><div className="space-y-2"><Skeleton className="h-4 w-6" /><Skeleton className="h-3 w-20" /></div><div className="flex gap-3"><Skeleton className="h-1.5 flex-1" /><Skeleton className="h-4 w-9" /></div><Skeleton className="h-5 w-16" /><Skeleton className="size-4" /></div>)}</div></div>
+      </WorkspacePanel>
+    </>
+  )
+}
+
+export function StudentScheduleRouteSkeleton() {
+  return <WorkspacePage aria-label="Loading schedule" aria-busy="true"><StudentScheduleContentSkeleton /></WorkspacePage>
+}
+
+export function StudentScheduleContentSkeleton() {
+  return (
+    <>
+      <WorkspacePanel className="grid grid-cols-7 overflow-hidden">
+        {Array.from({ length: 7 }, (_, index) => <div key={index} className="flex min-h-14 flex-col items-center justify-center gap-1.5 border-l px-1.5 first:border-l-0"><Skeleton className="h-3 w-8" /><Skeleton className="h-4 w-4" /></div>)}
+      </WorkspacePanel>
+      <WorkspacePanel className="overflow-hidden">
+        <div className="flex min-h-12 items-center justify-between border-b px-3 py-2"><div className="space-y-1.5"><Skeleton className="h-4 w-28" /><Skeleton className="h-3 w-52" /></div><Skeleton className="hidden h-4 w-24 sm:block" /></div>
+        <div className="divide-y">
+          {Array.from({ length: 4 }, (_, dayIndex) => (
+            <div key={dayIndex} className="grid gap-2 p-3 lg:grid-cols-[7.5rem_minmax(0,1fr)]">
+              <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-3 w-14" /></div>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: dayIndex === 1 ? 2 : 1 }, (_, courseIndex) => <Skeleton key={courseIndex} className="h-20 w-full" />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </WorkspacePanel>
+    </>
   )
 }

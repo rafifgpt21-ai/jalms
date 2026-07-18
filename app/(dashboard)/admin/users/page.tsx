@@ -3,14 +3,10 @@ import { getUsers, type UserFilter } from "@/lib/actions/user.actions"
 import { DataTable } from "./data-table"
 import { columns } from "./columns"
 import type { UserColumn } from "./columns"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import { UserToolbar } from "@/components/admin/users/user-toolbar"
-
-import { UserModal } from "@/components/admin/users/user-modal"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
-import { WorkspaceActions, WorkspacePage } from "@/components/workspace/workspace-page"
-import { TablePanelSkeleton } from "@/components/navigation/route-skeletons"
+import { WorkspacePage } from "@/components/workspace/workspace-page"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type UsersSearchParams = Promise<{
     query?: string
@@ -46,16 +42,20 @@ async function UsersTable({ searchParams }: { searchParams: UsersSearchParams })
         users = result.users
     }
 
-    return (
-            <div className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg border bg-card shadow-xs">
-                <div className="border-b bg-muted/40 p-3">
-                    <UserToolbar />
-                </div>
+    return <DataTable columns={columns} data={users} />
+}
 
-                <div className="flex-1">
-                    <DataTable columns={columns} data={users} />
+function UsersTableSkeleton() {
+    return (
+        <div className="divide-y" aria-label="Loading users" aria-busy="true">
+            {Array.from({ length: 8 }, (_, index) => (
+                <div key={index} className="flex h-14 items-center gap-4 px-4">
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="hidden h-4 w-28 sm:block" />
+                    <Skeleton className="h-6 w-20" />
                 </div>
-            </div>
+            ))}
+        </div>
     )
 }
 
@@ -64,16 +64,16 @@ export default function UsersPage({ searchParams }: { searchParams: UsersSearchP
         <WorkspacePage>
             <MobileHeaderSetter title="User Management" subtitle="Manage accounts for students, teachers, and admins." />
 
-            <WorkspaceActions className="md:flex-row">
-                <Button asChild variant="outline" className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <Link href="/admin/users/import" prefetch>Import via Excel</Link>
-                </Button>
-                <UserModal />
-            </WorkspaceActions>
-
-            <Suspense fallback={<TablePanelSkeleton />}>
-                <UsersTable searchParams={searchParams} />
-            </Suspense>
+            <div className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg border bg-card shadow-xs">
+                <div className="border-b bg-muted/40 p-2">
+                    <UserToolbar />
+                </div>
+                <div className="flex-1">
+                    <Suspense fallback={<UsersTableSkeleton />}>
+                        <UsersTable searchParams={searchParams} />
+                    </Suspense>
+                </div>
+            </div>
         </WorkspacePage>
     )
 }

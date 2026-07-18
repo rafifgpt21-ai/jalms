@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Outfit, Inter } from "next/font/google"; // [NEW] Premium fonts
 import "./globals.css";
 import { Toaster } from "sonner";
@@ -50,7 +51,7 @@ export default async function RootLayout({
   return (
     <html lang="en" data-density={density} data-theme={theme} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: appearanceScript }} />
+        <Script id="appearance-preference" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: appearanceScript }} />
       </head>
       <body
         className={`${inter.variable} ${outfit.variable} min-h-screen bg-background font-sans text-foreground antialiased`}

@@ -1,96 +1,45 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
+import type { StudentGradeRecord } from "@/lib/student-grades"
+import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { WorkspacePanel } from "@/components/workspace/workspace-page"
 
-interface GradesTableProps {
-    grades: any[]
-    semesterTitle: string
+function scoreTone(score: number) {
+  if (score >= 90) return "text-emerald-600 dark:text-emerald-400"
+  if (score >= 80) return "text-blue-600 dark:text-blue-400"
+  if (score >= 70) return "text-amber-700 dark:text-amber-400"
+  return "text-destructive"
 }
 
-export function GradesTable({ grades, semesterTitle }: GradesTableProps) {
-    const [excludeAttendance, setExcludeAttendance] = useState(false)
+export function GradesTable({ grades, semesterTitle, displayedScores = new Map<string, number>() }: { grades: StudentGradeRecord[]; semesterTitle: string; displayedScores?: Map<string, number> }) {
+  return (
+    <WorkspacePanel className="overflow-hidden">
+      <div className="flex min-h-11 items-center justify-between gap-3 border-b bg-muted/20 px-3 py-2"><div><h2 className="text-sm font-semibold">Course grades</h2><p className="text-xs text-muted-foreground">{semesterTitle}</p></div><span className="text-xs text-muted-foreground">{grades.length} {grades.length === 1 ? "course" : "courses"}</span></div>
 
-    return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
-                <CardTitle>{semesterTitle} Grades</CardTitle>
-                <div className="flex items-center space-x-2">
-                    <Switch
-                        id="exclude-attendance"
-                        checked={excludeAttendance}
-                        onCheckedChange={setExcludeAttendance}
-                    />
-                    <Label htmlFor="exclude-attendance">Exclude Attendance</Label>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Course</TableHead>
-                            <TableHead>Teacher</TableHead>
-                            <TableHead className="hidden md:table-cell">Attendance</TableHead>
-                            <TableHead className="text-right">Overall Grade</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {grades && grades.length > 0 ? (
-                            grades.map((grade: any) => {
-                                let displayGrade = grade.grade
+      {grades.length ? <>
+        <div className="divide-y md:hidden">
+          {grades.map((grade) => {
+            const score = displayedScores.get(grade.courseId) ?? grade.grade
+            return <Link key={grade.courseId} href={`/student/courses/${grade.courseId}/grades`} className="block px-3 py-3 transition-colors hover:bg-[var(--workspace-row-hover)]">
+              <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-sm font-semibold">{grade.courseName}</h3><p className="mt-0.5 truncate text-xs text-muted-foreground">{grade.teacherName}</p></div><div className="flex items-center gap-1.5"><span className={`text-lg font-semibold tabular-nums ${scoreTone(score)}`}>{score}%</span><ArrowRight className="size-4 text-muted-foreground" /></div></div>
+              <div className="mt-3 grid grid-cols-2 gap-3"><div><div className="flex justify-between text-[11px] text-muted-foreground"><span>Overall grade</span><span>{score}%</span></div><Progress value={score} className="mt-1 h-1.5" /></div><div><div className="flex justify-between text-[11px] text-muted-foreground"><span>Attendance</span><span>{grade.attendancePercentage}%</span></div><Progress value={grade.attendancePercentage} className="mt-1 h-1.5" /></div></div>
+            </Link>
+          })}
+        </div>
 
-                                if (excludeAttendance && grade.breakdown) {
-                                    const { studentPoints, maxPointsPossible, extraCreditPoints } = grade.breakdown
-                                    const numerator = studentPoints + extraCreditPoints
-                                    const denominator = maxPointsPossible
-
-                                    let calculatedGrade = 0
-                                    if (denominator > 0) {
-                                        calculatedGrade = (numerator / denominator) * 100
-                                    } else {
-                                        // Fallback if no max points possible (e.g. no assignments yet)
-                                        // If we exclude attendance and there are no assignments, what should it be?
-                                        // Arguably 100 or 0. Let's keep it consistent with default logic = 100.
-                                        calculatedGrade = 100
-                                    }
-                                    displayGrade = Math.round(Math.min(calculatedGrade, 100) * 10) / 10
-                                }
-
-                                return (
-                                    <TableRow key={grade.courseId}>
-                                        <TableCell className="font-medium">{grade.courseName}</TableCell>
-                                        <TableCell>{grade.teacherName}</TableCell>
-                                        <TableCell className="hidden md:table-cell">
-                                            <div className="flex items-center gap-2">
-                                                <Progress value={grade.attendancePercentage} className="w-[60px]" />
-                                                <span className="text-xs text-muted-foreground">{grade.attendancePercentage}%</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <span className={`text-lg font-bold ${displayGrade >= 90 ? 'text-green-600' :
-                                                displayGrade >= 80 ? 'text-blue-600' :
-                                                    displayGrade >= 70 ? 'text-yellow-600' : 'text-red-600'
-                                                }`}>
-                                                {displayGrade}%
-                                            </span>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                                    No grades found for this semester.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-    )
+        <div className="hidden md:block">
+          <Table><TableHeader><TableRow className="hover:bg-transparent"><TableHead>Course</TableHead><TableHead>Teacher</TableHead><TableHead className="w-[28%]">Attendance</TableHead><TableHead className="w-28 text-right">Overall grade</TableHead><TableHead className="w-10"><span className="sr-only">Open</span></TableHead></TableRow></TableHeader><TableBody>
+            {grades.map((grade) => {
+              const score = displayedScores.get(grade.courseId) ?? grade.grade
+              return <TableRow key={grade.courseId}><TableCell className="font-medium">{grade.courseName}</TableCell><TableCell className="text-muted-foreground">{grade.teacherName}</TableCell><TableCell><div className="flex items-center gap-2"><Progress value={grade.attendancePercentage} className="h-1.5 flex-1" /><span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{grade.attendancePercentage}%</span></div></TableCell><TableCell className={`text-right text-base font-semibold tabular-nums ${scoreTone(score)}`}>{score}%</TableCell><TableCell><Link href={`/student/courses/${grade.courseId}/grades`} className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={`Open grades for ${grade.courseName}`}><ArrowRight className="size-4" /></Link></TableCell></TableRow>
+            })}
+          </TableBody></Table>
+        </div>
+      </> : <div className="flex min-h-40 flex-col items-center justify-center p-6 text-center"><Badge variant="outline">No grade data</Badge><p className="mt-2 text-sm text-muted-foreground">No course grades are available for this semester.</p></div>}
+    </WorkspacePanel>
+  )
 }

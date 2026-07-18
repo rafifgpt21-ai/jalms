@@ -10,6 +10,7 @@ import {
   COURSE_CHAT_MAX_LENGTH,
   COURSE_CHAT_PAGE_SIZE,
   courseChatChannel,
+  type CourseChatRoleContext,
 } from "@/lib/course-chat.shared"
 import { getPusherServer, isPusherConfigured } from "@/lib/pusher/server"
 
@@ -67,10 +68,43 @@ async function requireAccess(courseId: string) {
   return { ok: true as const, userId, course }
 }
 
-export async function getCourseChatMessages(courseId: string, before?: CourseChatCursor) {
+async function persistCourseChatRead(
+  access: Extract<Awaited<ReturnType<typeof requireAccess>>, { ok: true }>,
+  roleContext: CourseChatRoleContext,
+  lastSeenChatAt: Date,
+) {
+  const storedRoleContext = roleContext === "teacher" ? "TEACHER" : "STUDENT"
+  await db.courseNavigationState.upsert({
+    where: {
+      userId_courseId_roleContext: {
+        userId: access.userId,
+        courseId: access.course.id,
+        roleContext: storedRoleContext,
+      },
+    },
+    create: {
+      userId: access.userId,
+      courseId: access.course.id,
+      roleContext: storedRoleContext,
+      lastSectionKey: "chat",
+      lastSeenChatAt,
+    },
+    update: { lastSeenChatAt },
+  })
+}
+
+export async function getCourseChatMessages(
+  courseId: string,
+  before?: CourseChatCursor,
+  roleContext?: CourseChatRoleContext,
+) {
   const access = await requireAccess(courseId)
   if (!access.ok) return { error: access.error }
 
+  // Persist the read receipt as part of the initial page load. Relying only on
+  // the client's fire-and-forget request lets a later reload restore stale
+  // unread state if the user navigates away before that request completes.
+  const openedAt = before || !roleContext ? null : new Date()
   const cursor = parseCursor(before)
   const records = await db.courseChatMessage.findMany({
     where: {
@@ -89,6 +123,7 @@ export async function getCourseChatMessages(courseId: string, before?: CourseCha
 
   const hasMore = records.length > COURSE_CHAT_PAGE_SIZE
   const messages = records.slice(0, COURSE_CHAT_PAGE_SIZE).reverse().map(serializeMessage)
+  if (openedAt && roleContext) await persistCourseChatRead(access, roleContext, openedAt)
   return {
     messages,
     hasMore,
@@ -155,27 +190,10 @@ export async function sendCourseChatMessage(courseId: string, rawContent: string
   return { success: true as const, message: serialized }
 }
 
-export async function markCourseChatRead(courseId: string) {
+export async function markCourseChatRead(courseId: string, roleContext: CourseChatRoleContext) {
   const access = await requireAccess(courseId)
   if (!access.ok) return { error: access.error }
 
-  const roleContext = access.course.teacherId === access.userId ? "TEACHER" : "STUDENT"
-  await db.courseNavigationState.upsert({
-    where: {
-      userId_courseId_roleContext: {
-        userId: access.userId,
-        courseId,
-        roleContext,
-      },
-    },
-    create: {
-      userId: access.userId,
-      courseId,
-      roleContext,
-      lastSectionKey: "chat",
-      lastSeenChatAt: new Date(),
-    },
-    update: { lastSeenChatAt: new Date() },
-  })
+  await persistCourseChatRead(access, roleContext, new Date())
   return { success: true as const }
 }

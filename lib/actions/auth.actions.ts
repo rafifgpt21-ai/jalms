@@ -10,7 +10,7 @@ export async function authenticate(
     try {
         const data = Object.fromEntries(formData.entries())
         console.log("Attempting login with:", data.email)
-        await signIn("credentials", { ...data, redirectTo: "/admin" })
+        await signIn("credentials", { ...data, redirectTo: "/" })
     } catch (error) {
         if (error instanceof AuthError) {
             switch (error.type) {

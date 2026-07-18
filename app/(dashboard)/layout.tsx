@@ -10,6 +10,7 @@ import { WorkspaceShell } from "@/components/navigation/workspace-shell"
 import type { NavigationCourse } from "@/types/navigation"
 import { isDirectMessagingEnabled } from "@/lib/features"
 import { CourseChatNotificationProvider } from "@/components/course/course-chat-notification-provider"
+import { latestSeenChatByCourse } from "@/lib/course-chat.shared"
 
 function orderCourses(courses: NavigationCourse[], order: string[]) {
   const positions = new Map(order.map((id, index) => [id, index]))
@@ -88,10 +89,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   })))
   const latestByCourseId = new Map(latestMessages.filter((message) => message !== null).map((message) => [message.courseId, message.createdAt]))
-  const seenByCourseKey = new Map(navigationStates.map((state) => [`${state.roleContext.toLowerCase()}:${state.courseId}`, state.lastSeenChatAt]))
+  const seenByCourseId = latestSeenChatByCourse(navigationStates)
   const initialUnreadCourseIds = courses.filter((course) => {
     const latest = latestByCourseId.get(course.id)
-    const seen = seenByCourseKey.get(`${course.roleContext}:${course.id}`)
+    const seen = seenByCourseId.get(course.id)
     return latest && (!seen || latest > seen)
   }).map((course) => course.id)
 

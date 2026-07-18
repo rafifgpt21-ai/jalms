@@ -149,9 +149,7 @@ export async function saveTeacherSchedule(
         for (const [courseId, slots] of schedulesByCourse.entries()) {
             const courseConflicts = await checkCourseScheduleUpdateConflict(courseId, slots)
             if (courseConflicts.length > 0) {
-                const first = courseConflicts[0]
-                // Return structured data for the first conflict of this course (or all?)
-                // Let's return all to be safe and let UI handle display
+                // Return every conflict so the UI can present the complete result.
                 courseConflicts.forEach(c => {
                     conflicts.push({
                         studentName: c.studentName,
@@ -310,13 +308,20 @@ export async function getStudentSchedule(studentId: string) {
     try {
         const courses = await prisma.course.findMany({
             where: {
-                studentIds: { has: studentId },
+                OR: [
+                    { studentIds: { has: studentId } },
+                    { courseEnrollments: { some: { studentId, OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }] } } }
+                ],
                 deletedAt: { isSet: false },
                 term: { isActive: true }
             },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                reportName: true,
                 schedules: {
-                    where: { deletedAt: { isSet: false } }
+                    where: { deletedAt: { isSet: false } },
+                    select: { id: true, dayOfWeek: true, period: true }
                 },
                 teacher: {
                     select: {
@@ -324,9 +329,10 @@ export async function getStudentSchedule(studentId: string) {
                         nickname: true
                     }
                 },
-                subject: true,
-                class: true
-            }
+                subject: { select: { reportName: true, code: true } },
+                class: { select: { name: true, color: true } }
+            },
+            orderBy: { name: "asc" }
         })
 
         return { courses }

@@ -181,7 +181,7 @@ export function AnnouncementWorkspace({
   return (
     <>
       <WorkspacePanel className="grid overflow-hidden lg:grid-cols-[auto_minmax(24rem,1fr)]">
-        <div className={`grid ${canManage ? "grid-cols-3" : "grid-cols-2"} divide-x border-b lg:border-r lg:border-b-0`}>
+        <div className={`hidden ${canManage ? "grid-cols-3" : "grid-cols-2"} divide-x lg:grid lg:border-r`}>
           <div className="min-w-0 px-3 py-2.5">
             <p className="text-lg font-semibold leading-none">{counts.published}</p>
             <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Published</p>

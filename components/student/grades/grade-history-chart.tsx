@@ -1,64 +1,33 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { BarChart3 } from "lucide-react"
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import type { GradeHistoryPoint } from "@/lib/student-grades"
+import { WorkspacePanel } from "@/components/workspace/workspace-page"
 
-interface GradeHistoryChartProps {
-    history: any[]
-}
-
-export default function GradeHistoryChart({ history }: GradeHistoryChartProps) {
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
-
-    if (!mounted || !history || history.length === 0) return null
-
-    return (
-        <Card className="col-span-4">
-            <CardHeader>
-                <CardTitle>Grade History</CardTitle>
-            </CardHeader>
-            <CardContent className="pl-2">
-                <div className="h-[200px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={history} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                            <XAxis
-                                dataKey="name"
-                                stroke="#888888"
-                                fontSize={12}
-                                tickLine={false}
-                                axisLine={false}
-                                tickFormatter={(_, i) => (i + 1).toString()}
-                            />
-                            <YAxis
-                                stroke="#888888"
-                                fontSize={12}
-                                tickLine={false}
-                                axisLine={false}
-                                tickFormatter={(value) => `${value}%`}
-                                domain={[0, 100]}
-                            />
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                                formatter={(value: any) => [`${value}%`, 'Average Grade']}
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="average"
-                                stroke="#2563eb"
-                                strokeWidth={2}
-                                activeDot={{ r: 6, fill: "#2563eb" }}
-                                dot={{ r: 4, fill: "#2563eb" }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            </CardContent>
-        </Card>
-    )
+export default function GradeHistoryChart({ history }: { history: GradeHistoryPoint[] }) {
+  return (
+    <WorkspacePanel className="overflow-hidden">
+      <div className="border-b px-3 py-2.5"><h2 className="text-sm font-semibold">Grade history</h2><p className="text-xs text-muted-foreground">Average course grade by semester.</p></div>
+      {history.length < 2 ? (
+        <div className="flex min-h-56 flex-col items-center justify-center p-6 text-center">
+          <BarChart3 className="size-6 text-muted-foreground" />
+          <p className="mt-3 text-2xl font-semibold tabular-nums">{history[0] ? `${history[0].average}%` : "—"}</p>
+          <p className="mt-1 max-w-xs text-sm text-muted-foreground">{history.length ? "A trend will appear after another semester has grade data." : "Grade history will appear when course grades are available."}</p>
+        </div>
+      ) : (
+        <div className="h-64 p-2" role="img" aria-label="Line chart showing average grades by semester">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={history} margin={{ top: 10, right: 12, left: -18, bottom: 6 }}>
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+              <Tooltip formatter={(value) => [`${Number(value)}%`, "Average grade"]} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--popover-foreground)", fontSize: "12px" }} />
+              <Line type="monotone" dataKey="average" stroke="var(--primary)" strokeWidth={2} activeDot={{ r: 5, fill: "var(--primary)" }} dot={{ r: 3, fill: "var(--primary)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </WorkspacePanel>
+  )
 }

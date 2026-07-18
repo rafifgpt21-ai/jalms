@@ -16,6 +16,21 @@ export const CLASS_COLOR_STYLES: Record<ClassColor, { background: string; foregr
   ROSE: { background: "bg-rose-600 dark:bg-rose-800", foreground: "text-white dark:text-rose-50", ring: "ring-rose-500 dark:ring-rose-700", swatch: "bg-rose-500 dark:bg-rose-700" },
 }
 
+export const CLASS_COLOR_SURFACE_STYLES: Record<ClassColor, string> = {
+  RED: "bg-red-50/80 dark:bg-red-950/25",
+  ORANGE: "bg-orange-50/80 dark:bg-orange-950/25",
+  AMBER: "bg-amber-50/80 dark:bg-amber-950/25",
+  EMERALD: "bg-emerald-50/80 dark:bg-emerald-950/25",
+  TEAL: "bg-teal-50/80 dark:bg-teal-950/25",
+  CYAN: "bg-cyan-50/80 dark:bg-cyan-950/25",
+  BLUE: "bg-blue-50/80 dark:bg-blue-950/25",
+  INDIGO: "bg-indigo-50/80 dark:bg-indigo-950/25",
+  VIOLET: "bg-violet-50/80 dark:bg-violet-950/25",
+  PURPLE: "bg-purple-50/80 dark:bg-purple-950/25",
+  PINK: "bg-pink-50/80 dark:bg-pink-950/25",
+  ROSE: "bg-rose-50/80 dark:bg-rose-950/25",
+}
+
 const FALLBACK_COLORS: ClassColor[] = ["INDIGO", "BLUE", "TEAL", "EMERALD", "VIOLET", "PURPLE", "ROSE", "ORANGE"]
 
 function hash(value: string) {

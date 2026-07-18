@@ -13,7 +13,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, MoreHorizontal, Search } from "lucide-react"
+import { Edit, Trash2, MoreHorizontal, Search, SlidersHorizontal } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -41,14 +42,16 @@ import {
 
 import { CourseModal } from "./course-modal"
 
+type CourseListItem = Course & {
+    teacher: User;
+    term: Term & { academicYear: AcademicYear };
+    subject: Subject | null;
+    class: Class | null;
+    _count: { students: number };
+}
+
 interface CourseListProps {
-    courses: (Course & {
-        teacher: User;
-        term: Term & { academicYear: AcademicYear };
-        subject: Subject | null;
-        class: Class | null;
-        _count: { students: number };
-    })[]
+    courses: CourseListItem[]
     teachers: { id: string; name: string }[]
     terms: { id: string; academicYear: { name: string }; type: string; isActive: boolean }[]
     subjects: Subject[]
@@ -56,7 +59,7 @@ interface CourseListProps {
 
 export function CourseList({ courses, teachers, terms, subjects }: CourseListProps) {
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingCourse, setEditingCourse] = useState<any>(null)
+    const [editingCourse, setEditingCourse] = useState<CourseListItem | null>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [filterValue, setFilterValue] = useState("")
@@ -88,15 +91,7 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
     })
     const classes = Array.from(new Map(courses.flatMap(course => course.class ? [[course.class.id, course.class] as const] : [])).values())
 
-    const handleSearch = () => {
-        setFilterValue(searchQuery)
-    }
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            handleSearch()
-        }
-    }
+    const activeFilterCount = Number(subjectFilter !== "all") + Number(classFilter !== "all") + Number(teacherFilter !== "all")
 
     async function handleDelete(id: string) {
         setDeleteId(id)
@@ -115,41 +110,55 @@ export function CourseList({ courses, teachers, terms, subjects }: CourseListPro
     }
 
     return (
-        <div className="space-y-4">
-            <div className="admin-toolbar">
-                <div className="w-full shrink-0 sm:w-auto [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">
+        <div className="space-y-2">
+            <div className="rounded-md border bg-card p-2 shadow-xs xl:flex xl:items-center xl:gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 border-0 bg-transparent p-0 shadow-none md:flex md:flex-wrap md:items-center xl:contents">
+                <div className="min-w-0 justify-self-start xl:mr-auto [&_[data-slot=button]]:w-auto">
                     <CourseModal teachers={teachers} terms={terms} subjects={subjects} />
                 </div>
 
-                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-                    <div className="flex items-center space-x-2 whitespace-nowrap">
-                        <Switch
-                            id="show-all"
-                            checked={!showAll}
-                            onCheckedChange={(checked) => handleToggle(!checked)}
-                        />
-                        <Label htmlFor="show-all">Active Courses</Label>
-                    </div>
-                    <div className="flex w-full sm:w-auto items-center space-x-2">
-                        <div className="relative flex-1 sm:flex-initial">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
-                            <Input
-                                placeholder="Search courses..."
-                                value={searchQuery}
-                                onChange={(e) => { setSearchQuery(e.target.value); setFilterValue(e.target.value) }}
-                                onKeyDown={handleKeyDown}
-                                className="w-full pl-9 sm:w-[300px]"
-                            />
-                        </div>
-                    </div>
+                <div className="flex min-h-8 items-center gap-2 whitespace-nowrap md:order-2">
+                    <Switch
+                        id="show-all"
+                        checked={!showAll}
+                        onCheckedChange={(checked) => handleToggle(!checked)}
+                    />
+                    <Label htmlFor="show-all">Active courses</Label>
+                </div>
+
+                <div className="relative min-w-0 md:order-3 md:ml-auto md:flex-1 xl:ml-0 xl:min-w-36 xl:max-w-[18rem]">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="Search courses..."
+                        value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); setFilterValue(e.target.value) }}
+                        className="w-full pl-9"
+                    />
+                </div>
+
+                <div className="md:hidden">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full px-3" aria-label={`Course filters${activeFilterCount ? `, ${activeFilterCount} active` : ""}`}>
+                                <SlidersHorizontal /> Filters{activeFilterCount > 0 && <span className="text-xs text-primary">{activeFilterCount}</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-72 space-y-2">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Filter courses</p>
+                            <Select value={subjectFilter} onValueChange={setSubjectFilter}><SelectTrigger className="w-full" aria-label="Filter by subject"><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent><SelectItem value="all">All subjects</SelectItem><SelectItem value="unlinked">No subject</SelectItem>{subjects.map(subject => <SelectItem key={subject.id} value={subject.id}>{subject.code} · {subject.name}</SelectItem>)}</SelectContent></Select>
+                            <Select value={classFilter} onValueChange={setClassFilter}><SelectTrigger className="w-full" aria-label="Filter by class"><SelectValue placeholder="Class" /></SelectTrigger><SelectContent><SelectItem value="all">All classes</SelectItem><SelectItem value="unlinked">No linked class</SelectItem>{classes.map(cls => <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>)}</SelectContent></Select>
+                            <Select value={teacherFilter} onValueChange={setTeacherFilter}><SelectTrigger className="w-full" aria-label="Filter by teacher"><SelectValue placeholder="Teacher" /></SelectTrigger><SelectContent><SelectItem value="all">All teachers</SelectItem>{teachers.map(teacher => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select>
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
 
-            <div className="admin-filter-grid">
-                <Select value={subjectFilter} onValueChange={setSubjectFilter}><SelectTrigger className="h-8 w-[170px]"><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent><SelectItem value="all">All subjects</SelectItem><SelectItem value="unlinked">No subject</SelectItem>{subjects.map(subject => <SelectItem key={subject.id} value={subject.id}>{subject.code} · {subject.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={classFilter} onValueChange={setClassFilter}><SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Class" /></SelectTrigger><SelectContent><SelectItem value="all">All classes</SelectItem><SelectItem value="unlinked">No linked class</SelectItem>{classes.map(cls => <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={teacherFilter} onValueChange={setTeacherFilter}><SelectTrigger className="h-8 w-[170px]"><SelectValue placeholder="Teacher" /></SelectTrigger><SelectContent><SelectItem value="all">All teachers</SelectItem>{teachers.map(teacher => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select>
-                <span className="admin-filter-summary">Showing {filteredCourses.length} of {courses.length} courses</span>
+            <div className="mt-2 hidden border-0 bg-transparent p-0 shadow-none md:grid md:grid-cols-3 md:gap-2 xl:mt-0 xl:contents">
+                <Select value={subjectFilter} onValueChange={setSubjectFilter}><SelectTrigger className="w-full xl:order-4 xl:w-32 2xl:w-40" aria-label="Filter by subject"><SelectValue placeholder="Subject" /></SelectTrigger><SelectContent><SelectItem value="all">All subjects</SelectItem><SelectItem value="unlinked">No subject</SelectItem>{subjects.map(subject => <SelectItem key={subject.id} value={subject.id}>{subject.code} · {subject.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={classFilter} onValueChange={setClassFilter}><SelectTrigger className="w-full xl:order-4 xl:w-32 2xl:w-40" aria-label="Filter by class"><SelectValue placeholder="Class" /></SelectTrigger><SelectContent><SelectItem value="all">All classes</SelectItem><SelectItem value="unlinked">No linked class</SelectItem>{classes.map(cls => <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={teacherFilter} onValueChange={setTeacherFilter}><SelectTrigger className="w-full xl:order-4 xl:w-32 2xl:w-40" aria-label="Filter by teacher"><SelectValue placeholder="Teacher" /></SelectTrigger><SelectContent><SelectItem value="all">All teachers</SelectItem>{teachers.map(teacher => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select>
+                <span className="hidden shrink-0 text-xs text-muted-foreground xl:order-5 xl:block" aria-label={`Showing ${filteredCourses.length} of ${courses.length} courses`}>{filteredCourses.length} of {courses.length}</span>
+            </div>
             </div>
 
             <div className="overflow-hidden">

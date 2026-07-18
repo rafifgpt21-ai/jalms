@@ -1,8 +1,10 @@
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { UserModal } from "@/components/admin/users/user-modal"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,8 +14,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Search, Filter, ArrowUpDown, X } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Search, Filter, ArrowUpDown, FileSpreadsheet, Plus, X } from "lucide-react"
+import { useRef } from "react"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -31,16 +33,12 @@ export function UserToolbar() {
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
-    // State for inputs
-    const [search, setSearch] = useState(searchParams.get("query") || "")
-
-    // Sync search state with URL params when they change externally (e.g. back button)
-    useEffect(() => {
-        setSearch(searchParams.get("query") || "")
-    }, [searchParams])
+    const currentQuery = searchParams.get("query") || ""
+    const searchInputRef = useRef<HTMLInputElement>(null)
 
     const handleSearch = () => {
         const params = new URLSearchParams(searchParams)
+        const search = searchInputRef.current?.value.trim() || ""
         if (search) {
             params.set("query", search)
         } else {
@@ -80,7 +78,7 @@ export function UserToolbar() {
         params.delete("status")
         params.delete("query")
         params.delete("sort")
-        setSearch("")
+        params.delete("showAll")
         router.replace(`${pathname}?${params.toString()}`)
     }
 
@@ -100,33 +98,38 @@ export function UserToolbar() {
     }
 
     return (
-        <div className="admin-toolbar border-0 bg-transparent p-0 shadow-none">
-            {/* Search Bar */}
-            <div className="flex w-full min-w-0 flex-1 items-center gap-2 sm:max-w-md">
+        <div className="admin-toolbar flex-col gap-1.5 border-0 bg-transparent p-0 shadow-none md:flex-row md:flex-nowrap">
+            <div className="flex w-full min-w-0 items-center gap-1.5 md:max-w-md md:flex-1">
                 <div className="relative flex-1">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
+                        key={currentQuery}
+                        ref={searchInputRef}
                         placeholder="Search users..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        defaultValue={currentQuery}
                         onKeyDown={handleKeyDown}
                         className="border-input bg-background pl-9 focus:bg-background"
                     />
                 </div>
-                <Button onClick={handleSearch} size="sm">Search</Button>
+                <Button onClick={handleSearch} size="sm" className="shrink-0 px-3" aria-label="Search users">
+                    <Search className="h-4 w-4 sm:hidden" />
+                    <span className="hidden sm:inline">Search</span>
+                </Button>
             </div>
 
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <div className="flex w-full min-w-0 items-center gap-1.5 md:flex-1">
                 {/* Show All Toggle */}
                 {showAll ? (
-                    <Button variant="outline" size="sm" onClick={handleShowAll} className="h-9">
-                        Hide All Users
+                    <Button variant="outline" size="sm" onClick={handleShowAll} className="h-9 shrink-0 px-2.5" aria-label="Hide all users">
+                        <span className="sm:hidden">Hide all</span>
+                        <span className="hidden sm:inline">Hide all users</span>
                     </Button>
                 ) : (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9">
-                                Show All Users
+                            <Button variant="outline" size="sm" className="h-9 shrink-0 px-2.5" aria-label="Show all users">
+                                <span className="sm:hidden">All users</span>
+                                <span className="hidden sm:inline">Show all users</span>
                             </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -147,9 +150,9 @@ export function UserToolbar() {
                 {/* Filter Button */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 gap-1" aria-label="Filter users">
+                        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 md:w-auto md:px-2.5" aria-label="Filter users">
                             <Filter className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline-block">Filter</span>
+                            <span className="hidden lg:inline-block">Filter</span>
                             {(currentRole !== "ALL" || currentStatus !== "ALL") && (
                                 <span className="ml-1 rounded-full bg-blue-600 w-2 h-2" />
                             )}
@@ -179,9 +182,9 @@ export function UserToolbar() {
                 {/* Sort Button */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 gap-1" aria-label="Sort users">
+                        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 md:w-auto md:px-2.5" aria-label="Sort users">
                             <ArrowUpDown className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline-block">Sort</span>
+                            <span className="hidden lg:inline-block">Sort</span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
@@ -196,7 +199,7 @@ export function UserToolbar() {
                 </DropdownMenu>
 
                 {/* Clear Filters */}
-                {(currentRole !== "ALL" || currentStatus !== "ALL" || search || currentSort !== "newest" || showAll) && (
+                {(currentRole !== "ALL" || currentStatus !== "ALL" || currentQuery || currentSort !== "newest" || showAll) && (
                     <Button
                         variant="ghost"
                         size="sm"
@@ -207,6 +210,23 @@ export function UserToolbar() {
                         <X className="h-4 w-4" />
                     </Button>
                 )}
+
+                <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                    <Button asChild variant="outline" size="sm" className="h-9 px-2.5" aria-label="Import users via Excel">
+                        <Link href="/admin/users/import" prefetch>
+                            <FileSpreadsheet className="h-4 w-4" />
+                            <span className="hidden lg:inline">Import via Excel</span>
+                        </Link>
+                    </Button>
+                    <UserModal
+                        trigger={(
+                            <Button size="sm" className="h-9 px-2.5" aria-label="Create user">
+                                <Plus className="h-4 w-4" />
+                                <span className="hidden min-[400px]:inline">Create user</span>
+                            </Button>
+                        )}
+                    />
+                </div>
             </div>
         </div>
     )

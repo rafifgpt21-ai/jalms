@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth"
+import { getDefaultDashboardHref } from "@/lib/role-dashboard"
 
 export const authConfig = {
     pages: {
@@ -14,14 +15,7 @@ export const authConfig = {
             if (isOnLogin || nextUrl.pathname === '/') {
                 if (isLoggedIn) {
                     const roles = (auth?.user as any)?.roles || [];
-                    if (roles.includes("ADMIN")) return Response.redirect(new URL('/admin', nextUrl));
-                    if (roles.includes("SUBJECT_TEACHER")) return Response.redirect(new URL('/teacher', nextUrl));
-                    if (roles.includes("HOMEROOM_TEACHER")) return Response.redirect(new URL('/homeroom', nextUrl));
-                    if (roles.includes("STUDENT")) return Response.redirect(new URL('/student', nextUrl));
-                    if (roles.includes("PARENT")) return Response.redirect(new URL('/parent', nextUrl));
-
-                    // Fallback to student if no role matches but logged in (or some default)
-                    return Response.redirect(new URL('/student', nextUrl));
+                    return Response.redirect(new URL(getDefaultDashboardHref(roles), nextUrl));
                 }
                 if (nextUrl.pathname === '/') return false; // Redirect unauthenticated users on root to login (handled by return false below)
                 return true;

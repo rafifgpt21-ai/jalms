@@ -227,12 +227,14 @@ The rail can expose:
 
 - Home;
 - Messages;
+- Homeroom, when authorized;
+- Administration, when authorized;
 - Teaching courses;
 - Enrolled courses;
-- Administration, when authorized;
-- Homeroom, when authorized;
 - Family, when authorized;
 - profile/settings at the bottom.
+
+Home is always the first rail destination. Messages, Homeroom, and Administration belong to the same top utility cluster directly beneath Home, with Administration ordered below Homeroom when both are available. Teaching and enrolled course groups follow after a divider; Family remains below the course groups when authorized.
 
 Home is a routing action, not a standalone dashboard. It opens the highest-priority dashboard authorized for the current user. Daily academic work takes priority in this order: Teaching, Learning, Homeroom, Administration, then Family. `/home` remains redirect-only for compatibility with old bookmarks.
 
@@ -464,6 +466,8 @@ Resolution order:
 3. course initials.
 
 The mark combines this label/image with the linked class color or a deterministic fallback color. A custom image retains a class-colored ring. Tooltips and accessible labels include textual course, subject, class, and role context so color is never the only identifier.
+
+Expanded course summaries in the section sidebar omit the course mark so longer course names have room for two lines. When a linked class has a color, the summary uses a subtle tint of that color; unlinked or colorless courses use the neutral card surface. This applies equally to teaching and enrolled course contexts.
 
 Do not create a separate random course-color algorithm. Reuse `resolveCourseIdentity` for consistent labels and colors.
 

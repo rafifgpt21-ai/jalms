@@ -10,7 +10,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { ArrowUpDown, Home, MessageSquare, PanelLeftClose, PanelLeftOpen, RotateCcw, School, Settings2, Users } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { resolveCourseIdentity } from "@/lib/course-identity"
+import { CLASS_COLOR_SURFACE_STYLES, resolveCourseIdentity } from "@/lib/course-identity"
 import {
   contextFromPath, contextLabel, defaultCourseHref, groupsForContext, isSectionActive,
   type BrowseContext,
@@ -29,6 +29,12 @@ import {
   CourseRouteSkeleton,
   DashboardRouteSkeleton,
   GridRouteSkeleton,
+  LearningProfileRouteSkeleton,
+  MaterialFormRouteSkeleton,
+  StudentAttendanceRouteSkeleton,
+  StudentCoursesRouteSkeleton,
+  StudentGradesRouteSkeleton,
+  StudentScheduleRouteSkeleton,
   StudentTaskDetailRouteSkeleton,
   StudentTaskRouteSkeleton,
   TaskGradingRouteSkeleton,
@@ -42,6 +48,7 @@ function PendingDestinationSkeleton({ pathname }: { pathname: string }) {
   if (pathname === "/admin") return <DashboardRouteSkeleton variant="admin" />
   if (pathname === "/homeroom") return <DashboardRouteSkeleton variant="homeroom" />
   if (pathname === "/parent") return <DashboardRouteSkeleton variant="parent" />
+  if (pathname === "/teacher/materials/new") return <MaterialFormRouteSkeleton />
   if (/^\/student\/courses\/[^/]+\/tasks\/?$/.test(pathname)) return <StudentTaskRouteSkeleton />
   if (/^\/student\/courses\/[^/]+\/tasks\/[^/]+\/?$/.test(pathname)) return <StudentTaskDetailRouteSkeleton />
   if (/^\/teacher\/courses\/[^/]+\/tasks\/?$/.test(pathname)) return <TaskRouteSkeleton />
@@ -50,8 +57,13 @@ function PendingDestinationSkeleton({ pathname }: { pathname: string }) {
   if (/^\/student\/courses\/[^/]+\/announcements\/?$/.test(pathname)) return <AnnouncementRouteSkeleton />
   if (/^\/teacher\/attendance\/[^/]+\/?$/.test(pathname)) return <AttendanceRouteSkeleton detail />
   if (pathname === "/teacher/attendance") return <AttendanceRouteSkeleton />
+  if (pathname === "/student/learning-profile") return <LearningProfileRouteSkeleton />
+  if (pathname === "/student/grades") return <StudentGradesRouteSkeleton />
+  if (pathname === "/student/attendance") return <StudentAttendanceRouteSkeleton />
+  if (pathname === "/student/schedule") return <StudentScheduleRouteSkeleton />
   if (/^\/(teacher|student)\/courses\/[^/]+/.test(pathname)) return <CourseRouteSkeleton />
-  if (pathname === "/student/courses" || pathname === "/homeroom") return <GridRouteSkeleton />
+  if (pathname === "/student/courses") return <StudentCoursesRouteSkeleton />
+  if (pathname === "/homeroom") return <GridRouteSkeleton />
   if (/^\/admin\/(users|classes|courses|subjects|semesters|schedule|grading|rollover)/.test(pathname)) return <TableRouteSkeleton />
   return <DashboardRouteSkeleton />
 }
@@ -143,6 +155,7 @@ function CourseRail({ user, courses, activeContext, onSelect, onNavigate, reorde
   )
   const teaching = ordered.filter((course) => course.roleContext === "teacher")
   const enrolled = ordered.filter((course) => course.roleContext === "student")
+  const hasCourseContexts = teaching.length > 0 || enrolled.length > 0
   const homeHref = getDefaultDashboardHref(user.roles)
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -173,7 +186,9 @@ function CourseRail({ user, courses, activeContext, onSelect, onNavigate, reorde
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
             <RailDestination label="Home" href={homeHref} icon={Home} active={activeContext.kind === "home"} onSelect={onNavigate ? () => onNavigate(homeHref) : undefined} />
             {directMessagesEnabled && <RailDestination label="Messages" href="/socials" icon={MessageSquare} active={activeContext.kind === "messages"} onSelect={onSelect ? () => select({ kind: "messages" }) : undefined} />}
-            <div className="mx-auto my-2 h-px w-8 bg-[var(--workspace-rail-divider)]" />
+            {user.roles.includes("HOMEROOM_TEACHER") && <RailDestination label="Homeroom" href="/homeroom" icon={School} active={activeContext.kind === "homeroom"} onSelect={onSelect ? () => select({ kind: "homeroom" }) : undefined} />}
+            {user.roles.includes("ADMIN") && <RailDestination label="Administration" href="/admin" icon={Settings2} active={activeContext.kind === "admin"} onSelect={onSelect ? () => select({ kind: "admin" }) : undefined} />}
+            {hasCourseContexts && <div className="mx-auto my-2 h-px w-8 bg-[var(--workspace-rail-divider)]" />}
             {teaching.length > 0 && <>
               <div className="px-1 pb-1 text-center text-[9px] font-semibold uppercase tracking-wider text-slate-500">Teach</div>
               <SortableContext items={teaching.map((course) => `teacher:${course.id}`)} strategy={verticalListSortingStrategy}>
@@ -187,10 +202,10 @@ function CourseRail({ user, courses, activeContext, onSelect, onNavigate, reorde
                 {enrolled.map((course) => <SortableCourse key={`student:${course.id}`} course={course} active={activeContext.kind === "course" && activeContext.course.id === course.id && activeContext.course.roleContext === "student"} reorderEnabled={reorderEnabled} onSelect={onSelect} />)}
               </SortableContext>
             </>}
-            <div className="mx-auto my-2 h-px w-8 bg-[var(--workspace-rail-divider)]" />
-            {user.roles.includes("ADMIN") && <RailDestination label="Administration" href="/admin" icon={Settings2} active={activeContext.kind === "admin"} onSelect={onSelect ? () => select({ kind: "admin" }) : undefined} />}
-            {user.roles.includes("HOMEROOM_TEACHER") && <RailDestination label="Homeroom" href="/homeroom" icon={School} active={activeContext.kind === "homeroom"} onSelect={onSelect ? () => select({ kind: "homeroom" }) : undefined} />}
-            {user.roles.includes("PARENT") && <RailDestination label="Family" href="/parent" icon={Users} active={activeContext.kind === "family"} onSelect={onSelect ? () => select({ kind: "family" }) : undefined} />}
+            {user.roles.includes("PARENT") && <>
+              <div className="mx-auto my-2 h-px w-8 bg-[var(--workspace-rail-divider)]" />
+              <RailDestination label="Family" href="/parent" icon={Users} active={activeContext.kind === "family"} onSelect={onSelect ? () => select({ kind: "family" }) : undefined} />
+            </>}
           </div>
           <div className="flex justify-center border-t border-[var(--workspace-rail-divider)] p-2">
             <UserSettings email={user.email} name={user.name} nickname={user.nickname} image={user.image} side="right" align="end" />
@@ -219,13 +234,13 @@ function CourseSidebarSummary({ course, onCollapse }: {
         [summary.upcomingCount, "Upcoming"],
       ]
   const className = course.class?.name
+  const summarySurface = course.class?.color ? CLASS_COLOR_SURFACE_STYLES[course.class.color] : "bg-card"
 
   return (
-    <div className="shrink-0 border-b p-3">
-      <div className="flex min-w-0 items-start gap-2.5">
-        <CourseMark course={course} className="size-10 md:size-10" />
+    <div className={cn("shrink-0 border-b p-3", summarySurface)}>
+      <div className="flex min-w-0 items-start gap-2">
         <div className="min-w-0 flex-1 pt-0.5">
-          <div className="truncate text-sm font-semibold">{course.reportName || course.name}</div>
+          <div className="line-clamp-2 text-sm font-semibold leading-5">{course.reportName || course.name}</div>
           {className && <div className="truncate text-[11px] text-muted-foreground">{className}</div>}
         </div>
         {onCollapse && (
@@ -235,7 +250,7 @@ function CourseSidebarSummary({ course, onCollapse }: {
         )}
       </div>
 
-      <div className={cn("mt-3 grid overflow-hidden rounded-md border bg-background/45", course.roleContext === "teacher" ? "grid-cols-2" : "grid-cols-3")}>
+      <div className={cn("mt-2.5 grid overflow-hidden rounded-md border bg-background/55 dark:bg-background/30", course.roleContext === "teacher" ? "grid-cols-2" : "grid-cols-3")}>
         {stats.map(([value, label], index) => (
           <div key={label} className={cn(
             "min-w-0 px-2 py-1.5",
@@ -285,7 +300,7 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse, dire
                 const hasUnreadChat = context.kind === "course" && section.id === "chat" && unreadCourseIds.has(context.course.id) && !active
                 return <Link key={section.id} href={section.href} prefetch onClick={() => {
                   if (context.kind === "course") void rememberCourseSection(context.course.id, context.course.roleContext, section.id)
-                  if (context.kind === "course" && section.id === "chat") clearCourseUnread(context.course.id)
+                  if (context.kind === "course" && section.id === "chat") clearCourseUnread(context.course.id, context.course.roleContext)
                   onNavigate?.(section.href)
                 }} className={cn(
                   "flex min-h-11 items-center gap-3 rounded-md px-3 text-base transition-colors md:min-h-8 md:gap-2 md:px-2.5 md:text-sm",
@@ -366,13 +381,14 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
     if (window.history.state?.arsyncNavigator) window.history.back()
     else setMobileNavigatorOpen(false)
   }
-  const navigateFromMobile = (href?: string) => {
+  const dismissMobileNavigator = (href?: string) => {
     window.history.replaceState({ ...window.history.state, arsyncNavigator: undefined }, "")
     setMobileNavigatorOpen(false)
-    if (href) {
-      setPendingPath(href)
-      router.push(href)
-    }
+    if (href) setPendingPath(href)
+  }
+  const navigateFromMobile = (href?: string) => {
+    dismissMobileNavigator(href)
+    if (href) router.push(href)
   }
   const toggleCollapsed = () => {
     const next = !collapsed
@@ -412,8 +428,8 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
             {!isNavigating && mobileHeader.subtitle && <div className="truncate text-xs text-muted-foreground">{mobileHeader.subtitle}</div>}
           </div>
           {!isNavigating && mobileHeader.rightAction && <div className="flex items-center gap-2">{mobileHeader.rightAction}</div>}
-          <Button variant="outline" size="sm" className="md:hidden" onClick={openMobileNavigator} aria-label="Open workspace navigation">
-            <PanelLeftOpen className="size-4" /><span className="hidden min-[380px]:inline">Menu</span>
+          <Button variant="outline" size="sm" className="-mr-2 md:hidden" onClick={openMobileNavigator} aria-label="Open workspace navigation">
+            Menu
           </Button>
         </header>
 
@@ -429,14 +445,14 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
             <Button variant={mobileReorder ? "secondary" : "ghost"} size="sm" onClick={() => setMobileReorder((value) => !value)}>
               {mobileReorder ? <RotateCcw className="size-4" /> : <ArrowUpDown className="size-4" />}{mobileReorder ? "Done" : "Reorder"}
             </Button>
-            <Button variant="ghost" size="sm" onClick={closeMobileNavigator}>Close</Button>
+            <Button variant="ghost" size="sm" className="-mr-2" onClick={closeMobileNavigator}>Close</Button>
           </div>
           <SectionSidebar
             context={browseContext}
             roles={user.roles}
             pathname={displayPath}
             directMessagesEnabled={directMessagesEnabled}
-            onNavigate={(href) => navigateFromMobile(href)}
+            onNavigate={dismissMobileNavigator}
           />
         </div>
       </div>}

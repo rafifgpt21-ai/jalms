@@ -25,12 +25,15 @@ export async function getStudentLearningProfile(studentId: string, termId?: stri
                     }
                 }
             },
-            include: {
+            select: {
+                grade: true,
                 assignment: {
-                    include: {
+                    select: {
+                        maxPoints: true,
+                        academicDomains: true,
                         course: {
-                            include: {
-                                subject: true // Need subject for fallback tags
+                            select: {
+                                subject: { select: { academicDomains: true } }
                             }
                         }
                     }
@@ -48,7 +51,10 @@ export async function getStudentLearningProfile(studentId: string, termId?: stri
 
         for (const sub of submissions) {
             const assignment = sub.assignment
-            const grade = sub.grade || 0 // Should be not null due to WHERE clause
+            const grade = sub.grade || 0
+            const normalizedScore = assignment.maxPoints > 0
+                ? Math.max(0, Math.min(100, (grade / assignment.maxPoints) * 100))
+                : 0
 
             // Determine effective tags
             let domains: AcademicDomain[] = []
@@ -64,7 +70,7 @@ export async function getStudentLearningProfile(studentId: string, termId?: stri
 
             // Distribute score to each tag
             domains.forEach(domain => {
-                domainScores[domain].total += grade
+                domainScores[domain].total += normalizedScore
                 domainScores[domain].count += 1
             })
         }

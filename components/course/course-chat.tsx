@@ -57,7 +57,6 @@ export function CourseChat({
   const [content, setContent] = React.useState("")
   const [isSending, setIsSending] = React.useState(false)
   const [isLoadingOlder, setIsLoadingOlder] = React.useState(false)
-  const [connectionState, setConnectionState] = React.useState<"connecting" | "connected" | "unavailable">("connecting")
   const { setHeader, resetHeader } = useMobileHeader()
   const latestCursorRef = React.useRef<CourseChatCursor | null>(initialPage.latestCursor)
   const syncInFlightRef = React.useRef<Promise<void> | null>(null)
@@ -74,14 +73,9 @@ export function CourseChat({
     setHeader({
       title: "Chat",
       subtitle: null,
-      rightAction: (
-        <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
-          <span className={cn("size-2 rounded-full", connectionState === "connected" ? "bg-emerald-500" : connectionState === "connecting" ? "bg-amber-500" : "bg-slate-400")} />
-          {connectionState === "connected" ? "Live" : connectionState === "connecting" ? "Connecting" : "Reconnecting"}
-        </div>
-      ),
+      rightAction: null,
     })
-  }, [connectionState, setHeader])
+  }, [setHeader])
 
   const syncUpdates = React.useCallback(async () => {
     if (syncInFlightRef.current) return syncInFlightRef.current
@@ -113,7 +107,6 @@ export function CourseChat({
     try {
       pusher = getPusherClient()
     } catch {
-      setConnectionState("unavailable")
       return
     }
 
@@ -121,13 +114,7 @@ export function CourseChat({
     const channel = pusher.subscribe(channelName)
     const onMessage = () => void syncUpdates()
     const onConnected = () => {
-      setConnectionState("connected")
       void syncUpdates()
-    }
-    const onStateChange = ({ current }: { current: string }) => {
-      if (current === "connected") setConnectionState("connected")
-      else if (["unavailable", "failed", "disconnected"].includes(current)) setConnectionState("unavailable")
-      else setConnectionState("connecting")
     }
     const onVisibility = () => {
       if (!document.hidden) void syncUpdates()
@@ -135,15 +122,11 @@ export function CourseChat({
 
     channel.bind(COURSE_CHAT_EVENT, onMessage)
     channel.bind("pusher:subscription_succeeded", onConnected)
-    channel.bind("pusher:subscription_error", () => setConnectionState("unavailable"))
-    pusher.connection.bind("state_change", onStateChange)
     document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       channel.unbind(COURSE_CHAT_EVENT, onMessage)
       channel.unbind("pusher:subscription_succeeded", onConnected)
-      channel.unbind("pusher:subscription_error")
-      pusher.connection.unbind("state_change", onStateChange)
       document.removeEventListener("visibilitychange", onVisibility)
     }
   }, [courseId, syncUpdates])

@@ -1,6 +1,7 @@
 "use server"
 
 import { db as prisma } from "@/lib/db"
+import type { Prisma } from "@prisma/client"
 import { getUser } from "@/lib/actions/user.actions"
 import { revalidatePath } from "next/cache"
 
@@ -281,16 +282,23 @@ export async function getStudentDashboardStats() {
     }
 }
 
-export async function getStudentSemesters() {
+export async function getStudentSemesters(explicitStudentId?: string) {
     try {
-        const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        let studentId = explicitStudentId
+        if (!studentId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            studentId = user.id
+        }
 
         const terms = await prisma.term.findMany({
             where: {
                 courses: {
                     some: {
-                        studentIds: { has: user.id },
+                        OR: [
+                            { studentIds: { has: studentId } },
+                            { courseEnrollments: { some: { studentId, OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }] } } }
+                        ],
                         deletedAt: { isSet: false }
                     }
                 },
@@ -311,15 +319,20 @@ export async function getStudentSemesters() {
     }
 }
 
-export async function getStudentGrades(termId?: string) {
+export async function getStudentGrades(termId?: string, explicitStudentId?: string) {
     try {
-        const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        let studentId = explicitStudentId
+        if (!studentId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            studentId = user.id
+        }
 
-        const studentId = user.id
-
-        const whereClause: any = {
-            studentIds: { has: studentId },
+        const whereClause: Prisma.CourseWhereInput = {
+            OR: [
+                { studentIds: { has: studentId } },
+                { courseEnrollments: { some: { studentId, OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }] } } }
+            ],
             deletedAt: { isSet: false }
         }
 
@@ -439,14 +452,21 @@ export async function getStudentGrades(termId?: string) {
     }
 }
 
-export async function getStudentGradeHistory() {
+export async function getStudentGradeHistory(explicitStudentId?: string) {
     try {
-        const user = await getUser()
-        if (!user) return { error: "Unauthorized" }
+        let studentId = explicitStudentId
+        if (!studentId) {
+            const user = await getUser()
+            if (!user) return { error: "Unauthorized" }
+            studentId = user.id
+        }
 
         const courses = await prisma.course.findMany({
             where: {
-                studentIds: { has: user.id },
+                OR: [
+                    { studentIds: { has: studentId } },
+                    { courseEnrollments: { some: { studentId, OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }] } } }
+                ],
                 deletedAt: { isSet: false }
             },
             include: {
@@ -457,12 +477,12 @@ export async function getStudentGradeHistory() {
                     where: { deletedAt: { isSet: false } },
                     include: {
                         submissions: {
-                            where: { studentId: user.id, deletedAt: { isSet: false } }
+                            where: { studentId, deletedAt: { isSet: false } }
                         }
                     }
                 },
                 attendances: {
-                    where: { studentId: user.id, deletedAt: { isSet: false } }
+                    where: { studentId, deletedAt: { isSet: false } }
                 }
             },
             orderBy: {
@@ -470,7 +490,8 @@ export async function getStudentGradeHistory() {
             }
         })
 
-        const termGroups = new Map<string, { term: any, grades: number[] }>()
+        type GradeHistoryTerm = (typeof courses)[number]["term"]
+        const termGroups = new Map<string, { term: GradeHistoryTerm, grades: number[] }>()
 
         for (const course of courses) {
             // Calculate Grade (Logic duplicated from getStudentGrades for now)
@@ -551,7 +572,7 @@ export async function submitAssignment(assignmentId: string, content: string, at
 
         if (existing) {
             // Update existing submission
-            const updateData: any = {
+            const updateData: Prisma.SubmissionUncheckedUpdateInput = {
                 submittedAt: new Date(),
                 submissionUrl: content,
                 link: link || null
@@ -818,8 +839,8 @@ export async function submitQuizAttempt(assignmentId: string, answers: Record<st
         revalidatePath(`/student/courses/${assignmentId}/tasks`) // simplified path invalidation
         return result
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error submitting quiz:", error)
-        return { error: error.message || "Failed to submit quiz" }
+        return { error: error instanceof Error ? error.message : "Failed to submit quiz" }
     }
 }

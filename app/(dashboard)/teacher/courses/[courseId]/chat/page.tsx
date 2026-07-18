@@ -5,7 +5,7 @@ import { getCourseChatMessages } from "@/lib/actions/course-chat.actions"
 
 export default async function TeacherCourseChatPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params
-  const [session, result] = await Promise.all([auth(), getCourseChatMessages(courseId)])
+  const [session, result] = await Promise.all([auth(), getCourseChatMessages(courseId, undefined, "teacher")])
   if (!session?.user?.id || "error" in result) notFound()
   return <CourseChat courseId={courseId} currentUserId={session.user.id} initialPage={result} />
 }
