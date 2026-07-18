@@ -3,8 +3,12 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { isDirectMessagingEnabled } from "@/lib/features";
+
+const DIRECT_MESSAGES_DISABLED = "Direct messages are temporarily unavailable";
 
 export async function getConversations(explicitUserId?: string) {
+    if (!isDirectMessagingEnabled()) return [];
     const userId = explicitUserId || (await auth())?.user?.id;
     if (!userId) return [];
 
@@ -60,6 +64,7 @@ export async function getConversations(explicitUserId?: string) {
 }
 
 export async function getMessages(conversationId: string, after?: Date) {
+    if (!isDirectMessagingEnabled()) return [];
     const session = await auth();
     if (!session?.user?.id) return [];
 
@@ -111,6 +116,7 @@ export async function getMessages(conversationId: string, after?: Date) {
 }
 
 export async function getUnreadStatus() {
+    if (!isDirectMessagingEnabled()) return { hasUnread: false, unreadConversationIds: [], lastActivity: new Date(0) };
     const session = await auth();
     if (!session?.user?.id) return { hasUnread: false, unreadConversationIds: [], lastActivity: new Date(0) };
 
@@ -180,6 +186,7 @@ export async function getUnreadStatus() {
 }
 
 export async function sendMessage(conversationId: string, content: string) {
+    if (!isDirectMessagingEnabled()) return { error: DIRECT_MESSAGES_DISABLED };
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
@@ -210,6 +217,7 @@ export async function sendMessage(conversationId: string, content: string) {
 }
 
 export async function markConversationAsRead(conversationId: string) {
+    if (!isDirectMessagingEnabled()) return { error: DIRECT_MESSAGES_DISABLED };
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
@@ -244,6 +252,7 @@ export async function markConversationAsRead(conversationId: string) {
 }
 
 export async function createConversation(participantIds: string[]) {
+    if (!isDirectMessagingEnabled()) return { error: DIRECT_MESSAGES_DISABLED };
     const session = await auth();
     if (!session?.user?.id) return { error: "Unauthorized" };
 
@@ -288,6 +297,7 @@ export async function createConversation(participantIds: string[]) {
 }
 
 export async function searchUsers(query: string) {
+    if (!isDirectMessagingEnabled()) return [];
     const session = await auth();
     if (!session?.user?.id) return [];
 
@@ -326,6 +336,7 @@ export async function searchUsers(query: string) {
 // Admin Actions
 
 export async function getAllConversations() {
+    if (!isDirectMessagingEnabled()) return [];
     const session = await auth();
     // Check for ADMIN role. Adjust based on how roles are stored in session.
     // Assuming session.user.role or similar.

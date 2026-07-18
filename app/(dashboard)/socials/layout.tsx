@@ -1,6 +1,8 @@
 
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { isDirectMessagingEnabled } from "@/lib/features";
+import { getDefaultDashboardHref } from "@/lib/role-dashboard";
 
 export default async function SocialsLayout({
     children,
@@ -9,6 +11,7 @@ export default async function SocialsLayout({
 }) {
     const session = await auth();
     if (!session?.user) redirect("/auth/login");
+    if (!isDirectMessagingEnabled()) redirect(getDefaultDashboardHref(session.user.roles));
 
     return (
         <div className="flex h-full w-full overflow-hidden rounded-2xl border border-white/20 shadow-xl relative bg-white/30 dark:bg-slate-900/30 backdrop-blur-md">

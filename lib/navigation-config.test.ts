@@ -20,6 +20,7 @@ test("course navigation omits Overview for teachers and students", () => {
 
     assert.equal(sections.some((section) => section.id === "overview"), false)
     assert.equal(sections.some((section) => section.id === "tasks"), true)
+    assert.equal(sections.some((section) => section.id === "chat"), true)
   }
 })
 
@@ -36,6 +37,16 @@ test("legacy Overview history falls back to Tasks", () => {
 test("valid remembered course sections are preserved", () => {
   assert.equal(defaultCourseHref(course("teacher", "gradebook")), "/teacher/courses/course-1/gradebook")
   assert.equal(defaultCourseHref(course("student", "grades")), "/student/courses/course-1/grades")
+  assert.equal(defaultCourseHref(course("teacher", "chat")), "/teacher/courses/course-1/chat")
+  assert.equal(defaultCourseHref(course("student", "chat")), "/student/courses/course-1/chat")
+})
+
+test("direct-message destinations are omitted when the feature is disabled", () => {
+  const messages = groupsForContext({ kind: "messages" }, [], false)
+  const admin = groupsForContext({ kind: "admin" }, ["ADMIN"], false)
+
+  assert.deepEqual(messages, [])
+  assert.equal(admin.flatMap((group) => group.sections).some((section) => section.href.includes("socials")), false)
 })
 
 test("primary role dashboard roots use the shared home context", () => {

@@ -266,6 +266,11 @@ html[data-density="comfortable"] {
     padding: var(--workspace-page-padding);
   }
 
+  .workspace-content.course-chat-content {
+    overflow: hidden;
+    padding: 0;
+  }
+
   .workspace-content h1 {
     font-size: 1.25rem !important;
     line-height: 1.75rem !important;

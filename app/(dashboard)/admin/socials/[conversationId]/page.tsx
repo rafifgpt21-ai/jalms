@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { AdminChatView } from "@/components/admin/socials/admin-chat-view";
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
 import { WorkspacePage } from "@/components/workspace/workspace-page"
+import { isDirectMessagingEnabled } from "@/lib/features";
 
 interface AdminChatPageProps {
     params: {
@@ -13,6 +14,7 @@ interface AdminChatPageProps {
 }
 
 export default async function AdminChatPage({ params }: AdminChatPageProps) {
+    if (!isDirectMessagingEnabled()) redirect("/admin");
     const session = await auth();
     if (!session?.user || !session.user.roles.includes("ADMIN")) {
         redirect("/");

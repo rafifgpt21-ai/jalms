@@ -83,6 +83,25 @@ export function AttendanceRouteSkeleton({ detail = false }: { detail?: boolean }
   )
 }
 
+export function AnnouncementRouteSkeleton({ canManage = false }: { canManage?: boolean }) {
+  return (
+    <WorkspacePage aria-label="Loading announcements" aria-busy="true">
+      <WorkspacePanel className="grid overflow-hidden lg:grid-cols-[auto_minmax(24rem,1fr)]">
+        <div className={`grid ${canManage ? "grid-cols-3" : "grid-cols-2"} divide-x border-b lg:border-r lg:border-b-0`}>
+          {Array.from({ length: canManage ? 3 : 2 }, (_, index) => <div key={index} className="space-y-1.5 px-3 py-2.5"><Skeleton className="h-5 w-8" /><Skeleton className="h-3 w-16" /></div>)}
+        </div>
+        <div className="flex items-center gap-2 p-2"><Skeleton className="h-8 flex-1" /><Skeleton className="h-8 w-[8.5rem]" />{canManage && <Skeleton className="hidden h-8 w-36 sm:block" />}</div>
+      </WorkspacePanel>
+      <WorkspacePanel className="overflow-hidden">
+        <div className="flex h-12 items-center justify-between border-b bg-muted/20 px-3"><div className="space-y-1.5"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-52" /></div><Skeleton className="h-3 w-16" /></div>
+        <div className="divide-y">
+          {Array.from({ length: 5 }, (_, index) => <div key={index} className="flex gap-3 px-3 py-3 sm:px-4"><Skeleton className="size-8 shrink-0 rounded-full" /><div className="flex-1 space-y-2"><div className="flex justify-between gap-3"><div className="space-y-1.5"><Skeleton className="h-4 w-48 max-w-[50vw]" /><Skeleton className="h-3 w-40" /></div>{canManage && <Skeleton className="size-8" />}</div><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-4/5" /></div></div>)}
+        </div>
+      </WorkspacePanel>
+    </WorkspacePage>
+  )
+}
+
 export function TableRouteSkeleton() {
   return (
     <WorkspacePage aria-label="Loading list" aria-busy="true">

@@ -8,6 +8,8 @@ import { MobileHeaderProvider } from "@/components/mobile-header-context"
 import { AppearancePreferenceHydrator } from "@/components/appearance-preference-hydrator"
 import { WorkspaceShell } from "@/components/navigation/workspace-shell"
 import type { NavigationCourse } from "@/types/navigation"
+import { isDirectMessagingEnabled } from "@/lib/features"
+import { CourseChatNotificationProvider } from "@/components/course/course-chat-notification-provider"
 
 function orderCourses(courses: NavigationCourse[], order: string[]) {
   const positions = new Map(order.map((id, index) => [id, index]))
@@ -79,9 +81,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ...orderCourses(teacherCourses, workspacePreference.teachingCourseOrder),
     ...orderCourses(studentCourses, workspacePreference.enrolledCourseOrder),
   ]
+  const courseIds = [...new Set(courses.map((course) => course.id))]
+  const latestMessages = await Promise.all(courseIds.map((courseId) => db.courseChatMessage.findFirst({
+    where: { courseId, senderId: { not: session.user.id } },
+    select: { courseId: true, createdAt: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  })))
+  const latestByCourseId = new Map(latestMessages.filter((message) => message !== null).map((message) => [message.courseId, message.createdAt]))
+  const seenByCourseKey = new Map(navigationStates.map((state) => [`${state.roleContext.toLowerCase()}:${state.courseId}`, state.lastSeenChatAt]))
+  const initialUnreadCourseIds = courses.filter((course) => {
+    const latest = latestByCourseId.get(course.id)
+    const seen = seenByCourseKey.get(`${course.roleContext}:${course.id}`)
+    return latest && (!seen || latest > seen)
+  }).map((course) => course.id)
 
-  return (
-    <ChatNotificationProvider initialConversations={[]} userId={session.user.id}>
+  const directMessagesEnabled = isDirectMessagingEnabled()
+  const workspace = (
+    <CourseChatNotificationProvider courseIds={courseIds} initialUnreadCourseIds={[...new Set(initialUnreadCourseIds)]} currentUserId={session.user.id}>
       <MobileHeaderProvider>
         <AppearancePreferenceHydrator density={workspacePreference.density} theme={workspacePreference.theme} />
         <WorkspaceShell
@@ -95,10 +111,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
           }}
           courses={courses}
           channelSidebarCollapsed={workspacePreference.channelSidebarCollapsed}
+          directMessagesEnabled={directMessagesEnabled}
         >
           {children}
         </WorkspaceShell>
       </MobileHeaderProvider>
-    </ChatNotificationProvider>
+    </CourseChatNotificationProvider>
   )
+
+  return directMessagesEnabled ? (
+    <ChatNotificationProvider initialConversations={[]} userId={session.user.id}>
+      {workspace}
+    </ChatNotificationProvider>
+  ) : workspace
 }

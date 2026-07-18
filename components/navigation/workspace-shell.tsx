@@ -22,7 +22,9 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { UserSettings } from "@/components/user-settings"
 import { useMobileHeader } from "@/components/mobile-header-context"
+import { useCourseChatNotifications } from "@/components/course/course-chat-notification-provider"
 import {
+  AnnouncementRouteSkeleton,
   AttendanceRouteSkeleton,
   CourseRouteSkeleton,
   DashboardRouteSkeleton,
@@ -44,6 +46,8 @@ function PendingDestinationSkeleton({ pathname }: { pathname: string }) {
   if (/^\/student\/courses\/[^/]+\/tasks\/[^/]+\/?$/.test(pathname)) return <StudentTaskDetailRouteSkeleton />
   if (/^\/teacher\/courses\/[^/]+\/tasks\/?$/.test(pathname)) return <TaskRouteSkeleton />
   if (/^\/teacher\/courses\/[^/]+\/tasks\/[^/]+\/?$/.test(pathname) && !pathname.endsWith("/new")) return <TaskGradingRouteSkeleton />
+  if (/^\/teacher\/courses\/[^/]+\/announcements\/?$/.test(pathname)) return <AnnouncementRouteSkeleton canManage />
+  if (/^\/student\/courses\/[^/]+\/announcements\/?$/.test(pathname)) return <AnnouncementRouteSkeleton />
   if (/^\/teacher\/attendance\/[^/]+\/?$/.test(pathname)) return <AttendanceRouteSkeleton detail />
   if (pathname === "/teacher/attendance") return <AttendanceRouteSkeleton />
   if (/^\/(teacher|student)\/courses\/[^/]+/.test(pathname)) return <CourseRouteSkeleton />
@@ -122,13 +126,14 @@ function RailDestination({ label, href, active, icon: Icon, onSelect }: {
   )
 }
 
-function CourseRail({ user, courses, activeContext, onSelect, onNavigate, reorderEnabled = true }: {
+function CourseRail({ user, courses, activeContext, onSelect, onNavigate, reorderEnabled = true, directMessagesEnabled = true }: {
   user: WorkspaceUser
   courses: NavigationCourse[]
   activeContext: BrowseContext
   onSelect?: (context: BrowseContext) => void
   onNavigate?: (href: string) => void
   reorderEnabled?: boolean
+  directMessagesEnabled?: boolean
 }) {
   const [ordered, setOrdered] = React.useState(courses)
   React.useEffect(() => setOrdered(courses), [courses])
@@ -167,7 +172,7 @@ function CourseRail({ user, courses, activeContext, onSelect, onNavigate, reorde
         <aside className="flex h-full w-16 shrink-0 flex-col border-r border-[var(--workspace-rail-divider)] bg-[var(--workspace-rail)] text-[var(--workspace-rail-foreground)]">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
             <RailDestination label="Home" href={homeHref} icon={Home} active={activeContext.kind === "home"} onSelect={onNavigate ? () => onNavigate(homeHref) : undefined} />
-            <RailDestination label="Messages" href="/socials" icon={MessageSquare} active={activeContext.kind === "messages"} onSelect={onSelect ? () => select({ kind: "messages" }) : undefined} />
+            {directMessagesEnabled && <RailDestination label="Messages" href="/socials" icon={MessageSquare} active={activeContext.kind === "messages"} onSelect={onSelect ? () => select({ kind: "messages" }) : undefined} />}
             <div className="mx-auto my-2 h-px w-8 bg-[var(--workspace-rail-divider)]" />
             {teaching.length > 0 && <>
               <div className="px-1 pb-1 text-center text-[9px] font-semibold uppercase tracking-wider text-slate-500">Teach</div>
@@ -247,14 +252,16 @@ function CourseSidebarSummary({ course, onCollapse }: {
   )
 }
 
-function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
+function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse, directMessagesEnabled = true }: {
   context: BrowseContext
   roles: WorkspaceUser["roles"]
   pathname: string
   onNavigate?: (href: string) => void
   onCollapse?: () => void
+  directMessagesEnabled?: boolean
 }) {
-  const groups = groupsForContext(context, roles)
+  const groups = groupsForContext(context, roles, directMessagesEnabled)
+  const { unreadCourseIds, clearCourseUnread } = useCourseChatNotifications()
   return (
     <aside className="flex h-full w-full min-w-0 flex-col bg-[var(--workspace-sidebar)] text-foreground">
       {context.kind === "course" ? (
@@ -275,8 +282,10 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
               {group.sections.map((section) => {
                 const Icon = section.icon
                 const active = isSectionActive(pathname, section)
+                const hasUnreadChat = context.kind === "course" && section.id === "chat" && unreadCourseIds.has(context.course.id) && !active
                 return <Link key={section.id} href={section.href} prefetch onClick={() => {
                   if (context.kind === "course") void rememberCourseSection(context.course.id, context.course.roleContext, section.id)
+                  if (context.kind === "course" && section.id === "chat") clearCourseUnread(context.course.id)
                   onNavigate?.(section.href)
                 }} className={cn(
                   "flex min-h-11 items-center gap-3 rounded-md px-3 text-base transition-colors md:min-h-8 md:gap-2 md:px-2.5 md:text-sm",
@@ -284,6 +293,7 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
                 )}>
                   <Icon className="size-[18px] shrink-0 md:size-4" />
                   <span className="truncate">{section.label}</span>
+                  {hasUnreadChat && <span className="ml-auto size-2 shrink-0 rounded-full bg-red-500 ring-2 ring-red-500/15" aria-label="New chat messages" />}
                   {section.actionHref && <span className="ml-auto text-base text-muted-foreground">+</span>}
                 </Link>
               })}
@@ -295,11 +305,12 @@ function SectionSidebar({ context, roles, pathname, onNavigate, onCollapse }: {
   )
 }
 
-export function WorkspaceShell({ children, user, courses, channelSidebarCollapsed = false }: {
+export function WorkspaceShell({ children, user, courses, channelSidebarCollapsed = false, directMessagesEnabled = true }: {
   children: React.ReactNode
   user: WorkspaceUser
   courses: NavigationCourse[]
   channelSidebarCollapsed?: boolean
+  directMessagesEnabled?: boolean
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -314,6 +325,7 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
   const displayPath = pendingPath ?? pathname
   const displayContext = contextFromPath(displayPath, courses)
   const isSocials = displayPath.startsWith("/socials")
+  const isCourseChat = /^\/(teacher|student)\/courses\/[^/]+\/chat\/?$/.test(displayPath)
   const isNavigating = pendingPath !== null && pendingPath !== pathname
 
   React.useEffect(() => {
@@ -322,14 +334,15 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
-    const highPriorityRoutes = [getDefaultDashboardHref(user.roles), "/socials"]
+    const highPriorityRoutes = [getDefaultDashboardHref(user.roles)]
+    if (directMessagesEnabled) highPriorityRoutes.push("/socials")
     if (user.roles.includes("ADMIN")) highPriorityRoutes.push("/admin")
     if (user.roles.includes("SUBJECT_TEACHER")) highPriorityRoutes.push("/teacher")
     if (user.roles.includes("STUDENT")) highPriorityRoutes.push("/student")
     if (user.roles.includes("HOMEROOM_TEACHER")) highPriorityRoutes.push("/homeroom")
     if (user.roles.includes("PARENT")) highPriorityRoutes.push("/parent")
 
-    const siblingRoutes = groupsForContext(routeContext, user.roles)
+    const siblingRoutes = groupsForContext(routeContext, user.roles, directMessagesEnabled)
       .flatMap((group) => group.sections)
       .map((section) => section.href)
 
@@ -367,7 +380,7 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
     void updateWorkspacePreference({ density: document.documentElement.dataset.density === "comfortable" ? "comfortable" : "compact", theme: (document.documentElement.dataset.theme as "system" | "light" | "dark") || "system", channelSidebarCollapsed: next })
   }
 
-  const activeGroups = groupsForContext(displayContext, user.roles)
+  const activeGroups = groupsForContext(displayContext, user.roles, directMessagesEnabled)
   const activeSection = activeGroups.flatMap((group) => group.sections).find((section) => isSectionActive(displayPath, section))
   const pageTitle = pendingPath ? activeSection?.label || contextLabel(displayContext) : mobileHeader.title || activeSection?.label || contextLabel(displayContext)
 
@@ -380,13 +393,13 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
       <div className="hidden md:flex" onClick={(event) => {
         const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[href]")
         if (link) beginNavigation(link.pathname)
-      }}><CourseRail user={user} courses={courses} activeContext={displayContext} /></div>
+      }}><CourseRail user={user} courses={courses} activeContext={displayContext} directMessagesEnabled={directMessagesEnabled} /></div>
 
-      {!collapsed && <div className="hidden w-60 shrink-0 border-r lg:flex"><SectionSidebar context={displayContext} roles={user.roles} pathname={displayPath} onNavigate={beginNavigation} onCollapse={toggleCollapsed} /></div>}
+      {!collapsed && <div className="hidden w-60 shrink-0 border-r lg:flex"><SectionSidebar context={displayContext} roles={user.roles} pathname={displayPath} onNavigate={beginNavigation} onCollapse={toggleCollapsed} directMessagesEnabled={directMessagesEnabled} /></div>}
 
       {tabletSectionsOpen && <div className="fixed inset-0 z-50 hidden md:flex lg:hidden">
         <button className="absolute inset-0 bg-black/40" onClick={() => setTabletSectionsOpen(false)} aria-label="Close sections" />
-        <div className="relative ml-16 w-60 border-r shadow-xl"><SectionSidebar context={displayContext} roles={user.roles} pathname={displayPath} onNavigate={(href) => { beginNavigation(href); setTabletSectionsOpen(false) }} /></div>
+        <div className="relative ml-16 w-60 border-r shadow-xl"><SectionSidebar context={displayContext} roles={user.roles} pathname={displayPath} onNavigate={(href) => { beginNavigation(href); setTabletSectionsOpen(false) }} directMessagesEnabled={directMessagesEnabled} /></div>
       </div>}
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -404,13 +417,13 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
           </Button>
         </header>
 
-        <main className={cn("workspace-content min-h-0 flex-1 overflow-y-auto", isSocials && "p-0")}>
+        <main className={cn("workspace-content min-h-0 flex-1 overflow-y-auto", isSocials && "p-0", isCourseChat && "course-chat-content")}>
           {isNavigating ? <PendingDestinationSkeleton pathname={displayPath} /> : children}
         </main>
       </div>
 
       {mobileNavigatorOpen && <div className="fixed inset-0 z-[100] flex bg-background md:hidden">
-        <CourseRail user={user} courses={courses} activeContext={browseContext} onSelect={setBrowseContext} onNavigate={navigateFromMobile} reorderEnabled={mobileReorder} />
+        <CourseRail user={user} courses={courses} activeContext={browseContext} onSelect={setBrowseContext} onNavigate={navigateFromMobile} reorderEnabled={mobileReorder} directMessagesEnabled={directMessagesEnabled} />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="workspace-topbar flex h-14 min-h-14 items-center justify-between gap-2 border-b bg-[var(--workspace-header)] px-4 py-1.5">
             <Button variant={mobileReorder ? "secondary" : "ghost"} size="sm" onClick={() => setMobileReorder((value) => !value)}>
@@ -422,6 +435,7 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
             context={browseContext}
             roles={user.roles}
             pathname={displayPath}
+            directMessagesEnabled={directMessagesEnabled}
             onNavigate={(href) => navigateFromMobile(href)}
           />
         </div>

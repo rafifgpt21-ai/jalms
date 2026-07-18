@@ -141,6 +141,7 @@ model User {
   courseEnrollments     CourseEnrollment[]
   courseNavigationState CourseNavigationState[]
   courseAnnouncements   CourseAnnouncement[]     @relation("CourseAnnouncementAuthor")
+  courseChatMessages    CourseChatMessage[]       @relation("CourseChatMessageSender")
   workspacePreference   UserWorkspacePreference?
 }
 
@@ -285,6 +286,7 @@ model Course {
 
   navigationStates CourseNavigationState[]
   announcements    CourseAnnouncement[]
+  chatMessages     CourseChatMessage[]
 
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
@@ -464,6 +466,7 @@ model CourseNavigationState {
   roleContext            CourseRoleContext
   lastSectionKey         String            @default("overview")
   lastSeenAnnouncementAt DateTime?
+  lastSeenChatAt         DateTime?
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
 
@@ -489,6 +492,20 @@ model CourseAnnouncement {
 
   @@index([courseId, publishedAt])
   @@index([authorId])
+}
+
+model CourseChatMessage {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  senderId String @db.ObjectId
+  sender   User   @relation("CourseChatMessageSender", fields: [senderId], references: [id])
+
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([courseId, createdAt])
+  @@index([senderId])
 }
 
 model AcademicRollover {

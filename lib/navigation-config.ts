@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import {
   Activity, BookOpen, Calendar, CalendarRange, Clock, FileQuestion, FileText,
   GraduationCap, LayoutDashboard, Library, ListTodo, MessageSquare,
-  PieChart, RotateCcw, School, Settings, Table, Users,
+  MessagesSquare, PieChart, RotateCcw, School, Settings, Table, Users,
 } from "lucide-react"
 import type { Role } from "@prisma/client"
 import type { NavigationCourse } from "@/types/navigation"
@@ -45,18 +45,19 @@ export function contextFromPath(pathname: string, courses: NavigationCourse[]): 
 export function defaultCourseHref(course: NavigationCourse) {
   const base = `/${course.roleContext}/courses/${course.id}`
   const allowed = course.roleContext === "teacher"
-    ? new Set(["announcements", "tasks", "materials", "tasks-summary", "attendance", "gradebook", "settings"])
-    : new Set(["announcements", "tasks", "materials", "grades", "attendance"])
+    ? new Set(["announcements", "chat", "tasks", "materials", "tasks-summary", "attendance", "gradebook", "settings"])
+    : new Set(["announcements", "chat", "tasks", "materials", "grades", "attendance"])
   const key = course.lastSectionKey && allowed.has(course.lastSectionKey) ? course.lastSectionKey : "tasks"
   return `${base}/${key}`
 }
 
-export function groupsForContext(context: BrowseContext, roles: Role[]): NavigationGroup[] {
+export function groupsForContext(context: BrowseContext, roles: Role[], directMessagesEnabled = true): NavigationGroup[] {
   if (context.kind === "course") {
     const base = `/${context.course.roleContext}/courses/${context.course.id}`
     if (context.course.roleContext === "teacher") return [
       { id: "course", sections: [
         { id: "announcements", label: "Announcements", href: `${base}/announcements`, icon: MessageSquare },
+        { id: "chat", label: "Chat", href: `${base}/chat`, icon: MessagesSquare },
       ] },
       { id: "classroom", label: "Classroom", sections: [
         { id: "tasks", label: "Tasks", href: `${base}/tasks`, icon: ListTodo, actionHref: `${base}/tasks/new` },
@@ -72,6 +73,7 @@ export function groupsForContext(context: BrowseContext, roles: Role[]): Navigat
     return [
       { id: "course", sections: [
         { id: "announcements", label: "Announcements", href: `${base}/announcements`, icon: MessageSquare },
+        { id: "chat", label: "Chat", href: `${base}/chat`, icon: MessagesSquare },
       ] },
       { id: "learn", label: "Learn", sections: [
         { id: "tasks", label: "Tasks", href: `${base}/tasks`, icon: ListTodo },
@@ -84,10 +86,10 @@ export function groupsForContext(context: BrowseContext, roles: Role[]): Navigat
     ]
   }
 
-  if (context.kind === "admin") return [{ id: "admin", sections: ADMIN_NAV_SECTIONS }]
+  if (context.kind === "admin") return [{ id: "admin", sections: directMessagesEnabled ? ADMIN_NAV_SECTIONS : ADMIN_NAV_SECTIONS.filter((section) => section.id !== "socials") }]
   if (context.kind === "homeroom") return [{ id: "homeroom", sections: [{ id: "class", label: "My Class", href: "/homeroom", icon: School }] }]
   if (context.kind === "family") return [{ id: "family", sections: [{ id: "overview", label: "Family Overview", href: "/parent", icon: Users }] }]
-  if (context.kind === "messages") return [{ id: "messages", sections: [{ id: "messages", label: "Direct Messages", href: "/socials", icon: MessageSquare }] }]
+  if (context.kind === "messages") return directMessagesEnabled ? [{ id: "messages", sections: [{ id: "messages", label: "Direct Messages", href: "/socials", icon: MessageSquare }] }] : []
 
   const groups: NavigationGroup[] = []
   if (roles.includes("SUBJECT_TEACHER")) groups.push({ id: "teaching", label: "Teaching", sections: [
