@@ -1,85 +1,44 @@
-import { getStudentGradesForTeacher, getStudentSemestersForTeacher, getStudentGradeHistoryForTeacher, getStudentBasicInfo } from "@/lib/actions/homeroom.actions"
-import { SemesterSelector } from "@/components/student/grades/semester-selector"
-import { GradeStatistics } from "@/components/student/grades/grade-statistics"
-import { GradesTable } from "@/components/student/grades/grades-table"
 import { MobileHeaderSetter } from "@/components/mobile-header-setter"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import dynamicLoader from "next/dynamic"
-import { Skeleton } from "@/components/ui/skeleton"
-import { WorkspaceActions } from "@/components/workspace/workspace-page"
+import { HomeroomStudentGradesView } from "@/components/homeroom/student-grades-view"
+import { WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
+import { getStudentBasicInfo, getStudentGradeHistoryForTeacher, getStudentGradesForTeacher, getStudentSemestersForTeacher } from "@/lib/actions/homeroom.actions"
 
-const GradeHistoryChart = dynamicLoader(
-    () => import("@/components/student/grades/grade-history-chart")
-)
-
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 interface PageProps {
-    params: Promise<{
-        classId: string
-        studentId: string
-    }>
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  params: Promise<{ classId: string; studentId: string }>
+  searchParams: Promise<{ termId?: string | string[] }>
 }
 
-export default async function TeacherStudentGradesPage(props: PageProps) {
-    const params = await props.params;
+export default async function TeacherStudentGradesPage({ params, searchParams }: PageProps) {
+  const [{ classId, studentId }, resolvedSearchParams] = await Promise.all([params, searchParams])
+  const termId = typeof resolvedSearchParams.termId === "string" ? resolvedSearchParams.termId : undefined
+  const [studentResult, gradesResult, semestersResult, historyResult] = await Promise.all([
+    getStudentBasicInfo(studentId),
+    getStudentGradesForTeacher(studentId, termId),
+    getStudentSemestersForTeacher(studentId),
+    getStudentGradeHistoryForTeacher(studentId),
+  ])
 
-    const { classId, studentId } = params;
+  if (studentResult.error || gradesResult.error || semestersResult.error || historyResult.error || !studentResult.student) {
+    return <WorkspacePage><WorkspacePanel className="border-destructive/30 px-4 py-8 text-center text-sm text-destructive">Unable to load this student&apos;s grades.</WorkspacePanel></WorkspacePage>
+  }
 
-    const resolvedSearchParams = await props.searchParams
-    const termId = typeof resolvedSearchParams.termId === 'string' ? resolvedSearchParams.termId : undefined
+  const grades = gradesResult.grades ?? []
+  const semesters = semestersResult.semesters ?? []
+  const history = historyResult.history ?? []
+  const selectedTermId = termId || semesters.find((semester) => semester.isActive)?.id || "all"
+  let semesterTitle = "Active semester"
+  if (termId === "all") semesterTitle = "All grade history"
+  else if (termId) {
+    const selectedSemester = semesters.find((semester) => semester.id === termId)
+    if (selectedSemester) semesterTitle = `${selectedSemester.academicYear.name} · ${selectedSemester.type === "ODD" ? "Odd" : "Even"} semester`
+  }
 
-    const [studentRes, gradesRes, semestersRes, historyRes] = await Promise.all([
-        getStudentBasicInfo(studentId),
-        getStudentGradesForTeacher(studentId, termId),
-        getStudentSemestersForTeacher(studentId),
-        getStudentGradeHistoryForTeacher(studentId)
-    ])
-
-    if ('error' in studentRes || 'error' in gradesRes || 'error' in semestersRes || 'error' in historyRes) {
-        return <div className="p-8 text-red-500 bg-red-50 rounded-lg">Error loading grades data</div>
-    }
-
-    const { student } = studentRes as { student: { name: string, email: string } }
-    const { grades } = gradesRes as { grades: any[] }
-    const { semesters } = semestersRes as { semesters: any[] }
-    const { history } = historyRes as { history: any[] }
-
-    // Determine display title for the table
-    let semesterTitle = "Active Semester"
-    if (termId === 'all') {
-        semesterTitle = "All History"
-    } else if (termId) {
-        const selectedSemester = semesters.find(s => s.id === termId)
-        if (selectedSemester) {
-            semesterTitle = `${selectedSemester.academicYear.name} ${selectedSemester.type}`
-        }
-    }
-
-    return (
-        <div className="space-y-6">
-            <MobileHeaderSetter title={`${student.name}'s Grades`} subtitle={student.email} />
-            <WorkspaceActions>
-                <Button variant="ghost" size="sm" asChild className="-ml-3">
-                    <Link href={`/homeroom/${classId}`}>
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Class
-                    </Link>
-                </Button>
-            </WorkspaceActions>
-
-            <GradeHistoryChart history={history} />
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <SemesterSelector semesters={semesters} />
-            </div>
-
-            <GradeStatistics grades={grades} />
-
-            <GradesTable grades={grades} semesterTitle={semesterTitle} />
-        </div>
-    )
+  return (
+    <WorkspacePage>
+      <MobileHeaderSetter title={`${studentResult.student.name}'s grades`} subtitle={studentResult.student.email} backLink={`/homeroom/${classId}`} />
+      <HomeroomStudentGradesView grades={grades} semesters={semesters} history={history} semesterTitle={semesterTitle} selectedTermId={selectedTermId} />
+    </WorkspacePage>
+  )
 }

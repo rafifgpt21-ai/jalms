@@ -1,6 +1,6 @@
 import { getHomeroomClassDetails } from "@/lib/actions/homeroom.actions"
 import { ClassDetailsView } from "@/components/homeroom/class-details-view"
-import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
 
 export const dynamic = 'force-dynamic'
 
@@ -18,13 +18,12 @@ export default async function HomeroomClassPage(props: PageProps) {
     const { classData, students, error } = await getHomeroomClassDetails(classId)
 
     if (error || !classData || !students) {
-        return <div className="p-8 text-red-500 bg-red-50 rounded-lg">Error: {error || "Failed to load class data"}</div>
+        return <WorkspacePage><WorkspacePanel className="border-destructive/30 px-4 py-8 text-center text-sm text-destructive">{error || "Failed to load class data"}</WorkspacePanel></WorkspacePage>
     }
 
     return (
-        <div className="space-y-6">
-            <MobileHeaderSetter title={classData.name} />
+        <WorkspacePage>
             <ClassDetailsView classData={classData} students={students!} />
-        </div>
+        </WorkspacePage>
     )
 }

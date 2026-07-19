@@ -1,7 +1,7 @@
 # ARSync Current Design System
 
 Status: current implementation reference  
-Updated: 2026-07-16<br>
+Updated: 2026-07-19<br>
 Audience: agents and developers making UI changes, adding components, or creating pages
 
 ## 1. Purpose and authority
@@ -263,6 +263,8 @@ Student course sections:
 - Attendance.
 
 Administration and the Home context use the centralized configuration in `lib/navigation-config.ts`. Administration and Homeroom retain dedicated rail contexts and expose their menus only after their rail icons are selected. The Home section sidebar combines the authorized Teaching, Learning, and Family menus and separates each visible role group with a divider. Add or change shared destinations there rather than hardcoding a second navigation list.
+
+Administration includes a **Miscellaneous** destination for shared settings that do not yet justify a dedicated management area. Keep its contents as clearly labeled independent panels rather than an unstructured catch-all form.
 
 Detail routes keep their parent section active through prefix matching. A course remembers its last visited valid section and reopens there from the rail.
 
@@ -529,6 +531,16 @@ Recommended composition:
 - Show inline validation close to the field.
 - Use optimistic success only when rollback/error handling is clear.
 - For long forms, use a sticky action region rather than duplicating save buttons throughout the page.
+
+### Homeroom and report cards
+
+- Homeroom uses the same compact workspace language as management and grading pages: summary/search controls in one operational strip, a mobile card list, and a desktop table where comparison benefits from columns.
+- Student rows expose Grades and Report as visible actions. Do not hide these primary homeroom tasks behind an overflow menu.
+- The retained top bar owns record identity and Back navigation on class, student-grade, report-editor, and report-preview routes. Do not repeat breadcrumbs or large identity headers inside page content.
+- The report editor groups read-only academic results, attendance, extracurriculars, achievements, personal development, and the homeroom note into restrained workspace panels. Its first panel contains report status and save/preview actions in no more than two mobile rows.
+- PDF rendering remains a separate formal document system. The report card retains its legacy black-and-white, Times-based document design; workspace redesigns must not restyle the generated report. Load the PDF renderer only on the preview route and use a structural preview fallback rather than a spinner or blank screen.
+- Principal names are admin-owned shared settings under Administration → Miscellaneous. Store one SMP principal for grades 7–9 and one SMA principal for grades 10–12. Resolve the appropriate name from the class's explicit `gradeLevel` on the server when a report is saved; published reports retain that saved name as their signature snapshot.
+- Homeroom teachers may see the resolved principal in the report editor but must not be able to change the global principal there.
 
 ### Empty, error, and permission states
 

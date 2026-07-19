@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "db:seed": "npx tsx prisma/seed.ts",
     "db:seed-admin": "npx tsx prisma/seed-admin.ts",
     "db:reset": "npx tsx prisma/reset-db.ts",
     "db:populate": "npx tsx prisma/populate-db.ts",

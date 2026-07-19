@@ -2,8 +2,18 @@
 
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
-import { getGradingScaleDefaults, getPrincipalName } from "@/lib/actions/system-config.actions"
+import { readPrincipalNameForGrade } from "@/lib/school-principals"
 import { revalidatePath } from "next/cache"
+import type { Prisma } from "@prisma/client"
+import type {
+    ReportAchievement,
+    ReportAttendanceSummary,
+    ReportCompetencyRule,
+    ReportDevelopment,
+    ReportExtracurricular,
+} from "@/lib/report-card"
+
+type ReportGradingScale = { grade: string; min: number; max: number }
 
 export async function getHomeroomClasses() {
     try {
@@ -199,13 +209,20 @@ export async function getStudentReportCard(studentId: string, classId: string) {
                 where: { id: classId },
                 include: {
                     term: { include: { academicYear: true } },
-                    homeroomTeacher: true
+                    homeroomTeacher: true,
+                    students: {
+                        where: { studentId, deletedAt: { isSet: false } },
+                        select: { id: true },
+                        take: 1
+                    }
                 }
             })
         ])
 
         if (!user) return { error: "Unauthorized" }
         if (!classData) return { error: "Class not found" }
+        if (classData.homeroomTeacherId !== user.id && !user.roles.includes("ADMIN")) return { error: "Unauthorized" }
+        if (!classData.students.length) return { error: "Student is not enrolled in this class" }
 
         // 1. Check for existing published report card
         const existingReport = await prisma.reportCard.findFirst({
@@ -218,11 +235,15 @@ export async function getStudentReportCard(studentId: string, classId: string) {
         })
 
         if (existingReport) {
-            return {
-                student: await prisma.user.findUnique({ 
+            const [student, configuredPrincipalName] = await Promise.all([
+                prisma.user.findUnique({
                     where: { id: studentId },
-                    select: { id: true, name: true, image: true, email: true }
+                    select: { id: true, name: true, image: true, email: true, nis: true, nisn: true, officialId: true }
                 }),
+                existingReport.principalName ? Promise.resolve("") : readPrincipalNameForGrade(classData.gradeLevel),
+            ])
+            return {
+                student,
                 classData,
                 courses: existingReport.courseGrades,
                 extracurriculars: existingReport.extracurriculars,
@@ -230,7 +251,7 @@ export async function getStudentReportCard(studentId: string, classId: string) {
                 development: existingReport.development,
                 attendance: existingReport.attendance,
                 homeroomTeacherNote: existingReport.homeroomTeacherNote,
-                principalName: existingReport.principalName,
+                principalName: existingReport.principalName || configuredPrincipalName,
                 generatedAt: existingReport.updatedAt,
                 isSnapshot: true
             }
@@ -238,7 +259,7 @@ export async function getStudentReportCard(studentId: string, classId: string) {
 
         // 2. Generate on the fly (Parallelize all remaining fetches)
         console.time(`[REPORT_BENCHMARK] DB Fetch - ${studentId}`)
-        const [student, sysConfig, rawCourses, draftReport, globalPrincipalName] = await Promise.all([
+        const [student, sysConfig, rawCourses, draftReport, configuredPrincipalName] = await Promise.all([
             prisma.user.findUnique({
                 where: { id: studentId },
                 include: {
@@ -298,14 +319,14 @@ export async function getStudentReportCard(studentId: string, classId: string) {
                     published: false
                 }
             }),
-            getPrincipalName()
+            readPrincipalNameForGrade(classData.gradeLevel)
         ])
         console.timeEnd(`[REPORT_BENCHMARK] DB Fetch - ${studentId}`)
 
         if (!student) return { error: "Student not found" }
 
         console.time(`[REPORT_BENCHMARK] JS Processing - ${studentId}`)
-        const gradingScale: any[] = (sysConfig?.value as any[]) || []
+        const gradingScale = (Array.isArray(sysConfig?.value) ? sysConfig.value : []) as unknown as ReportGradingScale[]
 
         const courses = rawCourses.map(course => {
             const studentAttendance = course.attendances
@@ -361,9 +382,9 @@ export async function getStudentReportCard(studentId: string, classId: string) {
                 else letterGrade = "D"
             }
 
-            const competencyRules = course.competencyRules as any[]
-            if (competencyRules && Array.isArray(competencyRules)) {
-                const rule = competencyRules.find((r: any) => r.grade === letterGrade)
+            const competencyRules = (Array.isArray(course.competencyRules) ? course.competencyRules : []) as unknown as ReportCompetencyRule[]
+            if (competencyRules.length) {
+                const rule = competencyRules.find((candidate) => candidate.grade === letterGrade)
                 if (rule && rule.description) {
                     competencyDesc = rule.description
                 }
@@ -383,9 +404,9 @@ export async function getStudentReportCard(studentId: string, classId: string) {
 
         // Optimize attendance calculation
         const calculatedAttendance = { sick: 0, excused: 0, alpha: 0 }
-        const attendanceMap = new Map<string, string>()
+        const attendanceMap = new Map<string, "ALPHA" | "SAKIT" | "IZIN">()
 
-        student.attendances.forEach((att: any) => {
+        student.attendances.forEach((att) => {
             // att.date is already a Date object - reuse it efficiently
             const dateKey = att.date.toISOString().slice(0, 10)
             const currentStatus = attendanceMap.get(dateKey)
@@ -422,9 +443,14 @@ export async function getStudentReportCard(studentId: string, classId: string) {
 
         let attendanceData = calculatedAttendance
         if (draftReport && draftReport.attendance) {
-            const dAtt = draftReport.attendance as any
-            if (dAtt.sick > 0 || dAtt.excused > 0 || dAtt.alpha > 0) {
-                attendanceData = dAtt
+            const draftAttendance = draftReport.attendance as unknown as Partial<ReportAttendanceSummary>
+            const normalizedDraftAttendance = {
+                sick: Number(draftAttendance.sick) || 0,
+                excused: Number(draftAttendance.excused) || 0,
+                alpha: Number(draftAttendance.alpha) || 0,
+            }
+            if (normalizedDraftAttendance.sick > 0 || normalizedDraftAttendance.excused > 0 || normalizedDraftAttendance.alpha > 0) {
+                attendanceData = normalizedDraftAttendance
             } else if (calculatedAttendance.sick > 0 || calculatedAttendance.excused > 0 || calculatedAttendance.alpha > 0) {
                 attendanceData = calculatedAttendance
             }
@@ -440,7 +466,7 @@ export async function getStudentReportCard(studentId: string, classId: string) {
             development: draftReport?.development || [],
             attendance: attendanceData,
             homeroomTeacherNote: draftReport?.homeroomTeacherNote || "",
-            principalName: draftReport?.principalName || globalPrincipalName || "",
+            principalName: configuredPrincipalName,
             generatedAt: new Date(),
             isSnapshot: false,
             gradingScale,
@@ -457,12 +483,11 @@ export async function upsertReportCard(
     classId: string,
     studentId: string,
     data: {
-        extracurriculars: any[]
-        achievements: any[]
-        development: any[]
-        attendance: any
+        extracurriculars: ReportExtracurricular[]
+        achievements: ReportAchievement[]
+        development: ReportDevelopment[]
+        attendance: ReportAttendanceSummary
         homeroomTeacherNote: string
-        principalName: string
         published: boolean
     }
 ) {
@@ -481,42 +506,40 @@ export async function upsertReportCard(
             return { error: "Unauthorized" }
         }
 
-        // Fetch System Grading Scale
-        const sysConfig = await prisma.systemConfig.findUnique({
-            where: { id: "grading_scale" }
-        })
-        const gradingScale: any[] = (sysConfig?.value as any[]) || []
-
-        // Fetch courses and calc grades
-        const rawCourses = await prisma.course.findMany({
-            where: {
-                studentIds: { has: studentId },
-                termId: classData.termId,
-                deletedAt: { isSet: false }
-            },
-            include: {
-                subject: { select: { reportName: true, name: true, code: true } },
-                teacher: { select: { name: true } },
-                assignments: {
-                    where: { deletedAt: { isSet: false } },
-                    select: {
-                        id: true,
-                        maxPoints: true,
-                        isExtraCredit: true,
-                        dueDate: true,
-                        latePenalty: true,
-                        submissions: { 
-                            where: { studentId, deletedAt: { isSet: false } },
-                            select: { grade: true, submittedAt: true }
-                        }
-                    }
+        const [sysConfig, rawCourses, principalName] = await Promise.all([
+            prisma.systemConfig.findUnique({ where: { id: "grading_scale" } }),
+            prisma.course.findMany({
+                where: {
+                    studentIds: { has: studentId },
+                    termId: classData.termId,
+                    deletedAt: { isSet: false }
                 },
-                attendances: {
-                    where: { studentId, deletedAt: { isSet: false } },
-                    select: { status: true }
+                include: {
+                    subject: { select: { reportName: true, name: true, code: true } },
+                    teacher: { select: { name: true } },
+                    assignments: {
+                        where: { deletedAt: { isSet: false } },
+                        select: {
+                            id: true,
+                            maxPoints: true,
+                            isExtraCredit: true,
+                            dueDate: true,
+                            latePenalty: true,
+                            submissions: {
+                                where: { studentId, deletedAt: { isSet: false } },
+                                select: { grade: true, submittedAt: true }
+                            }
+                        }
+                    },
+                    attendances: {
+                        where: { studentId, deletedAt: { isSet: false } },
+                        select: { status: true }
+                    }
                 }
-            }
-        })
+            }),
+            readPrincipalNameForGrade(classData.gradeLevel),
+        ])
+        const gradingScale = (Array.isArray(sysConfig?.value) ? sysConfig.value : []) as unknown as ReportGradingScale[]
 
         const courseGrades = rawCourses.map(course => {
             const studentAttendance = course.attendances
@@ -573,9 +596,9 @@ export async function upsertReportCard(
                 else letterGrade = "D"
             }
 
-            const competencyRules = course.competencyRules as any[]
-            if (competencyRules && Array.isArray(competencyRules)) {
-                const rule = competencyRules.find((r: any) => r.grade === letterGrade)
+            const competencyRules = (Array.isArray(course.competencyRules) ? course.competencyRules : []) as unknown as ReportCompetencyRule[]
+            if (competencyRules.length) {
+                const rule = competencyRules.find((candidate) => candidate.grade === letterGrade)
                 if (rule && rule.description) {
                     competencyDesc = rule.description
                 }
@@ -604,12 +627,12 @@ export async function upsertReportCard(
                 where: { id: existing.id },
                 data: {
                     courseGrades,
-                    extracurriculars: data.extracurriculars,
-                    achievements: data.achievements,
-                    development: data.development,
-                    attendance: data.attendance,
+                    extracurriculars: data.extracurriculars as unknown as Prisma.InputJsonValue[],
+                    achievements: data.achievements as unknown as Prisma.InputJsonValue[],
+                    development: data.development as unknown as Prisma.InputJsonValue[],
+                    attendance: data.attendance as unknown as Prisma.InputJsonValue,
                     homeroomTeacherNote: data.homeroomTeacherNote,
-                    principalName: data.principalName,
+                    principalName,
                     published: data.published
                 }
             })
@@ -620,12 +643,12 @@ export async function upsertReportCard(
                     classId,
                     termId: classData.termId,
                     courseGrades,
-                    extracurriculars: data.extracurriculars,
-                    achievements: data.achievements,
-                    development: data.development,
-                    attendance: data.attendance,
+                    extracurriculars: data.extracurriculars as unknown as Prisma.InputJsonValue[],
+                    achievements: data.achievements as unknown as Prisma.InputJsonValue[],
+                    development: data.development as unknown as Prisma.InputJsonValue[],
+                    attendance: data.attendance as unknown as Prisma.InputJsonValue,
                     homeroomTeacherNote: data.homeroomTeacherNote,
-                    principalName: data.principalName,
+                    principalName,
                     published: data.published
                 }
             })
@@ -651,7 +674,7 @@ export async function getStudentBasicInfo(studentId: string) {
         })
 
         return { student }
-    } catch (error) {
+    } catch {
         return { error: "Failed to fetch student" }
     }
 }
@@ -694,7 +717,7 @@ export async function getStudentGradesForTeacher(studentId: string, termId?: str
         const user = await getUser()
         if (!user) return { error: "Unauthorized" }
 
-        const whereClause: any = {
+        const whereClause: Prisma.CourseWhereInput = {
             studentIds: { has: studentId },
             deletedAt: { isSet: false }
         }
@@ -823,7 +846,7 @@ export async function getStudentGradeHistoryForTeacher(studentId: string) {
             }
         })
 
-        const termGroups = new Map<string, { term: any, grades: number[] }>()
+        const termGroups = new Map<string, { term: Prisma.TermGetPayload<{ include: { academicYear: true } }>, grades: number[] }>()
 
         for (const course of courses) {
             const totalSessions = course.attendances.filter(a => a.status !== "SKIPPED").length

@@ -1,416 +1,166 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
+import Link from "next/link"
+import { Eye, FileCheck2, Loader2, Plus, RefreshCcw, Save, Send, Trash2, UserRoundCheck } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { upsertReportCard } from "@/lib/actions/homeroom.actions"
+import { educationStage, gradeLevelLabel } from "@/lib/grade-level"
+import type {
+  ReportAchievement,
+  ReportAttendanceSummary,
+  ReportClassData,
+  ReportCourseResult,
+  ReportDevelopment,
+  ReportExtracurricular,
+  ReportStudent,
+} from "@/lib/report-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Plus, Trash, FileCheck, Save, Loader2, RotateCcw, Eye, ExternalLink, Activity, UserCheck, XCircle } from "lucide-react"
-import { upsertReportCard } from "@/lib/actions/homeroom.actions"
-import { updatePrincipalName } from "@/lib/actions/system-config.actions"
-import { toast } from "sonner"
-import { useRouter, useParams } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
+import { WorkspacePanel } from "@/components/workspace/workspace-page"
 
 interface ReportCardFormProps {
-    student: any
-    classData: any
-    courses: any[]
-    extracurriculars: any[]
-    achievements: any[]
-    development: any[]
-    attendance: any
-    homeroomTeacherNote: string
-    principalName: string
-    isSnapshot: boolean
-    gradingScale: any[]
-    calculatedAttendance?: any // { sick: number, excused: number, alpha: number }
+  student: ReportStudent
+  classData: ReportClassData
+  courses: ReportCourseResult[]
+  extracurriculars: ReportExtracurricular[]
+  achievements: ReportAchievement[]
+  development: ReportDevelopment[]
+  attendance: ReportAttendanceSummary
+  homeroomTeacherNote: string
+  principalName: string
+  isSnapshot: boolean
+  calculatedAttendance?: ReportAttendanceSummary
+}
+
+function PanelHeading({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
+  return <div className="flex min-h-12 items-center justify-between gap-3 border-b px-4 py-2.5"><div><h2 className="text-sm font-semibold">{title}</h2><p className="text-xs text-muted-foreground">{description}</p></div>{action}</div>
 }
 
 export function ReportCardForm({
-    student,
-    classData,
-    courses,
-    extracurriculars: initialExtra,
-    achievements: initialAch,
-    development: initialDev,
-    attendance: initialAtt,
-    homeroomTeacherNote: initialNote,
-    principalName: initialPrincipal,
-    isSnapshot,
-    gradingScale,
-    calculatedAttendance
+  student,
+  classData,
+  courses,
+  extracurriculars: initialExtracurriculars,
+  achievements: initialAchievements,
+  development: initialDevelopment,
+  attendance: initialAttendance,
+  homeroomTeacherNote: initialNote,
+  principalName,
+  isSnapshot,
+  calculatedAttendance,
 }: ReportCardFormProps) {
-    const router = useRouter()
-    const { classId, studentId } = useParams()
+  const router = useRouter()
+  const [extracurriculars, setExtracurriculars] = useState(initialExtracurriculars)
+  const [achievements, setAchievements] = useState(initialAchievements)
+  const [development, setDevelopment] = useState(initialDevelopment)
+  const [attendance, setAttendance] = useState(initialAttendance)
+  const [note, setNote] = useState(initialNote)
+  const [savingMode, setSavingMode] = useState<"draft" | "publish" | null>(null)
+  const averageGrade = courses.length ? courses.reduce((total, course) => total + course.grade, 0) / courses.length : 0
+  const stage = educationStage(classData.gradeLevel)
 
-    // State
-    const [extracurriculars, setExtracurriculars] = useState<any[]>(initialExtra)
-    const [achievements, setAchievements] = useState<any[]>(initialAch)
-    const [development, setDevelopment] = useState<any[]>(initialDev)
-    const [attendance, setAttendance] = useState<any>(initialAtt)
+  async function save(published: boolean) {
+    setSavingMode(published ? "publish" : "draft")
+    try {
+      const result = await upsertReportCard(classData.id, student.id, {
+        extracurriculars,
+        achievements,
+        development,
+        attendance: {
+          sick: Number(attendance.sick) || 0,
+          excused: Number(attendance.excused) || 0,
+          alpha: Number(attendance.alpha) || 0,
+        },
+        homeroomTeacherNote: note,
+        published,
+      })
 
-    // Separate input state
-    const [noteInput, setNoteInput] = useState(initialNote)
-    const [principalNameInput, setPrincipalNameInput] = useState(initialPrincipal)
-
-    const [isSaving, setIsSaving] = useState(false)
-    const [isPrincipalSaving, setIsPrincipalSaving] = useState(false)
-
-    // Handlers
-    const addExtra = () => setExtracurriculars([...extracurriculars, { activity: "", predicate: "", note: "" }])
-    const removeExtra = (i: number) => setExtracurriculars(extracurriculars.filter((_, idx) => idx !== i))
-    const updateExtra = (i: number, field: string, val: string) => {
-        const newArr = [...extracurriculars]
-        newArr[i] = { ...newArr[i], [field]: val }
-        setExtracurriculars(newArr)
+      if (result.error) toast.error(result.error)
+      else {
+        toast.success(published ? (isSnapshot ? "Published report updated" : "Report published") : "Draft saved")
+        router.refresh()
+      }
+    } catch {
+      toast.error("Unable to save the report card")
+    } finally {
+      setSavingMode(null)
     }
+  }
 
-    const addDev = () => setDevelopment([...development, { activity: "", note: "" }])
-    const removeDev = (i: number) => setDevelopment(development.filter((_, idx) => idx !== i))
-    const updateDev = (i: number, field: string, val: string) => {
-        const newArr = [...development]
-        newArr[i] = { ...newArr[i], [field]: val }
-        setDevelopment(newArr)
-    }
+  function updateAttendance(field: keyof ReportAttendanceSummary, value: string) {
+    setAttendance((current) => ({ ...current, [field]: Math.max(0, Number(value) || 0) }))
+  }
 
-    const addAch = () => setAchievements([...achievements, { name: "", note: "" }])
-    const removeAch = (i: number) => setAchievements(achievements.filter((_, idx) => idx !== i))
-    const updateAch = (i: number, field: string, val: string) => {
-        const newArr = [...achievements]
-        newArr[i] = { ...newArr[i], [field]: val }
-        setAchievements(newArr)
-    }
+  return (
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-[var(--workspace-section-gap)]">
+      <WorkspacePanel className="overflow-hidden">
+        <div className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><FileCheck2 className="size-5" /></span>
+            <div className="min-w-0"><div className="flex items-center gap-2"><h2 className="truncate text-sm font-semibold">{student.name}</h2><StatusBadge status={isSnapshot ? "PUBLISHED" : "DRAFT"} /></div><p className="truncate text-xs text-muted-foreground">{classData.name} · {gradeLevelLabel(classData.gradeLevel)} · {classData.term.academicYear?.name || "Current academic year"}</p></div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+            <Button variant="outline" size="sm" asChild><Link href={`/homeroom/${classData.id}/students/${student.id}/report/preview`}><Eye className="size-4" />Preview PDF</Link></Button>
+            {!isSnapshot && <Button variant="secondary" size="sm" onClick={() => save(false)} disabled={savingMode !== null}>{savingMode === "draft" ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}Save draft</Button>}
+            <Button size="sm" onClick={() => save(true)} disabled={savingMode !== null} className={isSnapshot ? "" : "col-span-2 sm:col-span-1"}>{savingMode === "publish" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}{isSnapshot ? "Save published report" : "Publish report"}</Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 divide-x border-t bg-muted/20">
+          <div className="px-3 py-2"><p className="text-sm font-semibold tabular-nums">{courses.length}</p><p className="text-[11px] uppercase tracking-wide text-muted-foreground">Subjects</p></div>
+          <div className="px-3 py-2"><p className="text-sm font-semibold tabular-nums">{averageGrade.toFixed(1)}</p><p className="text-[11px] uppercase tracking-wide text-muted-foreground">Average</p></div>
+          <div className="min-w-0 px-3 py-2"><p className="truncate text-sm font-semibold">{principalName || "Not configured"}</p><p className="text-[11px] uppercase tracking-wide text-muted-foreground">{stage} principal</p></div>
+        </div>
+      </WorkspacePanel>
 
-    const handleResetAttendance = () => {
-        if (calculatedAttendance) {
-            setAttendance(calculatedAttendance)
-            toast.info("Attendance reset to calculated values")
-        }
-    }
+      <WorkspacePanel className="overflow-hidden">
+        <PanelHeading title="Academic results" description="Calculated course results that will appear in the report." />
+        {courses.length ? <div className="divide-y">{courses.map((course, index) => (
+          <div key={course.id || `${course.name}-${index}`} className="grid grid-cols-[minmax(0,1fr)_4rem] gap-3 px-4 py-2.5 sm:grid-cols-[minmax(0,1fr)_7rem_4rem]">
+            <div className="min-w-0"><p className="truncate text-sm font-medium">{course.name}</p><p className="truncate text-xs text-muted-foreground">{course.competency || course.teacher || "No competency description"}</p></div>
+            <div className="hidden text-right sm:block"><p className="text-sm tabular-nums">{course.attendance ?? 0}%</p><p className="text-[11px] text-muted-foreground">attendance</p></div>
+            <div className="text-right"><p className="text-base font-semibold tabular-nums">{course.grade}</p><p className="text-[11px] text-muted-foreground">{course.letter || "score"}</p></div>
+          </div>
+        ))}</div> : <div className="px-4 py-8 text-center text-sm text-muted-foreground">No course results are available.</div>}
+      </WorkspacePanel>
 
-    const handleSave = async (published: boolean) => {
-        setIsSaving(true)
-        try {
-            const res = await upsertReportCard(classData.id, student.id, {
-                extracurriculars,
-                achievements,
-                development,
-                attendance: {
-                    sick: Number(attendance.sick) || 0,
-                    excused: Number(attendance.excused) || 0,
-                    alpha: Number(attendance.alpha) || 0
-                },
-                homeroomTeacherNote: noteInput,
-                principalName: principalNameInput,
-                published
-            })
+      <WorkspacePanel className="overflow-hidden">
+        <PanelHeading title="Attendance summary" description="Days absent during this semester." action={calculatedAttendance && !isSnapshot ? <Button size="sm" variant="ghost" onClick={() => { setAttendance(calculatedAttendance); toast.info("Attendance restored from recorded sessions") }}><RefreshCcw className="size-4" />Use calculated</Button> : undefined} />
+        <div className="grid gap-3 p-4 sm:grid-cols-3">
+          {([['sick', 'Sick'], ['excused', 'Excused'], ['alpha', 'Unexcused']] as const).map(([field, label]) => <div key={field} className="space-y-1.5"><Label htmlFor={`attendance-${field}`}>{label}</Label><div className="relative"><Input id={`attendance-${field}`} type="number" min={0} value={attendance[field]} onChange={(event) => updateAttendance(field, event.target.value)} className="pr-12" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">days</span></div></div>)}
+        </div>
+      </WorkspacePanel>
 
-            if (res.error) {
-                toast.error(res.error)
-            } else {
-                toast.success(published ? "Report Card Published!" : "Draft Saved")
-                router.refresh()
-            }
-        } catch (err) {
-            toast.error("An error occurred")
-        } finally {
-            setIsSaving(false)
-        }
-    }
+      <WorkspacePanel className="overflow-hidden">
+        <PanelHeading title="Extracurricular activities" description="Activities, predicates, and progress notes." action={<Button size="sm" variant="outline" onClick={() => setExtracurriculars((items) => [...items, { activity: "", predicate: "", note: "" }])}><Plus className="size-4" />Add activity</Button>} />
+        {extracurriculars.length ? <div className="divide-y">{extracurriculars.map((item, index) => <div key={index} className="grid gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.4fr)_2.25rem] sm:items-end"><div className="space-y-1"><Label className="text-xs">Activity</Label><Input value={item.activity} onChange={(event) => setExtracurriculars((items) => items.map((value, itemIndex) => itemIndex === index ? { ...value, activity: event.target.value } : value))} placeholder="e.g. Scouts" /></div><div className="space-y-1"><Label className="text-xs">Predicate</Label><Input value={item.predicate} onChange={(event) => setExtracurriculars((items) => items.map((value, itemIndex) => itemIndex === index ? { ...value, predicate: event.target.value } : value))} placeholder="A / B / C" /></div><div className="space-y-1"><Label className="text-xs">Progress note</Label><Input value={item.note} onChange={(event) => setExtracurriculars((items) => items.map((value, itemIndex) => itemIndex === index ? { ...value, note: event.target.value } : value))} placeholder="Describe the student's progress" /></div><Button variant="ghost" size="icon-sm" onClick={() => setExtracurriculars((items) => items.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remove activity ${index + 1}`} className="text-muted-foreground hover:text-destructive"><Trash2 className="size-4" /></Button></div>)}</div> : <div className="px-4 py-8 text-center text-sm text-muted-foreground">No extracurricular activities added.</div>}
+      </WorkspacePanel>
 
-    const handleSavePrincipalDefault = async () => {
-        setIsPrincipalSaving(true)
-        try {
-            const res = await updatePrincipalName(principalNameInput)
-            if (res.error) {
-                toast.error(res.error)
-            } else {
-                toast.success("Nama Kepala Sekolah disimpan sebagai default")
-            }
-        } catch (err) {
-            toast.error("Gagal menyimpan data sistem")
-        } finally {
-            setIsPrincipalSaving(false)
-        }
-    }
+      <div className="grid items-start gap-[var(--workspace-section-gap)] lg:grid-cols-2">
+        <WorkspacePanel className="overflow-hidden">
+          <PanelHeading title="Achievements" description="Awards or notable accomplishments." action={<Button variant="ghost" size="icon-sm" onClick={() => setAchievements((items) => [...items, { name: "", note: "" }])} aria-label="Add achievement"><Plus className="size-4" /></Button>} />
+          {achievements.length ? <div className="divide-y">{achievements.map((item, index) => <div key={index} className="grid grid-cols-[minmax(0,1fr)_2.25rem] gap-2 p-3"><div className="space-y-2"><Input value={item.name} onChange={(event) => setAchievements((items) => items.map((value, itemIndex) => itemIndex === index ? { ...value, name: event.target.value } : value))} placeholder="Achievement" /><Input value={item.note} onChange={(event) => setAchievements((items) => items.map((value, itemIndex) => itemIndex === index ? { ...value, note: event.target.value } : value))} placeholder="Description" /></div><Button variant="ghost" size="icon-sm" onClick={() => setAchievements((items) => items.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remove achievement ${index + 1}`} className="text-muted-foreground hover:text-destructive"><Trash2 className="size-4" /></Button></div>)}</div> : <div className="px-4 py-8 text-center text-sm text-muted-foreground">No achievements added.</div>}
+        </WorkspacePanel>
 
-    const containerVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.4,
-                staggerChildren: 0.1
-            }
-        }
-    }
+        <WorkspacePanel className="overflow-hidden">
+          <PanelHeading title="Personal development" description="Development activities and observations." action={<Button variant="ghost" size="icon-sm" onClick={() => setDevelopment((items) => [...items, { activity: "", note: "" }])} aria-label="Add development activity"><Plus className="size-4" /></Button>} />
+          {development.length ? <div className="divide-y">{development.map((item, index) => <div key={index} className="grid grid-cols-[minmax(0,1fr)_2.25rem] gap-2 p-3"><div className="space-y-2"><Input value={item.activity} onChange={(event) => setDevelopment((items) => items.map((value, itemIndex) => itemIndex === index ? { ...value, activity: event.target.value } : value))} placeholder="Activity" /><Input value={item.note} onChange={(event) => setDevelopment((items) => items.map((value, itemIndex) => itemIndex === index ? { ...value, note: event.target.value } : value))} placeholder="Observation" /></div><Button variant="ghost" size="icon-sm" onClick={() => setDevelopment((items) => items.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remove development activity ${index + 1}`} className="text-muted-foreground hover:text-destructive"><Trash2 className="size-4" /></Button></div>)}</div> : <div className="px-4 py-8 text-center text-sm text-muted-foreground">No development activities added.</div>}
+        </WorkspacePanel>
+      </div>
 
-    const itemVariants = {
-        hidden: { opacity: 0, scale: 0.95 },
-        visible: { opacity: 1, scale: 1 }
-    }
+      <WorkspacePanel className="overflow-hidden">
+        <PanelHeading title="Homeroom teacher note" description="A concise message for the student and family." />
+        <div className="p-4"><Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Write encouragement, guidance, or an overall progress note…" className="min-h-32 resize-y" /></div>
+      </WorkspacePanel>
 
-    return (
-        <motion.div
-            className="max-w-4xl mx-auto space-y-8 pb-24"
-            initial="hidden"
-            animate="visible"
-            variants={containerVariants}
-        >
-            {/* Action Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border shadow-lg sticky top-4 z-30 transition-all duration-300">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <FileCheck className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-xl tracking-tight">Edit Report Data</h2>
-                        <div className="flex items-center gap-2">
-                            <span className={`inline-block w-2 h-2 rounded-full ${isSnapshot ? 'bg-green-500' : 'bg-orange-500'} animate-pulse`} />
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">{isSnapshot ? "Published Snapshot" : "Draft Mode"}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                    <Button variant="outline" size="lg" asChild className="flex-1 rounded-xl md:flex-initial">
-                        <Link href={`/homeroom/${classId}/students/${studentId}/report/preview`}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Preview & Print
-                        </Link>
-                    </Button>
-                    <Button variant="secondary" size="lg" onClick={() => handleSave(false)} disabled={isSaving} className="flex-1 md:flex-initial rounded-xl active:scale-95 transition-all">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Draft
-                    </Button>
-                    <Button size="lg" onClick={() => handleSave(true)} disabled={isSaving} className="flex-1 md:flex-initial rounded-xl shadow-md active:scale-95 transition-all">
-                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4 mr-2" />}
-                        Publish Report
-                    </Button>
-                </div>
-            </div>
-
-            <div className="space-y-6">
-                {/* Attendance Highlights */}
-                <motion.div variants={itemVariants}>
-                    <Card className="border-none shadow-xl bg-linear-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-950 overflow-hidden">
-                        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
-                            <div>
-                                <CardTitle className="text-lg">Ketidakhadiran</CardTitle>
-                                <CardDescription>Data rekapitulasi kehadiran siswa semester ini</CardDescription>
-                            </div>
-                            {calculatedAttendance && !isSnapshot && (
-                                <Button size="sm" variant="ghost" onClick={handleResetAttendance} className="text-primary hover:bg-primary/5 rounded-lg">
-                                    <RotateCcw className="w-3 h-3 mr-2" />
-                                    Sync Data
-                                </Button>
-                            )}
-                        </CardHeader>
-                        <CardContent className="pt-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                <div className="group relative p-6 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-900/30 hover:shadow-md transition-all duration-300">
-                                    <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border shadow-sm">
-                                        <Activity className="w-5 h-5 text-indigo-500" />
-                                    </div>
-                                    <span className="text-sm font-semibold text-indigo-600/70 dark:text-indigo-400 block mb-1">Sakit</span>
-                                    <div className="flex items-end gap-2">
-                                        <span className="text-4xl font-black text-indigo-900 dark:text-indigo-100">{attendance.sick}</span>
-                                        <span className="text-sm font-medium text-slate-500 mb-1.5 whitespace-nowrap">hari</span>
-                                    </div>
-                                </div>
-
-                                <div className="group relative p-6 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100/50 dark:border-amber-900/30 hover:shadow-md transition-all duration-300">
-                                    <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border shadow-sm">
-                                        <UserCheck className="w-5 h-5 text-amber-500" />
-                                    </div>
-                                    <span className="text-sm font-semibold text-amber-600/70 dark:text-amber-400 block mb-1">Izin</span>
-                                    <div className="flex items-end gap-2">
-                                        <span className="text-4xl font-black text-amber-900 dark:text-amber-100">{attendance.excused}</span>
-                                        <span className="text-sm font-medium text-slate-500 mb-1.5 whitespace-nowrap">hari</span>
-                                    </div>
-                                </div>
-
-                                <div className="group relative p-6 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100/50 dark:border-rose-900/30 hover:shadow-md transition-all duration-300">
-                                    <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border shadow-sm">
-                                        <XCircle className="w-5 h-5 text-rose-500" />
-                                    </div>
-                                    <span className="text-sm font-semibold text-rose-600/70 dark:text-rose-400 block mb-1">Alpha</span>
-                                    <div className="flex items-end gap-2">
-                                        <span className="text-4xl font-black text-rose-900 dark:text-rose-100">{attendance.alpha}</span>
-                                        <span className="text-sm font-medium text-slate-500 mb-1.5 whitespace-nowrap">hari</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
-
-                {/* Form Sections Grid */}
-                <div className="grid grid-cols-1 gap-6">
-                    {/* Extracurriculars */}
-                    <motion.div variants={itemVariants}>
-                        <Card className="rounded-2xl border-border shadow-sm transition-shadow hover:shadow-md">
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-base font-semibold">Ekstrakurikuler</CardTitle>
-                                    <CardDescription>Kegiatan non-akademik di sekolah</CardDescription>
-                                </div>
-                                <Button size="sm" variant="outline" onClick={addExtra} className="rounded-lg h-9 w-9 p-0">
-                                    <Plus className="w-5 h-5" />
-                                </Button>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <AnimatePresence initial={false}>
-                                    {extracurriculars.map((ex, i) => (
-                                        <motion.div
-                                            key={i}
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            className="flex gap-4 items-start p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 relative group"
-                                        >
-                                            <div className="flex-1 space-y-3">
-                                                <div className="flex flex-col sm:flex-row gap-3">
-                                                    <div className="flex-1">
-                                                        <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Kegiatan</label>
-                                                        <Input placeholder="e.g. Pramuka" value={ex.activity} onChange={(e) => updateExtra(i, "activity", e.target.value)} className="border-none bg-background shadow-sm focus-visible:ring-primary/20" />
-                                                    </div>
-                                                    <div className="w-full sm:w-32">
-                                                        <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Predikat</label>
-                                                        <Input placeholder="A / B / C" value={ex.predicate} onChange={(e) => updateExtra(i, "predicate", e.target.value)} className="border-none bg-background text-center font-bold shadow-sm focus-visible:ring-primary/20" />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Keterangan Capaian</label>
-                                                    <Input placeholder="Tulis catatan perkembangan siswa..." value={ex.note} onChange={(e) => updateExtra(i, "note", e.target.value)} className="border-none bg-background shadow-sm focus-visible:ring-primary/20" />
-                                                </div>
-                                            </div>
-                                            <Button size="icon" variant="ghost" className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg shrink-0 mt-6" onClick={() => removeExtra(i)}>
-                                                <Trash className="w-4 h-4" />
-                                            </Button>
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
-                                {extracurriculars.length === 0 && (
-                                    <div className="py-8 text-center border-2 border-dashed rounded-2xl border-slate-100 dark:border-slate-800">
-                                        <p className="text-sm text-slate-400">Belum ada data ekstrakurikuler</p>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-
-                    {/* Prestasi & Pengembangan Diri Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         {/* Achievements */}
-                        <motion.div variants={itemVariants}>
-                            <Card className="flex h-full flex-col rounded-2xl border-border shadow-sm">
-                                <CardHeader className="flex flex-row items-center justify-between shrink-0">
-                                    <div>
-                                        <CardTitle className="text-base">Prestasi</CardTitle>
-                                        <CardDescription>Pencapaian siswa</CardDescription>
-                                    </div>
-                                    <Button size="sm" variant="ghost" onClick={addAch} className="rounded-lg"><Plus className="w-4 h-4" /></Button>
-                                </CardHeader>
-                                <CardContent className="space-y-4 flex-1">
-                                    {achievements.map((ach, i) => (
-                                        <div key={i} className="flex gap-2 items-start border-b border-slate-50 dark:border-slate-800 pb-4 last:border-0 last:pb-0">
-                                            <div className="flex-1 space-y-2">
-                                                <Input placeholder="Jenis Prestasi" value={ach.name} onChange={(e) => updateAch(i, "name", e.target.value)} className="px-0 font-medium border-none bg-transparent shadow-none focus-visible:ring-0" />
-                                                <Input placeholder="Keterangan..." value={ach.note} onChange={(e) => updateAch(i, "note", e.target.value)} className="px-0 text-slate-500 text-sm h-7 border-none bg-transparent shadow-none focus-visible:ring-0" />
-                                            </div>
-                                            <Button size="icon" variant="ghost" className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg shrink-0" onClick={() => removeAch(i)}><Trash className="w-4 h-4" /></Button>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-
-                        {/* Development */}
-                        <motion.div variants={itemVariants}>
-                            <Card className="flex h-full flex-col rounded-2xl border-border shadow-sm">
-                                <CardHeader className="flex flex-row items-center justify-between shrink-0">
-                                    <div>
-                                        <CardTitle className="text-base">Pengembangan Diri</CardTitle>
-                                        <CardDescription>Kegiatan eksplorasi diri</CardDescription>
-                                    </div>
-                                    <Button size="sm" variant="ghost" onClick={addDev} className="rounded-lg"><Plus className="w-4 h-4" /></Button>
-                                </CardHeader>
-                                <CardContent className="space-y-4 flex-1">
-                                    {development.map((dev, i) => (
-                                        <div key={i} className="flex gap-2 items-start border-b border-slate-50 dark:border-slate-800 pb-4 last:border-0 last:pb-0">
-                                            <div className="flex-1 space-y-2">
-                                                <Input placeholder="Kegiatan" value={dev.activity} onChange={(e) => updateDev(i, "activity", e.target.value)} className="px-0 font-medium border-none bg-transparent shadow-none focus-visible:ring-0" />
-                                                <Input placeholder="Keterangan..." value={dev.note} onChange={(e) => updateDev(i, "note", e.target.value)} className="px-0 text-slate-500 text-sm h-7 border-none bg-transparent shadow-none focus-visible:ring-0" />
-                                            </div>
-                                            <Button size="icon" variant="ghost" className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg shrink-0" onClick={() => removeDev(i)}><Trash className="w-4 h-4" /></Button>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    </div>
-
-                    {/* Teacher Note */}
-                    <motion.div variants={itemVariants}>
-                        <Card className="group overflow-hidden rounded-2xl border-border shadow-sm">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-base font-semibold">Catatan Wali Kelas</CardTitle>
-                                <CardDescription>Catatan khusus untuk perkembangan siswa keseluruhan</CardDescription>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                <Textarea
-                                    placeholder="Tulis saran, motivasi, atau catatan untuk orang tua siswa..."
-                                    className="min-h-[160px] bg-slate-50/50 dark:bg-slate-800/30 border-none resize-none focus-visible:ring-primary/20 rounded-xl transition-all duration-300 group-focus-within:bg-white dark:group-focus-within:bg-slate-800"
-                                    value={noteInput}
-                                    onChange={(e) => setNoteInput(e.target.value)}
-                                />
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-
-                    {/* Administration / Signature */}
-                    <motion.div variants={itemVariants}>
-                        <Card className="rounded-2xl border-border shadow-sm">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-base font-semibold">Lain-lain</CardTitle>
-                                <CardDescription>Data administratif penunjang rapor</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 pt-2">
-                                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Nama Kepala Sekolah (Penandatangan)</label>
-                                    <div className="flex gap-3">
-                                        <Input
-                                            placeholder="Masukkan nama kepala sekolah..."
-                                            value={principalNameInput}
-                                            onChange={(e) => setPrincipalNameInput(e.target.value)}
-                                            className="h-11 rounded-xl border-none bg-background shadow-sm focus-visible:ring-primary/20"
-                                        />
-                                        <Button
-                                            variant="secondary"
-                                            size="lg"
-                                            onClick={handleSavePrincipalDefault}
-                                            disabled={isPrincipalSaving}
-                                            className="h-11 rounded-xl px-4 shrink-0 transition-transform active:scale-95"
-                                            title="Simpan sebagai default sistem"
-                                        >
-                                            {isPrincipalSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                            <span className="hidden sm:inline ml-2">Set Default</span>
-                                        </Button>
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-1.5">
-                                        <Activity className="w-3 h-3" />
-                                        Gunakan tombol simpan di samping untuk menerapkan nama ini secara otomatis ke semua rapor lainnya.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                </div>
-            </div>
-        </motion.div>
-    )
+      <WorkspacePanel className="flex items-start gap-3 p-4">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"><UserRoundCheck className="size-4" /></span>
+        <div className="min-w-0"><h2 className="text-sm font-semibold">Principal signature</h2><p className="mt-0.5 text-sm">{principalName || "No principal has been configured for this school stage."}</p><p className="mt-1 text-xs text-muted-foreground">Automatically selected from the {stage} principal setting because this class is {gradeLevelLabel(classData.gradeLevel)}.</p></div>
+      </WorkspacePanel>
+    </div>
+  )
 }

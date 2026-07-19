@@ -3,6 +3,12 @@
 import { db as prisma } from "@/lib/db"
 import { getUser } from "@/lib/actions/user.actions"
 import { revalidatePath } from "next/cache"
+import type { Prisma } from "@prisma/client"
+import {
+    readSchoolPrincipalNames,
+    SCHOOL_PRINCIPALS_KEY,
+    type SchoolPrincipalNames,
+} from "@/lib/school-principals"
 
 const GRADING_SCALE_KEY = "grading_scale"
 
@@ -50,8 +56,8 @@ export async function updateGradingScaleDefaults(scale: GradingScale[]) {
 
         await prisma.systemConfig.upsert({
             where: { id: GRADING_SCALE_KEY },
-            update: { value: scale as any },
-            create: { id: GRADING_SCALE_KEY, value: scale as any }
+            update: { value: scale as unknown as Prisma.InputJsonValue },
+            create: { id: GRADING_SCALE_KEY, value: scale as unknown as Prisma.InputJsonValue }
         })
 
         revalidatePath("/admin/grading")
@@ -63,36 +69,39 @@ export async function updateGradingScaleDefaults(scale: GradingScale[]) {
 
 }
 
-const PRINCIPAL_NAME_KEY = "principal_name"
-
-export async function getPrincipalName() {
+export async function getSchoolPrincipalNames() {
     try {
-        const config = await prisma.systemConfig.findUnique({
-            where: { id: PRINCIPAL_NAME_KEY }
-        })
-        return config?.value ? (config.value as { name: string }).name : ""
+        const user = await getUser()
+        if (!user) return { error: "Unauthorized" }
+
+        return { principals: await readSchoolPrincipalNames() }
     } catch (error) {
-        return ""
+        console.error("Error fetching school principals:", error)
+        return { error: "Failed to fetch school principals" }
     }
 }
 
-export async function updatePrincipalName(name: string) {
+export async function updateSchoolPrincipalNames(principals: SchoolPrincipalNames) {
     try {
         const user = await getUser()
-        // Allow teachers and admins to update this
-        if (!user || (!user.roles.includes("ADMIN") && !user.roles.includes("HOMEROOM_TEACHER"))) {
-            return { error: "Unauthorized" }
+        if (!user || !user.roles.includes("ADMIN")) return { error: "Unauthorized" }
+
+        const normalized = {
+            SMP: principals.SMP.trim(),
+            SMA: principals.SMA.trim(),
         }
 
         await prisma.systemConfig.upsert({
-            where: { id: PRINCIPAL_NAME_KEY },
-            update: { value: { name } },
-            create: { id: PRINCIPAL_NAME_KEY, value: { name } }
+            where: { id: SCHOOL_PRINCIPALS_KEY },
+            update: { value: normalized },
+            create: { id: SCHOOL_PRINCIPALS_KEY, value: normalized }
         })
 
+        revalidatePath("/admin/miscellaneous")
+        revalidatePath("/homeroom", "layout")
         return { success: true }
     } catch (error) {
-        console.error("Error updating principal name:", error)
-        return { error: "Failed to update principal name" }
+        console.error("Error updating school principals:", error)
+        return { error: "Failed to update school principals" }
     }
 }

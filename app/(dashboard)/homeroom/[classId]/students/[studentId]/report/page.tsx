@@ -1,72 +1,39 @@
-import { getStudentReportCard } from "@/lib/actions/homeroom.actions"
-import { MobileHeaderSetter } from "@/components/mobile-header-setter"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
 import { ReportCardForm } from "@/components/homeroom/report-card-form"
+import { MobileHeaderSetter } from "@/components/mobile-header-setter"
+import { WorkspacePage, WorkspacePanel } from "@/components/workspace/workspace-page"
+import { getStudentReportCard } from "@/lib/actions/homeroom.actions"
+import type { ReportAchievement, ReportAttendanceSummary, ReportCourseResult, ReportDevelopment, ReportExtracurricular } from "@/lib/report-card"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 interface PageProps {
-    params: Promise<{
-        classId: string
-        studentId: string
-    }>
+  params: Promise<{ classId: string; studentId: string }>
 }
 
-export default async function ReportCardPage(props: PageProps) {
-    const params = await props.params;
+export default async function ReportCardPage({ params }: PageProps) {
+  const { classId, studentId } = await params
+  const result = await getStudentReportCard(studentId, classId)
 
-    const { classId, studentId } = params;
+  if (result.error || !result.student || !result.classData || !result.courses) {
+    return <WorkspacePage><WorkspacePanel className="border-destructive/30 px-4 py-8 text-center text-sm text-destructive">{result.error || "Unable to load the report card."}</WorkspacePanel></WorkspacePage>
+  }
 
-    const {
-        student,
-        classData,
-        courses,
-        extracurriculars,
-        achievements,
-        development,
-        attendance,
-        homeroomTeacherNote,
-        principalName,
-        isSnapshot,
-        gradingScale,
-        generatedAt,
-        calculatedAttendance,
-        error
-    } = await getStudentReportCard(studentId, classId)
-
-    if (error || !student || !classData || !courses) {
-        return <div className="p-8 text-red-500 bg-red-50 rounded-lg">Error: {error || "Failed to load report card data"}</div>
-    }
-
-    return (
-        <div className="max-w-4xl mx-auto space-y-6 pb-20 p-4 sm:p-6 lg:p-8">
-            <MobileHeaderSetter title={`Report: ${student.name}`} />
-
-            <div className="flex items-center gap-2 text-sm text-slate-500 mb-2 overflow-x-auto whitespace-nowrap pb-2">
-                <Link href={`/homeroom/${classId}`} className="hover:text-primary transition-colors flex items-center">
-                    <ArrowLeft className="w-3 h-3 mr-1" />
-                    Class {classData.name}
-                </Link>
-                <span className="text-slate-300">/</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">{student.name}</span>
-            </div>
-
-            <ReportCardForm
-                student={student}
-                classData={classData}
-                courses={courses}
-                extracurriculars={extracurriculars || []}
-                achievements={achievements || []}
-                development={development || []}
-                attendance={attendance || { sick: 0, excused: 0, alpha: 0 }}
-                homeroomTeacherNote={homeroomTeacherNote || ""}
-                principalName={principalName || ""}
-                isSnapshot={isSnapshot || false}
-                gradingScale={gradingScale || []}
-                calculatedAttendance={calculatedAttendance}
-            />
-        </div>
-    )
+  return (
+    <WorkspacePage>
+      <MobileHeaderSetter title={`Report · ${result.student.name}`} subtitle={`${result.classData.name} · ${result.classData.term.academicYear?.name || "Current academic year"}`} backLink={`/homeroom/${classId}`} />
+      <ReportCardForm
+        student={result.student}
+        classData={result.classData}
+        courses={result.courses as unknown as ReportCourseResult[]}
+        extracurriculars={(result.extracurriculars || []) as unknown as ReportExtracurricular[]}
+        achievements={(result.achievements || []) as unknown as ReportAchievement[]}
+        development={(result.development || []) as unknown as ReportDevelopment[]}
+        attendance={(result.attendance || { sick: 0, excused: 0, alpha: 0 }) as unknown as ReportAttendanceSummary}
+        homeroomTeacherNote={result.homeroomTeacherNote || ""}
+        principalName={result.principalName || ""}
+        isSnapshot={result.isSnapshot || false}
+        calculatedAttendance={result.calculatedAttendance}
+      />
+    </WorkspacePage>
+  )
 }

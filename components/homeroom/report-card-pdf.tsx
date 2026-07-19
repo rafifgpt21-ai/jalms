@@ -1,7 +1,13 @@
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-
-// Register fonts if needed
-// Font.register({ family: 'Inter', src: '...' });
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import type {
+    ReportAchievement,
+    ReportAttendanceSummary,
+    ReportClassData,
+    ReportCourseResult,
+    ReportDevelopment,
+    ReportExtracurricular,
+    ReportStudent,
+} from '@/lib/report-card';
 
 const styles = StyleSheet.create({
     page: {
@@ -17,7 +23,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 30,
         textTransform: 'uppercase',
-        fontStyle: 'italic' // STUDENT REPORT is italic in the screenshot example? No, looks normal but let's stick to normal bold.
+        fontStyle: 'italic'
     },
     headerSubtitle: {
         fontSize: 12,
@@ -43,7 +49,7 @@ const styles = StyleSheet.create({
     infoLabel: {
         width: 100,
         fontWeight: 'bold',
-        fontStyle: 'italic', // "Student's Name" is italic
+        fontStyle: 'italic',
     },
     infoSeparator: {
         width: 10,
@@ -155,33 +161,33 @@ const styles = StyleSheet.create({
 });
 
 interface ReportCardDocumentProps {
-    student: any
-    classData: any
-    courses: any[]
-    extracurriculars?: any[]
-    achievements?: any[]
-    development?: any[]
-    attendance?: any
+    student: ReportStudent
+    classData: ReportClassData
+    courses: ReportCourseResult[]
+    extracurriculars?: ReportExtracurricular[]
+    achievements?: ReportAchievement[]
+    development?: ReportDevelopment[]
+    attendance?: ReportAttendanceSummary
     note?: string
     principalName?: string
     publishedDate?: Date
 }
 
 // Header Component for reuse
-const HeaderSection = ({ student, classData }: { student: any, classData: any }) => (
+const HeaderSection = ({ student, classData }: { student: ReportStudent, classData: ReportClassData }) => (
     <View>
         <Text style={styles.headerTitle}>STUDENT REPORT</Text>
         <View style={styles.infoContainer}>
             <View style={styles.infoColumn}>
                 <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Student's Name</Text>
+                    <Text style={styles.infoLabel}>{"Student's Name"}</Text>
                     <Text style={styles.infoSeparator}>:</Text>
                     <Text style={styles.infoValue}>{student.name}</Text>
                 </View>
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>NIS</Text>
                     <Text style={styles.infoSeparator}>:</Text>
-                    <Text style={styles.infoValue}>{student.officialId || '-'}</Text>
+                    <Text style={styles.infoValue}>{student.nis || student.officialId || '-'}</Text>
                 </View>
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>NISN</Text>
@@ -435,8 +441,5 @@ export const ReportCardDocument = ({
         </Document>
     )
 };
-
-// Helper for breaking page if needed? React-pdf handles it mostly auto.
-const TextBreak = () => <Text style={{ height: 10 }}></Text>
 
 export default ReportCardDocument;

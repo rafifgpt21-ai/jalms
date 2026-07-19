@@ -1,613 +1,520 @@
-
-import { PrismaClient, Role, SemesterType, AcademicDomain, AttendanceStatus, AssignmentType, QuizGradingType, GradeLevel } from "@prisma/client"
-import * as bcrypt from "bcryptjs"
-import { faker } from "@faker-js/faker"
+import {
+    AcademicDomain,
+    AssignmentType,
+    AttendanceStatus,
+    ClassColor,
+    ClassEnrollmentSource,
+    CourseEnrollmentMode,
+    CourseEnrollmentSource,
+    GradeLevel,
+    PrismaClient,
+    Role,
+    SemesterType,
+} from "@prisma/client"
+import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
 
-// Seed Configuration
-const CONFIG = {
-    TEACHER_COUNT: 15,
-    STUDENT_COUNT_PER_GRADE: 40, // 40 per grade * 3 grades = 120 total approx
-    CLASS_SECTIONS: ["A", "B"], // 2 classes per grade
+const DEMO_PASSWORD = "demo123"
+const ACADEMIC_YEAR_NAME = "2025/2026"
 
-    // Terms configuration based on user request
-    TERMS: [
-        {
-            name: "2024/2025 Even",
-            startDate: new Date("2025-01-01"),
-            endDate: new Date("2025-06-30"),
-            type: SemesterType.EVEN,
-            academicYear: "2024/2025",
-            isActive: false
-        },
-        {
-            name: "2025/2026 Odd",
-            startDate: new Date("2025-07-01"),
-            endDate: new Date("2025-12-31"),
-            type: SemesterType.ODD,
-            academicYear: "2025/2026",
-            isActive: false
-        },
-        {
-            name: "2025/2026 Even", // Current active
-            startDate: new Date("2026-01-01"),
-            endDate: new Date("2026-07-30"),
-            type: SemesterType.EVEN,
-            academicYear: "2025/2026",
-            isActive: true
-        }
-    ]
+const subjects = [
+    {
+        name: "Pendidikan Agama dan Budi Pekerti",
+        code: "PAB",
+        domain: AcademicDomain.SPIRITUALITY_ETHICS,
+        teacher: "Ahmad Fauzan",
+    },
+    {
+        name: "Pendidikan Pancasila",
+        code: "PPK",
+        domain: AcademicDomain.SOCIAL_HUMANITIES,
+        teacher: "Siti Rahmawati",
+    },
+    {
+        name: "Bahasa Indonesia",
+        code: "BIN",
+        domain: AcademicDomain.LANGUAGE_COMMUNICATION,
+        teacher: "Dewi Lestari",
+    },
+    {
+        name: "Matematika",
+        code: "MAT",
+        domain: AcademicDomain.SCIENCE_TECHNOLOGY,
+        teacher: "Budi Santoso",
+    },
+    {
+        name: "Bahasa Inggris",
+        code: "BIG",
+        domain: AcademicDomain.LANGUAGE_COMMUNICATION,
+        teacher: "Rina Wulandari",
+    },
+    {
+        name: "Sejarah Indonesia",
+        code: "SEJ",
+        domain: AcademicDomain.SOCIAL_HUMANITIES,
+        teacher: "Hendra Saputra",
+    },
+    {
+        name: "Pendidikan Jasmani, Olahraga, dan Kesehatan",
+        code: "PJK",
+        domain: AcademicDomain.PHYSICAL_EDUCATION,
+        teacher: "Agus Prasetyo",
+    },
+    {
+        name: "Seni Budaya",
+        code: "SBD",
+        domain: AcademicDomain.ARTS_CREATIVITY,
+        teacher: "Maya Kartika",
+    },
+] as const
+
+const classes = [
+    {
+        name: "Kelas 10 SMA",
+        gradeLevel: GradeLevel.GRADE_10,
+        color: ClassColor.BLUE,
+        students: [
+            "Aditya Pratama",
+            "Alya Putri Ramadhani",
+            "Bagas Maulana",
+            "Citra Maharani",
+            "Dimas Arya Nugraha",
+            "Fajar Rizky",
+        ],
+    },
+    {
+        name: "Kelas 11 SMA",
+        gradeLevel: GradeLevel.GRADE_11,
+        color: ClassColor.EMERALD,
+        students: [
+            "Gita Savitri",
+            "Hanif Akbar",
+            "Intan Permata Sari",
+            "Joko Firmansyah",
+            "Keyla Anindita",
+            "Luthfi Ramadhan",
+        ],
+    },
+    {
+        name: "Kelas 12 SMA",
+        gradeLevel: GradeLevel.GRADE_12,
+        color: ClassColor.VIOLET,
+        students: [
+            "Nadine Azzahra",
+            "Putra Mahendra",
+            "Qonita Zahra",
+            "Raka Adiwijaya",
+            "Salma Nabila",
+            "Yoga Pranata",
+        ],
+    },
+] as const
+
+const assignmentTemplates = [
+    { title: "Asesmen Formatif", dueDate: new Date("2026-02-20T07:00:00+07:00") },
+    { title: "Proyek Semester", dueDate: new Date("2026-04-24T07:00:00+07:00") },
+    { title: "Sumatif Akhir Semester", dueDate: new Date("2026-06-05T07:00:00+07:00") },
+] as const
+
+const attendanceDates = [
+    "2026-02-02",
+    "2026-02-16",
+    "2026-03-02",
+    "2026-03-16",
+    "2026-04-06",
+    "2026-04-20",
+    "2026-05-04",
+    "2026-05-18",
+    "2026-06-01",
+    "2026-06-08",
+    "2026-06-15",
+    "2026-06-22",
+].map((date) => new Date(`${date}T07:00:00+07:00`))
+
+function slugify(value: string) {
+    return value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, ".")
+        .replace(/^\.|\.$/g, "")
 }
 
-const generateAvatarConfig = () => {
-    const styles = ["adventurer", "avataaars", "bottts", "lorelei", "notionists", "open-peeps", "pixel-art"]
-    const style = faker.helpers.arrayElement(styles)
-    const seed = faker.string.alphanumeric(10)
-    return { style, seed }
+function scoreFor(studentIndex: number, subjectIndex: number, assignmentIndex: number) {
+    return 78 + ((studentIndex * 3 + subjectIndex * 2 + assignmentIndex * 4) % 19)
+}
+
+function attendanceFor(studentIndex: number, dateIndex: number) {
+    if (dateIndex === (studentIndex + 2) % attendanceDates.length) {
+        return { status: AttendanceStatus.EXCUSED, excuseReason: "Sakit" }
+    }
+
+    if (dateIndex === (studentIndex + 5) % attendanceDates.length) {
+        return { status: AttendanceStatus.EXCUSED, excuseReason: "Izin keperluan keluarga" }
+    }
+
+    if (studentIndex % 4 === 0 && dateIndex === (studentIndex + 8) % attendanceDates.length) {
+        return { status: AttendanceStatus.ABSENT, excuseReason: null }
+    }
+
+    return { status: AttendanceStatus.PRESENT, excuseReason: null }
+}
+
+async function clearDatabase() {
+    console.log("Cleaning existing application data...")
+
+    // Dependants first keeps this compatible if relation enforcement changes later.
+    await prisma.courseChatMessage.deleteMany()
+    await prisma.courseAnnouncement.deleteMany()
+    await prisma.courseNavigationState.deleteMany()
+    await prisma.userWorkspacePreference.deleteMany()
+    await prisma.academicRolloverItem.deleteMany()
+    await prisma.academicRollover.deleteMany()
+    await prisma.managementAuditLog.deleteMany()
+    await prisma.reportCard.deleteMany()
+    await prisma.attendance.deleteMany()
+    await prisma.submission.deleteMany()
+    await prisma.materialAssignment.deleteMany()
+    await prisma.schedule.deleteMany()
+    await prisma.courseEnrollment.deleteMany()
+    await prisma.enrollment.deleteMany()
+    await prisma.assignment.deleteMany()
+    await prisma.quizChoice.deleteMany()
+    await prisma.quizQuestion.deleteMany()
+    await prisma.quiz.deleteMany()
+    await prisma.quizFolder.deleteMany()
+    await prisma.material.deleteMany()
+    await prisma.materialFolder.deleteMany()
+    await prisma.course.deleteMany()
+    await prisma.subject.deleteMany()
+    await prisma.message.deleteMany()
+    await prisma.conversation.deleteMany()
+    await prisma.class.deleteMany()
+    await prisma.term.deleteMany()
+    await prisma.academicYear.deleteMany()
+    await prisma.systemConfig.deleteMany()
+    await prisma.user.deleteMany()
 }
 
 async function main() {
-    console.log("🌱 STARTING ORGANIC DATABASE POPULATION (3 SEMESTERS)...")
+    console.log("Starting deterministic SMA report-card demo seed...")
+    await clearDatabase()
 
-    // ----------------------------------------------------------------------
-    // 0. CLEANUP (Optional, mostly handled by reset-db, but good for safety if needed)
-    // ----------------------------------------------------------------------
+    const password = await bcrypt.hash(DEMO_PASSWORD, 10)
 
-    // ----------------------------------------------------------------------
-    // 1. ACADEMIC YEARS & TERMS
-    // ----------------------------------------------------------------------
-    console.log("📅 1. Setting up Academic Years & Terms...")
-    const termMap = new Map() // Key: index, Value: Term Object
+    const admin = await prisma.user.create({
+        data: {
+            name: "Admin JALMS",
+            email: "admin@jalms.id",
+            password,
+            roles: [Role.ADMIN],
+            isActive: true,
+            conversationIds: [],
+            enrolledCourseIds: [],
+        },
+    })
 
-    for (let i = 0; i < CONFIG.TERMS.length; i++) {
-        const tConfig = CONFIG.TERMS[i]
+    const homeroomTeacher = await prisma.user.create({
+        data: {
+            name: "Nur Aisyah",
+            email: "wali.kelas@jalms.id",
+            password,
+            roles: [Role.HOMEROOM_TEACHER],
+            nip: "198706152012122001",
+            isActive: true,
+            avatarConfig: { style: "notionists", seed: "nur-aisyah" },
+            conversationIds: [],
+            enrolledCourseIds: [],
+        },
+    })
 
-        // Ensure Academic Year exists
-        let academicYear = await prisma.academicYear.findFirst({ where: { name: tConfig.academicYear } })
-        if (!academicYear) {
-            academicYear = await prisma.academicYear.create({
-                data: {
-                    name: tConfig.academicYear,
-                    startDate: tConfig.startDate, // Simplified, using term dates for year bounds roughly
-                    endDate: tConfig.endDate,
-                    isActive: tConfig.isActive // Will be overridden by term logic if strictly one active
-                }
-            })
-        }
-
-        let term = await prisma.term.findFirst({
-            where: { academicYearId: academicYear.id, type: tConfig.type }
-        })
-
-        if (!term) {
-            term = await prisma.term.create({
-                data: {
-                    type: tConfig.type,
-                    startDate: tConfig.startDate,
-                    endDate: tConfig.endDate,
-                    isActive: tConfig.isActive,
-                    academicYearId: academicYear.id
-                }
-            })
-        }
-        termMap.set(i, term)
-        console.log(`   -> Created/Found Term: ${tConfig.name} (${term.id})`)
-    }
-
-    // ----------------------------------------------------------------------
-    // 2. SUBJECTS
-    // ----------------------------------------------------------------------
-    console.log("📚 2. Creating Subjects...")
-    const predefinedSubjects = [
-        { name: "Mathematics", code: "MAT", domains: [AcademicDomain.SCIENCE_TECHNOLOGY] },
-        { name: "Physics", code: "PHY", domains: [AcademicDomain.SCIENCE_TECHNOLOGY] },
-        { name: "Chemistry", code: "CHE", domains: [AcademicDomain.SCIENCE_TECHNOLOGY] },
-        { name: "Biology", code: "BIO", domains: [AcademicDomain.SCIENCE_TECHNOLOGY] },
-        { name: "English Literature", code: "ENG", domains: [AcademicDomain.LANGUAGE_COMMUNICATION] },
-        { name: "World History", code: "HIS", domains: [AcademicDomain.SOCIAL_HUMANITIES] },
-        { name: "Geography", code: "GEO", domains: [AcademicDomain.SOCIAL_HUMANITIES] },
-        { name: "Art & Design", code: "ART", domains: [AcademicDomain.ARTS_CREATIVITY] },
-        { name: "Physical Education", code: "PE", domains: [AcademicDomain.PHYSICAL_EDUCATION] },
-        { name: "Computer Science", code: "CS", domains: [AcademicDomain.SCIENCE_TECHNOLOGY] },
-    ]
-
-    const dbSubjects = []
-    for (const sub of predefinedSubjects) {
-        const s = await prisma.subject.upsert({
-            where: { id: "placeholder" }, // upsert hack not effective if id unknown, so findFirst
-            update: {},
-            create: {
-                name: sub.name,
-                code: sub.code,
-                reportName: sub.name,
-                description: faker.lorem.sentence(),
-                academicDomains: sub.domains
-            }
-        }).catch(async () => {
-            const existing = await prisma.subject.findFirst({ where: { code: sub.code } })
-            if (existing) return existing
-            return prisma.subject.create({
-                data: {
-                name: sub.name,
-                code: sub.code,
-                reportName: sub.name,
-                description: faker.lorem.sentence(),
-                academicDomains: sub.domains
-                }
-            })
-        })
-        dbSubjects.push(s)
-    }
-
-    // ----------------------------------------------------------------------
-    // 3. USERS (Teachers & Students)
-    // ----------------------------------------------------------------------
-    console.log("👥 3. Creating Users...")
-    const commonPassword = await bcrypt.hash("password123", 10)
-
-    // -- Teachers
-    const teachers = []
-    for (let i = 0; i < CONFIG.TEACHER_COUNT; i++) {
-        const firstName = faker.person.firstName()
-        const lastName = faker.person.lastName()
-        const email = faker.internet.email({ firstName, lastName, provider: 'school.edu' })
-
+    const subjectTeachers = []
+    for (const [index, subject] of subjects.entries()) {
         const teacher = await prisma.user.create({
             data: {
-                name: `${firstName} ${lastName}`,
-                email: email.toLowerCase(),
-                password: commonPassword,
+                name: subject.teacher,
+                email: `${slugify(subject.teacher)}@jalms.id`,
+                password,
                 roles: [Role.SUBJECT_TEACHER],
-                image: faker.image.avatar(),
-                nip: faker.string.numeric(18),
-                avatarConfig: generateAvatarConfig(),
-                isActive: true
-            }
+                nip: `198${String(index + 1).padStart(2, "0")}011201501${String(index + 1).padStart(3, "0")}`,
+                isActive: true,
+                avatarConfig: { style: "notionists", seed: slugify(subject.teacher) },
+                conversationIds: [],
+                enrolledCourseIds: [],
+            },
         })
-        teachers.push(teacher)
+        subjectTeachers.push(teacher)
     }
 
-    // -- Students (Cohorts)
-    // To simulate 3 semesters (2 years):
-    // Cohort 2025 (Grade 12 -> Graduated -> Gone) - Skipping to simplify
-    // Cohort 2026 (Grade 11 -> 12 -> 12)
-    // Cohort 2027 (Grade 10 -> 11 -> 11)
-    // Cohort 2028 (New -> 10 -> 10)
+    const academicYear = await prisma.academicYear.create({
+        data: {
+            name: ACADEMIC_YEAR_NAME,
+            startDate: new Date("2025-07-14T00:00:00+07:00"),
+            endDate: new Date("2026-07-30T23:59:59+07:00"),
+            isActive: true,
+        },
+    })
 
-    // Simplified Logic: 
-    // We create Student Groups.
-    // Group A: Starts in Grade 10 (Term 1), Promoted 11 (Term 2, 3)
-    // Group B: Starts in Grade 11 (Term 1), Promoted 12 (Term 2, 3)
-    // Group C: Starts in Grade 12 (Term 1), Graduated (Not in Term 2, 3)
-    // Group D: New entrants in Term 2 (Grade 10) (Term 2, 3)
+    await prisma.term.create({
+        data: {
+            type: SemesterType.ODD,
+            startDate: new Date("2025-07-14T00:00:00+07:00"),
+            endDate: new Date("2025-12-19T23:59:59+07:00"),
+            academicYearId: academicYear.id,
+            isActive: false,
+        },
+    })
 
-    const createStudents = async (count: number) => {
-        const arr = []
-        for (let i = 0; i < count; i++) {
-            const firstName = faker.person.firstName()
-            const lastName = faker.person.lastName()
-            const email = faker.internet.email({ firstName, lastName, provider: 'student.school.edu' })
-            const s = await prisma.user.create({
+    const activeTerm = await prisma.term.create({
+        data: {
+            type: SemesterType.EVEN,
+            startDate: new Date("2026-01-05T00:00:00+07:00"),
+            endDate: new Date("2026-07-30T23:59:59+07:00"),
+            academicYearId: academicYear.id,
+            isActive: true,
+        },
+    })
+
+    const dbSubjects = []
+    for (const subject of subjects) {
+        dbSubjects.push(await prisma.subject.create({
+            data: {
+                name: subject.name,
+                code: subject.code,
+                reportName: subject.name,
+                description: `Mata pelajaran wajib SMA: ${subject.name}.`,
+                academicDomains: [subject.domain],
+            },
+        }))
+    }
+
+    await prisma.systemConfig.createMany({
+        data: [
+            {
+                id: "grading_scale",
+                value: [
+                    { grade: "A", min: 90, max: 100 },
+                    { grade: "B", min: 80, max: 89 },
+                    { grade: "C", min: 70, max: 79 },
+                    { grade: "D", min: 60, max: 69 },
+                    { grade: "E", min: 0, max: 59 },
+                ],
+            },
+            { id: "principal_name", value: { name: "Drs. Bambang Setiawan, M.Pd." } },
+            {
+                id: "school_info",
+                value: {
+                    name: "SMA Nusantara Jaya",
+                    address: "Jl. Pendidikan No. 10, Tangerang Selatan",
+                },
+            },
+        ],
+    })
+
+    let totalStudents = 0
+    let totalCourses = 0
+    let totalReports = 0
+
+    for (const [classIndex, classSeed] of classes.entries()) {
+        const classroom = await prisma.class.create({
+            data: {
+                name: classSeed.name,
+                gradeLevel: classSeed.gradeLevel,
+                color: classSeed.color,
+                termId: activeTerm.id,
+                homeroomTeacherId: homeroomTeacher.id,
+            },
+        })
+
+        const students: Array<{ id: string; name: string }> = []
+        for (const [studentIndex, name] of classSeed.students.entries()) {
+            const sequence = classIndex * classSeed.students.length + studentIndex + 1
+            const nis = `26${String(sequence).padStart(6, "0")}`
+            const nisn = `006${String(sequence).padStart(7, "0")}`
+
+            students.push(await prisma.user.create({
                 data: {
-                    name: `${firstName} ${lastName}`,
-                    email: email.toLowerCase(),
-                    password: commonPassword,
+                    name,
+                    email: `${slugify(name)}@siswa.jalms.id`,
+                    password,
                     roles: [Role.STUDENT],
-                    image: faker.image.avatar(),
-                    nis: faker.string.numeric(8),
-                    nisn: faker.string.numeric(10),
-                    avatarConfig: generateAvatarConfig(),
-                    isActive: true
-                }
+                    nis,
+                    nisn,
+                    officialId: nis,
+                    isActive: true,
+                    avatarConfig: { style: "adventurer", seed: slugify(name) },
+                    conversationIds: [],
+                    enrolledCourseIds: [],
+                },
+            }))
+        }
+
+        await prisma.enrollment.createMany({
+            data: students.map((student) => ({
+                studentId: student.id,
+                classId: classroom.id,
+                source: ClassEnrollmentSource.IMPORT,
+                createdById: admin.id,
+            })),
+        })
+
+        const courseIds: string[] = []
+
+        for (const [subjectIndex, subject] of dbSubjects.entries()) {
+            const course = await prisma.course.create({
+                data: {
+                    name: `${subject.name} - ${classSeed.name}`,
+                    reportName: subject.name,
+                    subjectId: subject.id,
+                    classId: classroom.id,
+                    termId: activeTerm.id,
+                    teacherId: subjectTeachers[subjectIndex].id,
+                    studentIds: students.map((student) => student.id),
+                    attendancePoolScore: 10,
+                    enrollmentMode: CourseEnrollmentMode.CLASS_SEEDED,
+                    lastEnrollmentSyncAt: new Date(),
+                    competencyRules: [
+                        { grade: "A", min: 90, max: 100, description: `Menunjukkan penguasaan sangat baik pada ${subject.name}.` },
+                        { grade: "B", min: 80, max: 89, description: `Menguasai sebagian besar kompetensi ${subject.name} dengan baik.` },
+                        { grade: "C", min: 70, max: 79, description: `Menguasai kompetensi dasar ${subject.name} dan perlu meningkatkan ketelitian.` },
+                        { grade: "D", min: 60, max: 69, description: `Perlu bimbingan lanjutan dalam memahami ${subject.name}.` },
+                        { grade: "E", min: 0, max: 59, description: `Memerlukan pendampingan intensif pada ${subject.name}.` },
+                    ],
+                },
             })
-            arr.push(s)
-        }
-        return arr
-    }
+            courseIds.push(course.id)
+            totalCourses++
 
-    console.log("   -> Creating Student Cohorts...")
-    const cohortA = await createStudents(CONFIG.STUDENT_COUNT_PER_GRADE) // Current Grade 11 (approx)
-    const cohortB = await createStudents(CONFIG.STUDENT_COUNT_PER_GRADE) // Current Grade 12 (approx)
-    const cohortC = await createStudents(CONFIG.STUDENT_COUNT_PER_GRADE) // Graduated
-    const cohortD = await createStudents(CONFIG.STUDENT_COUNT_PER_GRADE) // Current Grade 10 (Incoming)
+            await prisma.courseEnrollment.createMany({
+                data: students.map((student) => ({
+                    courseId: course.id,
+                    studentId: student.id,
+                    source: CourseEnrollmentSource.CLASS_SEED,
+                    sourceClassId: classroom.id,
+                    createdById: admin.id,
+                })),
+            })
 
-    // ----------------------------------------------------------------------
-    // 4. MAIN LOOP - SIMULATE TERMS
-    // ----------------------------------------------------------------------
-    console.log("🏫 4. Simulating Terms, Classes, and Academic Data...")
+            await prisma.schedule.create({
+                data: {
+                    dayOfWeek: (subjectIndex % 5) + 1,
+                    period: Math.floor(subjectIndex / 5) + classIndex + 1,
+                    courseId: course.id,
+                },
+            })
 
-    /*
-      Term 1: Jan 25 - Jun 25
-         - Grade 10: Cohort A
-         - Grade 11: Cohort B
-         - Grade 12: Cohort C
-      Term 2: Jul 25 - Dec 25
-         - Grade 10: Cohort D
-         - Grade 11: Cohort A
-         - Grade 12: Cohort B
-         - (Cohort C graduated)
-      Term 3: Jan 26 - Jul 26
-         - Grade 10: Cohort D
-         - Grade 11: Cohort A
-         - Grade 12: Cohort B
-    */
-
-    // Mapping of [TermIndex][GradeLevel] -> StudentArray
-    const termEnrollmentPlan = {
-        0: { // Term 1
-            "10": cohortA,
-            "11": cohortB,
-            "12": cohortC
-        },
-        1: { // Term 2
-            "10": cohortD,
-            "11": cohortA,
-            "12": cohortB
-        },
-        2: { // Term 3
-            "10": cohortD,
-            "11": cohortA,
-            "12": cohortB
-        }
-    }
-
-    for (let tIndex = 0; tIndex < CONFIG.TERMS.length; tIndex++) {
-        const currentTerm = termMap.get(tIndex)
-        const enrollmentMap = termEnrollmentPlan[tIndex as keyof typeof termEnrollmentPlan]
-
-        console.log(`\n   --- Processing ${currentTerm.id} (${CONFIG.TERMS[tIndex].name}) ---`)
-
-        // For each grade level in this term
-        for (const [gradeLevel, students] of Object.entries(enrollmentMap)) {
-            // Split students into sections (A, B)
-            const half = Math.ceil(students.length / 2)
-            const sectionAStudents = students.slice(0, half)
-            const sectionBStudents = students.slice(half)
-            const sections = [
-                { name: "A", students: sectionAStudents },
-                { name: "B", students: sectionBStudents }
-            ]
-
-            for (const section of sections) {
-                if (section.students.length === 0) continue
-
-                // 1. Create Class
-                const className = `${gradeLevel}-${section.name}`
-                const homeroomTeacher = teachers[faker.number.int({ min: 0, max: teachers.length - 1 })]
-
-                // Ensure Homeroom Role
-                if (!homeroomTeacher.roles.includes(Role.HOMEROOM_TEACHER)) {
-                    homeroomTeacher.roles.push(Role.HOMEROOM_TEACHER)
-                    await prisma.user.update({
-                        where: { id: homeroomTeacher.id },
-                        data: { roles: homeroomTeacher.roles }
-                    })
-                }
-
-                const cls = await prisma.class.create({
+            for (const [assignmentIndex, template] of assignmentTemplates.entries()) {
+                const assignment = await prisma.assignment.create({
                     data: {
-                        name: className,
-                        gradeLevel: GradeLevel[`GRADE_${gradeLevel}` as keyof typeof GradeLevel],
-                        termId: currentTerm.id,
-                        homeroomTeacherId: homeroomTeacher.id
-                    }
+                        title: `${template.title} ${subject.code}`,
+                        description: `${template.title} untuk mata pelajaran ${subject.name}.`,
+                        dueDate: template.dueDate,
+                        type: AssignmentType.SUBMISSION,
+                        maxPoints: 100,
+                        latePenalty: 0,
+                        academicDomains: subject.academicDomains,
+                        courseId: course.id,
+                        showGradeAfterSubmission: true,
+                    },
                 })
 
-                // 2. Enroll Students
-                const enrollmentData = section.students.map(s => ({
-                    studentId: s.id,
-                    classId: cls.id
-                }))
-                await prisma.enrollment.createMany({ data: enrollmentData })
+                await prisma.submission.createMany({
+                    data: students.map((student, studentIndex) => ({
+                        assignmentId: assignment.id,
+                        studentId: student.id,
+                        grade: scoreFor(studentIndex, subjectIndex, assignmentIndex),
+                        feedback: "Capaian baik. Pertahankan konsistensi belajar dan tingkatkan ketelitian.",
+                        submittedAt: new Date(template.dueDate.getTime() - 24 * 60 * 60 * 1000),
+                    })),
+                })
+            }
 
-                // 3. Create Courses for this Class (All Subjects)
-                for (const subject of dbSubjects) {
-                    const teacher = teachers[faker.number.int({ min: 0, max: teachers.length - 1 })]
-
-                    const course = await prisma.course.create({
-                        data: {
-                            name: `${subject.name} ${className}`,
-                            reportName: subject.name,
-                            subjectId: subject.id,
-                            classId: cls.id,
-                            termId: currentTerm.id,
-                            teacherId: teacher.id,
-                            studentIds: section.students.map(s => s.id),
-                            attendancePoolScore: faker.number.int({ min: 10, max: 20 }),
-                            competencyRules: [
-                                { grade: "A", min: 90, max: 100, description: "Exceptional mastery of concepts." },
-                                { grade: "B", min: 80, max: 89, description: "Strong understanding and application." },
-                                { grade: "C", min: 70, max: 79, description: "Solid grasp of core principles." },
-                                { grade: "D", min: 60, max: 69, description: "Basic competency with some gaps." }
-                            ]
-                        }
-                    })
-
-                    // --- MATERIALS (LINKS ONLY) ---
-                    // Create 3-5 Materials per course
-                    const materialCount = faker.number.int({ min: 3, max: 5 })
-                    for (let m = 0; m < materialCount; m++) {
-                        const material = await prisma.material.create({
-                            data: {
-                                title: `${subject.name} Resource ${m + 1}`,
-                                description: faker.lorem.sentence(),
-                                linkUrl: faker.internet.url(),
-                                materialType: "LINK",
-                                teacherId: teacher.id,
-                                // Optional: link to course directly if needed by schema, but schema has MaterialAssignment
-                            }
-                        })
-
-                        // Link to Course via MaterialAssignment
-                        await prisma.materialAssignment.create({
-                            data: {
-                                materialId: material.id,
-                                courseId: course.id
-                            }
-                        })
-                    }
-
-                    // --- ASSIGNMENTS & GRADING ---
-
-                    // A. Standard Assignments
-                    // Create 3-5 Assignments
-                    const assignCount = 4
-                    for (let a = 0; a < assignCount; a++) {
-                        const maxPoints = 100
-                        const assignment = await prisma.assignment.create({
-                            data: {
-                                title: `${subject.code} ${a === 0 ? 'Project' : 'Homework'} ${a + 1}`,
-                                description: faker.lorem.sentence(),
-                                dueDate: faker.date.between({ from: CONFIG.TERMS[tIndex].startDate, to: CONFIG.TERMS[tIndex].endDate }),
-                                type: AssignmentType.SUBMISSION,
-                                courseId: course.id,
-                                maxPoints: maxPoints,
-                                academicDomains: subject.academicDomains,
-                                isExtraCredit: faker.number.int({ min: 1, max: 10 }) > 8,
-                                latePenalty: 10,
-                                showGradeAfterSubmission: true
-                            }
-                        })
-
-                        // Submissions (100% submission rate)
-                        for (const student of section.students) {
-                            // Grade logic: 60 - 100
-                            const grade = faker.number.int({ min: 60, max: 100 })
-
-                            await prisma.submission.create({
-                                data: {
-                                    assignmentId: assignment.id,
-                                    studentId: student.id,
-                                    grade: grade,
-                                    feedback: grade < 75 ? "Good effort, keep improving." : "Excellent work!",
-                                    submittedAt: faker.date.between({ from: assignment.dueDate, to: new Date(assignment.dueDate.getTime() + 86400000) }),
-                                    link: "https://docs.google.com/document/d/...",
-                                    attachmentUrl: faker.internet.url()
-                                }
-                            })
-                        }
-                    }
-
-                    // B. Quiz (REMOVED per user request)
-
-                    // C. Participation / Attendance Assignment (Special 10 Points)
-                    const partAssign = await prisma.assignment.create({
-                        data: {
-                            title: "Class Participation & Attendance",
-                            description: "Overall participation score for the term.",
-                            dueDate: CONFIG.TERMS[tIndex].endDate,
-                            type: AssignmentType.NON_SUBMISSION, // Or submission if manual entry
+            await prisma.attendance.createMany({
+                data: attendanceDates.flatMap((date, dateIndex) =>
+                    students.map((student, studentIndex) => {
+                        const attendance = attendanceFor(studentIndex, dateIndex)
+                        return {
+                            date,
+                            status: attendance.status,
+                            excuseReason: attendance.excuseReason,
+                            topic: `Pembelajaran ${subject.name}`,
+                            period: 1,
                             courseId: course.id,
-                            maxPoints: 10,
-                            academicDomains: subject.academicDomains
+                            studentId: student.id,
                         }
-                    })
-
-                    // Participation Grades
-                    for (const student of section.students) {
-                        // Grade: 6 - 10
-                        const grade = faker.number.int({ min: 6, max: 10 })
-                        await prisma.submission.create({
-                            data: {
-                                assignmentId: partAssign.id,
-                                studentId: student.id,
-                                grade: grade,
-                                submittedAt: CONFIG.TERMS[tIndex].endDate
-                            }
-                        })
-                    }
-
-                    // D. Daily Attendance Records (For organic feel)
-                    // Generate ~20 records per student per course
-                    const attendDates = []
-                    for (let d = 0; d < 15; d++) {
-                        attendDates.push(
-                            faker.date.between({ from: CONFIG.TERMS[tIndex].startDate, to: CONFIG.TERMS[tIndex].endDate })
-                        )
-                    }
-
-                    for (const date of attendDates) {
-                        for (const student of section.students) {
-                            const roll = faker.number.int({ min: 1, max: 100 })
-                            let status: AttendanceStatus = AttendanceStatus.PRESENT
-                            if (roll > 95) status = AttendanceStatus.ABSENT // Very few absent
-                            else if (roll > 90) status = AttendanceStatus.EXCUSED
-
-                            await prisma.attendance.create({
-                                data: {
-                                    date: date,
-                                    status: status,
-                                    courseId: course.id,
-                                    studentId: student.id,
-                                    period: 1,
-                                    topic: faker.helpers.arrayElement(["Morning Review", "Core Concepts", "Advanced Discussion", "Group Work", "Practical Session"])
-                                }
-                            })
-                        }
-                    }
-
-
-                    // E. SCHEDULE
-                    // Create simple schedule: 1-2 periods per week per course
-                    // Simple random allocation (conflicts possible but unlikely to block seed)
-                    const scheduleCount = faker.number.int({ min: 1, max: 2 })
-                    for (let s = 0; s < scheduleCount; s++) {
-                        await prisma.schedule.create({
-                            data: {
-                                dayOfWeek: faker.number.int({ min: 1, max: 5 }), // Mon-Fri
-                                period: faker.number.int({ min: 1, max: 6 }),    // 1-6 periods
-                                courseId: course.id
-                            }
-                        })
-                    }
-
-                    // F. QUIZZES
-                    if (faker.number.int({ min: 1, max: 10 }) > 7) {
-                        const quiz = await prisma.quiz.create({
-                            data: {
-                                title: `${subject.name} Mastery Quiz`,
-                                description: `Evaluate your understanding of ${subject.name} core concepts.`,
-                                teacherId: teacher.id,
-                                questions: {
-                                    create: [
-                                        {
-                                            text: `What is the primary focus of ${subject.name}?`,
-                                            points: 5,
-                                            order: 1,
-                                            gradingType: QuizGradingType.ALL_OR_NOTHING,
-                                            choices: {
-                                                create: [
-                                                    { text: "Option A (Correct)", isCorrect: true, order: 1 },
-                                                    { text: "Option B", isCorrect: false, order: 2 },
-                                                    { text: "Option C", isCorrect: false, order: 3 },
-                                                ]
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        })
-
-                        await prisma.assignment.create({
-                            data: {
-                                title: `${subject.name} Quiz`,
-                                dueDate: faker.date.between({ from: currentTerm.startDate, to: currentTerm.endDate }),
-                                type: AssignmentType.QUIZ,
-                                courseId: course.id,
-                                quizId: quiz.id,
-                                academicDomains: subject.academicDomains
-                            }
-                        })
-                    }
-
-                } // End Courses
-            } // End Sections
-        } // End Grades
-
-        // G. REPORT CARDS (For completed semesters or active term)
-        if (tIndex <= 2) { // Seed for all terms including current
-            console.log(`   -> Generating Report Cards for Term ${tIndex + 1}...`)
-            const enrollmentMap = termEnrollmentPlan[tIndex as keyof typeof termEnrollmentPlan]
-            for (const [gradeLevel, students] of Object.entries(enrollmentMap)) {
-                for (const student of students.slice(0, 5)) { // Just a few per grade to keep it fast
-                    const studentClasses = await prisma.enrollment.findMany({
-                        where: { studentId: student.id, class: { termId: currentTerm.id } },
-                        include: { class: true }
-                    })
-                    
-                    if (studentClasses.length > 0) {
-                        const cls = studentClasses[0].class
-                        await prisma.reportCard.create({
-                            data: {
-                                studentId: student.id,
-                                classId: cls.id,
-                                termId: currentTerm.id,
-                                courseGrades: [
-                                    { subject: "Mathematics", score: 85, grade: "B", competency: "Strong understanding." },
-                                    { subject: "English", score: 92, grade: "A", competency: "Excellent writing skills." }
-                                ],
-                                extracurriculars: [
-                                    { activity: "Basketball", predicate: "A", note: "Team captain and high effort." }
-                                ],
-                                attendance: { sick: 1, excused: 2, alpha: 0 },
-                                homeroomTeacherNote: "A diligent student with great potential.",
-                                principalName: "Dr. Awesome"
-                            }
-                        })
-                    }
-                }
-            }
+                    }),
+                ),
+            })
         }
-    } // End Terms
 
-    // ----------------------------------------------------------------------
-    // 5. ADDITIONAL DATA (CONFIG, CONVERSATIONS)
-    // ----------------------------------------------------------------------
-    console.log("🛠️ 5. Creating System Config & Conversations...")
+        for (const [studentIndex, student] of students.entries()) {
+            await prisma.user.update({
+                where: { id: student.id },
+                data: { enrolledCourseIds: courseIds },
+            })
 
-    // -- System Config
-    await prisma.systemConfig.upsert({
-        where: { id: "grading_scale" },
-        update: {},
-        create: {
-            id: "grading_scale",
-            value: [
-                { grade: "A", min: 90, max: 100 },
-                { grade: "B", min: 80, max: 89 },
-                { grade: "C", min: 70, max: 79 },
-                { grade: "D", min: 0, max: 69 }
-            ]
+            const hasAlpha = studentIndex % 4 === 0
+            const extracurricular = ["Pramuka", "Palang Merah Remaja", "Paskibra"][studentIndex % 3]
+
+            await prisma.reportCard.create({
+                data: {
+                    studentId: student.id,
+                    classId: classroom.id,
+                    termId: activeTerm.id,
+                    courseGrades: [],
+                    extracurriculars: [
+                        {
+                            activity: extracurricular,
+                            predicate: studentIndex % 3 === 0 ? "A" : "B",
+                            note: "Aktif, disiplin, dan mampu bekerja sama dalam kegiatan kelompok.",
+                        },
+                    ],
+                    achievements: [
+                        {
+                            name: studentIndex % 2 === 0 ? "Lomba Literasi Sekolah" : "Proyek Kelas Inspiratif",
+                            note: studentIndex % 2 === 0 ? "Meraih peringkat terbaik tingkat sekolah." : "Menunjukkan kreativitas dan kerja sama yang sangat baik.",
+                        },
+                    ],
+                    development: [
+                        {
+                            activity: "Projek Penguatan Profil Pelajar Pancasila",
+                            note: "Menunjukkan sikap gotong royong, mandiri, dan bernalar kritis.",
+                        },
+                    ],
+                    attendance: { sick: 1, excused: 1, alpha: hasAlpha ? 1 : 0 },
+                    homeroomTeacherNote: "Pertahankan semangat belajar, kedisiplinan, dan sikap positif. Terus kembangkan potensi akademik maupun nonakademik.",
+                    principalName: "Drs. Bambang Setiawan, M.Pd.",
+                    published: false,
+                },
+            })
+            totalReports++
         }
-    })
 
-    await prisma.systemConfig.upsert({
-        where: { id: "school_info" },
-        update: {},
-        create: {
-            id: "school_info",
-            value: {
-                name: "Antigravity Academy",
-                address: "123 Code Lane, Silicon Valley",
-                principals: ["Dr. Jane Doe", "Prof. John Smith"]
-            }
-        }
-    })
-
-    // -- Conversations
-    const someTeacher = teachers[0]
-    const someStudent = cohortA[0]
-
-    await prisma.conversation.create({
-        data: {
-            participantIds: [someTeacher.id, someStudent.id],
-            initiatorId: someTeacher.id,
-            messages: {
-                create: [
-                    { content: "Hello! How is your project going?", senderId: someTeacher.id },
-                    { content: "It's going well, thank you! I just finished the first draft.", senderId: someStudent.id },
-                    { content: "Great to hear. Keep it up!", senderId: someTeacher.id }
-                ]
-            }
-        }
-    })
+        totalStudents += students.length
+    }
 
     console.log(`
-🎉 ORGANIC POPULATION COMPLETE!
+SMA report-card demo seed complete.
 ---------------------------------------------
-- 3 Terms Configured
-- Students promoted across terms
-- All assignments 100% submitted
-- Scores 60-100% range
-- Participation assignments (10pts) created
+Academic year : ${ACADEMIC_YEAR_NAME} (Even semester, active)
+Classes       : ${classes.length} (grades 10, 11, and 12)
+Subjects      : ${subjects.length} Indonesian compulsory subjects
+Students      : ${totalStudents}
+Courses       : ${totalCourses}
+Draft reports : ${totalReports} (ready for Preview & Print)
+
+Demo accounts (password: ${DEMO_PASSWORD})
+Admin         : ${admin.email}
+Homeroom      : ${homeroomTeacher.email}
 ---------------------------------------------
-    `)
+`)
 }
 
 main()
-    .catch((e) => {
-        console.error("❌ Error:", e)
-        process.exit(1)
+    .catch((error) => {
+        console.error("Seed failed:", error)
+        process.exitCode = 1
     })
     .finally(async () => {
         await prisma.$disconnect()

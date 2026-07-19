@@ -49,6 +49,13 @@ test("direct-message destinations are omitted when the feature is disabled", () 
   assert.equal(admin.flatMap((group) => group.sections).some((section) => section.href.includes("socials")), false)
 })
 
+test("administration exposes miscellaneous settings", () => {
+  const sections = groupsForContext({ kind: "admin" }, ["ADMIN"])
+    .flatMap((group) => group.sections)
+
+  assert.equal(sections.some((section) => section.href === "/admin/miscellaneous"), true)
+})
+
 test("primary role dashboard roots use the shared home context", () => {
   for (const href of ["/teacher", "/student", "/parent"]) {
     assert.deepEqual(contextFromPath(href, []), { kind: "home" })

@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import {
   Activity, BookOpen, Calendar, CalendarRange, Clock, FileQuestion, FileText,
   GraduationCap, LayoutDashboard, Library, ListTodo, MessageSquare,
-  MessagesSquare, PieChart, RotateCcw, School, Settings, Table, Users,
+  MessagesSquare, PackageOpen, PieChart, RotateCcw, School, Settings, Table, Users,
 } from "lucide-react"
 import type { Role } from "@prisma/client"
 import type { NavigationCourse } from "@/types/navigation"
@@ -25,6 +25,7 @@ export const ADMIN_NAV_SECTIONS: NavigationSection[] = [
   { id: "rollover", label: "Rollover", href: "/admin/rollover", icon: RotateCcw },
   { id: "schedule", label: "Schedule", href: "/admin/schedule", icon: Calendar },
   { id: "grading", label: "Grading", href: "/admin/grading", icon: PieChart },
+  { id: "miscellaneous", label: "Miscellaneous", href: "/admin/miscellaneous", icon: PackageOpen },
   { id: "socials", label: "Socials", href: "/admin/socials", icon: Activity },
 ]
 
