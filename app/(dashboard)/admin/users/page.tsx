@@ -42,7 +42,11 @@ async function UsersTable({ searchParams }: { searchParams: UsersSearchParams })
         users = result.users
     }
 
-    return <DataTable columns={columns} data={users} />
+    const emptyMessage = isFiltered
+        ? "No users match your search or filters."
+        : "Users are hidden by default. Search or click “Show all users” to view them."
+
+    return <DataTable columns={columns} data={users} emptyMessage={emptyMessage} />
 }
 
 function UsersTableSkeleton() {

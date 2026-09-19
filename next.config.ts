@@ -24,6 +24,10 @@ const nextConfig: NextConfig & { allowedDevOrigins?: string[] } = {
   },
   allowedDevOrigins: getLocalIps(),
   images: {
+    // Serve the already-compressed source files directly. This prevents Vercel's
+    // /_next/image endpoint from generating and billing a separate transform for
+    // every source/width/quality combination used throughout the application.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
