@@ -29,6 +29,35 @@ export async function getTeacherSchedule(teacherId: string) {
     }
 }
 
+export async function getTeacherWeeklySchedule(teacherId: string) {
+    try {
+        const courses = await prisma.course.findMany({
+            where: {
+                teacherId,
+                deletedAt: { isSet: false },
+                term: { isActive: true }
+            },
+            select: {
+                id: true,
+                name: true,
+                reportName: true,
+                schedules: {
+                    where: { deletedAt: { isSet: false } },
+                    select: { id: true, dayOfWeek: true, period: true }
+                },
+                class: { select: { name: true, color: true } },
+                subject: { select: { name: true, reportName: true, code: true } }
+            },
+            orderBy: { name: "asc" }
+        })
+
+        return { courses }
+    } catch (error) {
+        console.error("Error fetching teacher weekly schedule:", error)
+        return { error: "Failed to fetch weekly schedule" }
+    }
+}
+
 export async function updateSchedule(
     teacherId: string,
     dayOfWeek: number,

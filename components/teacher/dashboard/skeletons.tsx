@@ -10,5 +10,5 @@ export function ClassesSkeleton() {
 }
 
 export function AssignmentsSkeleton() {
-  return <WorkspacePanel className="overflow-hidden" aria-label="Loading assignment progress" aria-busy="true"><PanelHeaderSkeleton /><div className="divide-y">{Array.from({ length: 5 }, (_, index) => <div key={index} className="space-y-2 px-4 py-3"><div className="flex gap-2"><Skeleton className="h-5 w-12" /><Skeleton className="h-4 w-2/5" /></div><Skeleton className="h-3 w-1/3" /><div className="flex items-center gap-3"><Skeleton className="h-1.5 flex-1" /><Skeleton className="h-3 w-20" /></div></div>)}</div></WorkspacePanel>
+  return <WorkspacePanel className="overflow-hidden" aria-label="Loading assignment progress" aria-busy="true"><PanelHeaderSkeleton /><div className="divide-y">{Array.from({ length: 3 }, (_, index) => <div key={index} className="space-y-2 px-4 py-3"><div className="flex gap-2"><Skeleton className="h-5 w-12" /><Skeleton className="h-4 w-2/5" /></div><Skeleton className="h-3 w-1/3" /><div className="flex items-center gap-3"><Skeleton className="h-1.5 flex-1" /><Skeleton className="h-3 w-20" /></div></div>)}</div></WorkspacePanel>
 }

@@ -23,12 +23,16 @@ function DashboardMetricSkeleton({ count }: { count: number }) {
   return <WorkspacePanel className={`grid overflow-hidden ${count === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-4"}`}>{Array.from({ length: count }, (_, index) => <div key={index} className="flex h-16 items-center gap-3 border-t px-4 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0"><Skeleton className="size-9" /><div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-28" /></div></div>)}</WorkspacePanel>
 }
 
+function DashboardActionsSkeleton({ mobileCount, desktopCount }: { mobileCount: number; desktopCount: number }) {
+  return <div aria-hidden><div className="flex gap-2 sm:hidden">{Array.from({ length: mobileCount }, (_, index) => <Skeleton key={index} className="h-11 flex-1" />)}</div><div className="hidden gap-2 sm:flex sm:flex-wrap">{Array.from({ length: desktopCount }, (_, index) => <Skeleton key={index} className="h-11 min-w-40 flex-1" />)}</div></div>
+}
+
 function DashboardSkeletonContent({ variant }: { variant: DashboardSkeletonVariant }) {
-  if (variant === "parent") return <WorkspacePanel className="flex min-h-56 items-center justify-center"><div className="space-y-3 text-center"><Skeleton className="mx-auto size-10" /><Skeleton className="mx-auto h-5 w-56" /><Skeleton className="mx-auto h-4 w-80 max-w-[70vw]" /></div></WorkspacePanel>
+  if (variant === "parent") return <WorkspacePanel className="flex min-h-44 items-center justify-center"><div className="space-y-3 text-center"><Skeleton className="mx-auto size-10" /><Skeleton className="mx-auto h-5 w-56" /><Skeleton className="mx-auto h-4 w-80 max-w-[70vw]" /></div></WorkspacePanel>
   if (variant === "homeroom") return <><DashboardMetricSkeleton count={2} /><DashboardPanelSkeleton rows={3} tall /></>
-  if (variant === "admin") return <><WorkspacePanel className="grid grid-cols-2 overflow-hidden sm:grid-cols-3 xl:grid-cols-6">{Array.from({ length: 6 }, (_, index) => <div key={index} className="flex h-14 items-center gap-2.5 border-t px-3"><Skeleton className="size-8" /><Skeleton className="h-4 w-16" /></div>)}</WorkspacePanel><div className="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(18rem,.6fr)]"><DashboardPanelSkeleton rows={1} tall /><DashboardPanelSkeleton rows={1} tall /></div><DashboardPanelSkeleton rows={5} /></>
-  if (variant === "student") return <><WorkspacePanel className="grid grid-cols-2 overflow-hidden sm:grid-cols-5">{Array.from({ length: 5 }, (_, index) => <div key={index} className="flex h-14 items-center gap-2.5 border-t px-3"><Skeleton className="size-8" /><Skeleton className="h-4 w-16" /></div>)}</WorkspacePanel><DashboardMetricSkeleton count={2} /><div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(19rem,.65fr)]"><div className="space-y-3"><DashboardPanelSkeleton rows={1} tall /><DashboardPanelSkeleton rows={4} /></div><DashboardPanelSkeleton rows={5} tall /></div></>
-  if (variant === "teacher") return <><WorkspacePanel className="grid overflow-hidden sm:grid-cols-3">{Array.from({ length: 3 }, (_, index) => <div key={index} className="flex h-14 items-center gap-3 border-t px-4 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0"><Skeleton className="size-8" /><Skeleton className="h-4 w-24" /></div>)}</WorkspacePanel><DashboardPanelSkeleton rows={3} /><DashboardPanelSkeleton rows={5} tall /></>
+  if (variant === "admin") return <><DashboardMetricSkeleton count={2} /><DashboardActionsSkeleton mobileCount={2} desktopCount={6} /><DashboardPanelSkeleton rows={3} /></>
+  if (variant === "student") return <><DashboardPanelSkeleton rows={1} tall /><DashboardActionsSkeleton mobileCount={2} desktopCount={5} /><DashboardMetricSkeleton count={2} /><div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(19rem,.65fr)]"><DashboardPanelSkeleton rows={3} /><DashboardPanelSkeleton rows={3} tall /></div></>
+  if (variant === "teacher") return <><DashboardPanelSkeleton rows={3} /><DashboardActionsSkeleton mobileCount={1} desktopCount={3} /><DashboardPanelSkeleton rows={3} tall /></>
   return <><DashboardMetricSkeleton count={4} /><div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.55fr)_minmax(18rem,.7fr)]"><div className="space-y-3"><DashboardPanelSkeleton rows={3} /><DashboardPanelSkeleton rows={5} tall /></div><DashboardPanelSkeleton rows={5} tall /></div></>
 }
 
@@ -500,6 +504,14 @@ export function StudentAttendanceContentSkeleton() {
 
 export function StudentScheduleRouteSkeleton() {
   return <WorkspacePage aria-label="Loading schedule" aria-busy="true"><StudentScheduleContentSkeleton /></WorkspacePage>
+}
+
+export function TeacherScheduleRouteSkeleton() {
+  return <WorkspacePage aria-label="Loading weekly schedule" aria-busy="true"><TeacherScheduleContentSkeleton /></WorkspacePage>
+}
+
+export function TeacherScheduleContentSkeleton() {
+  return <StudentScheduleContentSkeleton />
 }
 
 export function StudentScheduleContentSkeleton() {

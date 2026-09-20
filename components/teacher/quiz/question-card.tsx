@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useRef, useState, useTransition } from "react"
+import { type ReactNode, useEffect, useRef, useState, useTransition } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import imageCompression from "browser-image-compression"
-import { AudioLines, Image as ImageIcon, Loader2, Plus, Save, Trash2, X } from "lucide-react"
+import { ArrowDown, ArrowUp, AudioLines, ChevronDown, ChevronUp, Image as ImageIcon, Loader2, Plus, Save, Settings2, Trash2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { useLocalUpload } from "@/hooks/use-local-upload"
@@ -19,9 +19,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Editor } from "@/components/ui/editor"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -32,6 +32,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { isRichTextEmpty, richTextToPlainText } from "@/lib/rich-text"
 
 export interface QuizEditorChoice {
     id?: string
@@ -61,9 +62,13 @@ interface QuestionProps {
     question?: QuizEditorQuestion
     onCancelNew?: () => void
     questionNumber?: number
+    canMoveUp?: boolean
+    canMoveDown?: boolean
+    dragHandle?: ReactNode
+    onMove?: (direction: "up" | "down") => void
 }
 
-export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: QuestionProps) {
+export function QuestionCard({ quizId, question, onCancelNew, questionNumber, canMoveUp = false, canMoveDown = false, dragHandle, onMove }: QuestionProps) {
     const isNew = !question
     const router = useRouter()
     const { startUpload, isUploading } = useLocalUpload()
@@ -90,11 +95,18 @@ export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: 
         Object.fromEntries((question?.choices || []).flatMap((choice, index) => choice.imageUrl ? [[index, choice.imageUrl] as const] : [])),
     )
     const localPreviewUrls = useRef<string[]>([])
+    const moveFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+    const [isExpanded, setIsExpanded] = useState(isNew)
+    const [showSettings, setShowSettings] = useState(false)
+    const [moveFeedback, setMoveFeedback] = useState<"up" | "down" | null>(null)
 
     useEffect(() => {
         const urls = localPreviewUrls.current
-        return () => urls.forEach((url) => URL.revokeObjectURL(url))
+        return () => {
+            urls.forEach((url) => URL.revokeObjectURL(url))
+            if (moveFeedbackTimer.current) clearTimeout(moveFeedbackTimer.current)
+        }
     }, [])
 
     function createPreview(file: File) {
@@ -193,7 +205,7 @@ export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: 
     }
 
     function handleSave() {
-        if (!text.trim()) return toast.error("Question text is required")
+        if (isRichTextEmpty(text)) return toast.error("Question text is required")
         if (choices.length < 2) return toast.error("Add at least two choices")
         if (!choices.some((choice) => choice.isCorrect)) return toast.error("Mark at least one correct answer")
         if (choices.some((choice, index) => !choice.text.trim() && !choice.imageUrl && !pendingChoiceFiles[index])) {
@@ -269,43 +281,78 @@ export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: 
         })
     }
 
+    function handleMove(direction: "up" | "down") {
+        if (!question || !onMove) return
+        if (moveFeedbackTimer.current) clearTimeout(moveFeedbackTimer.current)
+        setMoveFeedback(direction)
+        moveFeedbackTimer.current = setTimeout(() => setMoveFeedback(null), 180)
+        onMove(direction)
+    }
+
     const correctCount = choices.filter((choice) => choice.isCorrect).length
     const busy = isPending || isUploading
     const identity = question?.id || "new"
 
     return (
-        <article className="relative overflow-hidden rounded-md border bg-card shadow-xs" aria-busy={busy}>
+        <article className={`relative overflow-hidden rounded-md border bg-card transition-shadow ${isExpanded ? "shadow-xs" : "hover:border-foreground/20"}`} aria-busy={busy}>
             {busy && <div className="absolute inset-x-0 top-0 z-20 h-0.5 animate-pulse bg-primary" />}
 
-            <header className="flex items-center gap-3 border-b bg-muted/25 px-3 py-2.5">
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-semibold tabular-nums text-primary-foreground">{questionNumber || "+"}</span>
-                <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold">{isNew ? "New question" : `Question ${questionNumber || ""}`}</h3>
-                    <p className="truncate text-xs text-muted-foreground">{text || "Write the question prompt below."}</p>
+            <header className={`flex items-center gap-2 px-3 py-2.5 ${isExpanded ? "border-b" : ""}`}>
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded((current) => !current)}
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                    aria-expanded={isExpanded}
+                >
+                    <span className={`flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold tabular-nums ${isExpanded ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>{questionNumber || "+"}</span>
+                    <span className="min-w-0 flex-1">
+                        <span className="block text-xs font-medium text-muted-foreground">{isNew ? "New question" : `Question ${questionNumber || ""}`}</span>
+                        <span className="block truncate text-sm font-medium text-foreground">{richTextToPlainText(text) || "Write a question"}</span>
+                    </span>
+                </button>
+                <div className="hidden shrink-0 items-center gap-1 text-xs text-muted-foreground sm:flex">
+                    <span>{points} pts</span>
+                    <span aria-hidden="true">·</span>
+                    <span className={correctCount === 0 ? "text-destructive" : undefined}>{correctCount} correct</span>
                 </div>
-                <div className="hidden items-center gap-1.5 sm:flex">
-                    <Badge variant="secondary">{points} pts</Badge>
-                    <Badge variant={correctCount > 0 ? "outline" : "destructive"}>{correctCount} correct</Badge>
-                </div>
+                {!isNew && (
+                    <div className="flex items-center" aria-label={`Reorder question ${questionNumber || ""}`}>
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleMove("up")} disabled={!canMoveUp || busy} className="overflow-hidden" aria-label="Move question up" title="Move up">
+                            <ArrowUp className={`size-3.5 transition-transform duration-150 ${moveFeedback === "up" ? "-translate-y-1 scale-110" : ""}`} />
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleMove("down")} disabled={!canMoveDown || busy} className="overflow-hidden" aria-label="Move question down" title="Move down">
+                            <ArrowDown className={`size-3.5 transition-transform duration-150 ${moveFeedback === "down" ? "translate-y-1 scale-110" : ""}`} />
+                        </Button>
+                    </div>
+                )}
                 {!isNew && (
                     <Button variant="ghost" size="icon-sm" onClick={() => setIsDeleteOpen(true)} className="text-muted-foreground hover:text-destructive" aria-label={`Delete question ${questionNumber || ""}`}>
                         <Trash2 className="size-4" />
                     </Button>
                 )}
+                <Button variant="ghost" size="icon-sm" onClick={() => setIsExpanded((current) => !current)} aria-label={isExpanded ? "Collapse question" : "Edit question"}>
+                    {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </Button>
+                {dragHandle}
             </header>
 
+            {isExpanded && <>
             <div className="space-y-5 p-3 sm:p-4">
-                <section className="space-y-3">
-                    <div>
-                        <Label htmlFor={`question-text-${identity}`}>Question prompt</Label>
-                        <p className="mt-0.5 text-xs text-muted-foreground">Keep it direct. Add media only when it helps students answer.</p>
-                    </div>
-                    <Textarea id={`question-text-${identity}`} value={text} onChange={(event) => setText(event.target.value)} placeholder="What do you want students to answer?" className="min-h-24 resize-y" />
+                <section className="space-y-2">
+                    <Label htmlFor={`question-text-${identity}`}>Question</Label>
+                    <Editor
+                        id={`question-text-${identity}`}
+                        value={text}
+                        onChange={setText}
+                        ariaLabel="Question text"
+                        placeholder="What do you want students to answer?"
+                        className="min-h-24 p-3 text-sm"
+                    />
 
-                    <div className="flex flex-wrap gap-2">
-                        {!questionPreview && <AttachmentLabel htmlFor={`q-img-${identity}`} icon={ImageIcon} label="Add image" />}
+                    <div className="flex flex-wrap items-center gap-3">
+                        {!questionPreview && <AttachmentLabel htmlFor={`q-img-${identity}`} icon={ImageIcon} label="Add image" compact />}
                         <Input id={`q-img-${identity}`} type="file" accept="image/*" className="hidden" onChange={(event) => handleFileSelect(event, "question")} disabled={isUploading} />
-                        {!audioPreview && <AttachmentLabel htmlFor={`q-audio-${identity}`} icon={AudioLines} label="Add audio" />}
+                        {!audioPreview && <AttachmentLabel htmlFor={`q-audio-${identity}`} icon={AudioLines} label="Add audio" compact />}
                         <Input id={`q-audio-${identity}`} type="file" accept="audio/*" className="hidden" onChange={(event) => handleFileSelect(event, "audio")} disabled={isUploading} />
                     </div>
 
@@ -332,18 +379,18 @@ export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: 
                     )}
                 </section>
 
-                <section className="space-y-3 border-t pt-4">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                            <Label>Answer choices</Label>
-                            <p className="mt-0.5 text-xs text-muted-foreground">Select every correct answer. Two to six choices are supported.</p>
+                <section className="space-y-2 border-t pt-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                            <Label>Answers</Label>
+                            <span className="text-xs text-muted-foreground">Check every correct answer</span>
                         </div>
-                        {choices.length < 6 && <Button variant="outline" size="sm" onClick={addChoice}><Plus className="size-4" />Add choice</Button>}
+                        {choices.length < 6 && <Button variant="ghost" size="sm" onClick={addChoice}><Plus className="size-4" />Add choice</Button>}
                     </div>
 
                     <div className="grid gap-2 lg:grid-cols-2">
                         {choices.map((choice, index) => (
-                            <div key={choice.id || index} className={`rounded-md border p-3 transition-colors ${choice.isCorrect ? "border-emerald-400 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/25" : "bg-background"}`}>
+                            <div key={choice.id || index} className={`rounded-md p-2 transition-colors ${choice.isCorrect ? "bg-emerald-50 ring-1 ring-emerald-400/70 dark:bg-emerald-950/25 dark:ring-emerald-800" : "bg-muted/25 hover:bg-muted/40"}`}>
                                 <div className="flex items-start gap-2">
                                     <div className="flex min-h-9 items-center gap-2">
                                         <Checkbox id={`correct-${identity}-${index}`} checked={choice.isCorrect} onCheckedChange={(checked) => updateChoice(index, "isCorrect", checked === true)} aria-label={`Mark choice ${index + 1} as correct`} />
@@ -356,7 +403,7 @@ export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: 
                                                 <Image src={choicePreviews[index]} alt={`Choice ${index + 1} attachment preview`} fill className="object-contain" />
                                                 <Button variant="destructive" size="icon-sm" className="absolute right-1.5 top-1.5" onClick={() => removeMedia(index)} aria-label={`Remove image from choice ${index + 1}`}><X className="size-4" /></Button>
                                             </div>
-                                        ) : <AttachmentLabel htmlFor={`c-img-${index}-${identity}`} icon={ImageIcon} label="Add image" compact />}
+                                        ) : <AttachmentLabel htmlFor={`c-img-${index}-${identity}`} icon={ImageIcon} label={`Add image to choice ${String.fromCharCode(65 + index)}`} compact iconOnly />}
                                         <Input id={`c-img-${index}-${identity}`} type="file" accept="image/*" className="hidden" onChange={(event) => handleFileSelect(event, index)} disabled={isUploading} />
                                     </div>
                                     <Button variant="ghost" size="icon-sm" onClick={() => removeChoice(index)} className="text-muted-foreground hover:text-destructive" aria-label={`Remove choice ${index + 1}`}><X className="size-4" /></Button>
@@ -366,33 +413,43 @@ export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: 
                     </div>
                 </section>
 
-                <section className="grid gap-3 border-t pt-4 md:grid-cols-[8rem_minmax(0,1fr)]">
-                    <div className="space-y-2">
-                        <Label htmlFor={`points-${identity}`}>Points</Label>
-                        <Input id={`points-${identity}`} type="number" min="1" value={points} onChange={(event) => setPoints(Math.max(1, parseInt(event.target.value) || 1))} />
-                    </div>
-                    {correctCount > 1 && (
-                        <div className="space-y-2">
-                            <Label>Multiple-answer grading</Label>
-                            <Select value={gradingType} onValueChange={(value) => setGradingType(value as "ALL_OR_NOTHING" | "RIGHT_MINUS_WRONG")}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL_OR_NOTHING">All or nothing</SelectItem>
-                                    <SelectItem value="RIGHT_MINUS_WRONG">Partial credit (right minus wrong)</SelectItem>
-                                </SelectContent>
-                            </Select>
+                <section className="border-t pt-2">
+                    <button type="button" onClick={() => setShowSettings((current) => !current)} className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-muted/50" aria-expanded={showSettings}>
+                        <Settings2 className="size-4 text-muted-foreground" />
+                        <span className="font-medium">Points & feedback</span>
+                        <span className="ml-auto truncate text-xs text-muted-foreground">{points} pts{explanation.trim() ? " · explanation added" : ""}</span>
+                        {showSettings ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+                    </button>
+
+                    {showSettings && (
+                        <div className="mt-2 grid gap-3 rounded-md bg-muted/20 p-3 md:grid-cols-[8rem_minmax(0,1fr)]">
+                            <div className="space-y-2">
+                                <Label htmlFor={`points-${identity}`}>Points</Label>
+                                <Input id={`points-${identity}`} type="number" min="1" value={points} onChange={(event) => setPoints(Math.max(1, parseInt(event.target.value) || 1))} />
+                            </div>
+                            {correctCount > 1 && (
+                                <div className="space-y-2">
+                                    <Label>Multiple-answer grading</Label>
+                                    <Select value={gradingType} onValueChange={(value) => setGradingType(value as "ALL_OR_NOTHING" | "RIGHT_MINUS_WRONG")}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ALL_OR_NOTHING">All or nothing</SelectItem>
+                                            <SelectItem value="RIGHT_MINUS_WRONG">Partial credit (right minus wrong)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                            <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor={`explanation-${identity}`}>Answer explanation <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                                <Textarea id={`explanation-${identity}`} value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Shown during review when grades are available." className="min-h-20 resize-y" />
+                            </div>
                         </div>
                     )}
-                    <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor={`explanation-${identity}`}>Answer explanation <span className="font-normal text-muted-foreground">(optional)</span></Label>
-                        <Textarea id={`explanation-${identity}`} value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Shown during review when grades are available." className="min-h-20 resize-y" />
-                    </div>
                 </section>
             </div>
 
-            <footer className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t bg-card/95 px-3 py-2.5 backdrop-blur-sm sm:px-4">
-                <p className="hidden text-xs text-muted-foreground sm:block">This question is saved independently.</p>
-                <div className="ml-auto flex gap-2">
+            <footer className="flex items-center justify-end gap-2 border-t bg-muted/15 px-3 py-2.5 sm:px-4">
+                <div className="flex gap-2">
                     {isNew && <Button variant="ghost" onClick={onCancelNew} disabled={busy}>Cancel</Button>}
                     <Button onClick={handleSave} disabled={busy}>
                         {busy ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
@@ -400,6 +457,7 @@ export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: 
                     </Button>
                 </div>
             </footer>
+            </>}
 
             {!isNew && (
                 <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
@@ -421,13 +479,16 @@ export function QuestionCard({ quizId, question, onCancelNew, questionNumber }: 
     )
 }
 
-function AttachmentLabel({ htmlFor, icon: Icon, label, compact = false }: { htmlFor: string; icon: React.ElementType; label: string; compact?: boolean }) {
+function AttachmentLabel({ htmlFor, icon: Icon, label, compact = false, iconOnly = false }: { htmlFor: string; icon: React.ElementType; label: string; compact?: boolean; iconOnly?: boolean }) {
     return (
-        <Label htmlFor={htmlFor} className={compact
-            ? "inline-flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        <Label htmlFor={htmlFor} title={label} className={compact
+            ? iconOnly
+                ? "inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                : "inline-flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
             : "inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
         }>
-            <Icon className={compact ? "size-3" : "size-4"} />{label}
+            <Icon className={compact && !iconOnly ? "size-3" : "size-4"} />
+            <span className={iconOnly ? "sr-only" : undefined}>{label}</span>
         </Label>
     )
 }

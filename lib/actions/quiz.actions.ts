@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { unlink } from "fs/promises"
 import path from "path"
+import { isRichTextEmpty } from "@/lib/rich-text"
 
 // --- Quiz Actions ---
 
@@ -344,6 +345,7 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
     try {
         const session = await auth();
         if (!session?.user?.id) return { error: "Unauthorized" };
+        if (isRichTextEmpty(data.text)) return { error: "Question text is required" };
 
         const quiz = await db.quiz.findUnique({ where: { id: quizId } });
         if (!quiz) return { error: "Quiz not found" };
@@ -432,6 +434,11 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
 
         } else {
             // Create New Question
+            const lastQuestion = await db.quizQuestion.findFirst({
+                where: { quizId },
+                orderBy: { order: 'desc' },
+                select: { order: true }
+            })
             const question = await db.quizQuestion.create({
                 data: {
                     quizId,
@@ -439,7 +446,7 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
                     imageUrl: data.imageUrl,
                     audioUrl: data.audioUrl,
                     audioLimit: data.audioLimit ?? 0,
-                    order: data.order,
+                    order: (lastQuestion?.order ?? -1) + 1,
                     points: data.points ?? 1,
                     gradingType: data.gradingType ?? 'ALL_OR_NOTHING',
                     explanation: data.explanation,
@@ -462,6 +469,81 @@ export async function upsertQuestion(quizId: string, data: QuestionInput) {
     } catch (error) {
         console.error("Error upserting question:", error)
         return { error: "Failed to save question" }
+    }
+}
+
+export async function moveQuestion(questionId: string, direction: 'up' | 'down') {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) return { error: "Unauthorized" }
+
+        const question = await db.quizQuestion.findUnique({
+            where: { id: questionId },
+            include: { quiz: { select: { teacherId: true } } }
+        })
+        if (!question) return { error: "Question not found" }
+        if (question.quiz.teacherId !== session.user.id) return { error: "Unauthorized" }
+
+        const questions = await db.quizQuestion.findMany({
+            where: { quizId: question.quizId },
+            orderBy: [{ order: 'asc' }, { id: 'asc' }],
+            select: { id: true }
+        })
+        const currentIndex = questions.findIndex((item) => item.id === questionId)
+        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+        if (currentIndex < 0 || targetIndex < 0 || targetIndex >= questions.length) {
+            return { success: true }
+        }
+
+        const reordered = [...questions]
+        ;[reordered[currentIndex], reordered[targetIndex]] = [reordered[targetIndex], reordered[currentIndex]]
+
+        await db.$transaction(reordered.map((item, index) =>
+            db.quizQuestion.update({ where: { id: item.id }, data: { order: index } })
+        ))
+
+        revalidatePath(`/teacher/quiz-manager/${question.quizId}`)
+        return { success: true }
+    } catch (error) {
+        console.error("Error moving question:", error)
+        return { error: "Failed to move question" }
+    }
+}
+
+export async function reorderQuestions(quizId: string, questionIds: string[]) {
+    try {
+        const session = await auth()
+        if (!session?.user?.id) return { error: "Unauthorized" }
+
+        const quiz = await db.quiz.findUnique({
+            where: { id: quizId },
+            select: { teacherId: true }
+        })
+        if (!quiz || quiz.teacherId !== session.user.id) return { error: "Quiz not found" }
+
+        const existingQuestions = await db.quizQuestion.findMany({
+            where: { quizId },
+            select: { id: true }
+        })
+        const existingIds = new Set(existingQuestions.map((question) => question.id))
+        const uniqueIncomingIds = new Set(questionIds)
+        if (
+            questionIds.length !== existingQuestions.length ||
+            uniqueIncomingIds.size !== questionIds.length ||
+            questionIds.some((id) => !existingIds.has(id))
+        ) {
+            return { error: "Question order is out of date. Refresh and try again." }
+        }
+
+        await db.$transaction(questionIds.map((id, index) =>
+            db.quizQuestion.update({ where: { id }, data: { order: index } })
+        ))
+
+        revalidatePath(`/teacher/quiz-manager/${quizId}`)
+        return { success: true }
+    } catch (error) {
+        console.error("Error reordering questions:", error)
+        return { error: "Failed to reorder questions" }
     }
 }
 
@@ -511,6 +593,9 @@ export async function bulkCreateQuestions(quizId: string, questionsData: Questio
     try {
         const session = await auth();
         if (!session?.user?.id) return { error: "Unauthorized" };
+        if (questionsData.some((question) => isRichTextEmpty(question.text))) {
+            return { error: "Every question needs text" };
+        }
 
         const quiz = await db.quiz.findUnique({ where: { id: quizId } });
         if (!quiz) return { error: "Quiz not found" };

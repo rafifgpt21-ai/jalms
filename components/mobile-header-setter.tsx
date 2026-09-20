@@ -9,12 +9,13 @@ import { useMobileHeader } from "@/components/mobile-header-context"
 interface MobileHeaderSetterProps {
     title: string
     subtitle?: string
+    showMobileSubtitle?: boolean
     image?: string | null
     backLink?: string
     rightAction?: React.ReactNode
 }
 
-export function MobileHeaderSetter({ title, subtitle, image, backLink, rightAction }: MobileHeaderSetterProps) {
+export function MobileHeaderSetter({ title, subtitle, showMobileSubtitle = true, image, backLink, rightAction }: MobileHeaderSetterProps) {
     const { setHeader, resetHeader } = useMobileHeader()
 
     useEffect(() => {
@@ -29,12 +30,13 @@ export function MobileHeaderSetter({ title, subtitle, image, backLink, rightActi
         setHeader({
             title,
             subtitle,
+            showMobileSubtitle,
             image,
             leftAction,
             rightAction
         })
         return () => resetHeader()
-    }, [title, subtitle, image, backLink, rightAction, setHeader, resetHeader])
+    }, [title, subtitle, showMobileSubtitle, image, backLink, rightAction, setHeader, resetHeader])
 
     return null
 }

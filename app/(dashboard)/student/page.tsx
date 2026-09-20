@@ -11,12 +11,12 @@ export const dynamic = "force-dynamic"
 export default function StudentDashboard() {
   return (
     <WorkspacePage>
-      <MobileHeaderSetter title="Learning dashboard" subtitle={format(new Date(), "EEEE, MMMM d")} />
+      <MobileHeaderSetter title="Learning dashboard" subtitle={format(new Date(), "EEEE, MMMM d")} showMobileSubtitle={false} />
+      <Suspense fallback={<UpNextSkeleton />}><DashboardUpNext /></Suspense>
       <QuickMenu />
       <Suspense fallback={<GradesSkeleton />}><DashboardGrades /></Suspense>
       <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(19rem,.65fr)]">
         <div className="space-y-3">
-          <Suspense fallback={<UpNextSkeleton />}><DashboardUpNext /></Suspense>
           <Suspense fallback={<ScheduleSkeleton />}><DashboardSchedule /></Suspense>
         </div>
         <Suspense fallback={<DeadlinesSkeleton />}><DashboardDeadlines /></Suspense>

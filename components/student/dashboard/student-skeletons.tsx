@@ -14,9 +14,9 @@ export function UpNextSkeleton() {
 }
 
 export function ScheduleSkeleton() {
-  return <WorkspacePanel className="overflow-hidden" aria-label="Loading today’s schedule" aria-busy="true"><HeaderSkeleton /><div className="divide-y">{Array.from({ length: 4 }, (_, index) => <div key={index} className="flex h-14 items-center gap-3 px-4"><Skeleton className="h-4 w-16" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/5" /><Skeleton className="h-3 w-1/2" /></div><Skeleton className="size-4" /></div>)}</div></WorkspacePanel>
+  return <WorkspacePanel className="overflow-hidden" aria-label="Loading today’s schedule" aria-busy="true"><HeaderSkeleton /><div className="divide-y">{Array.from({ length: 3 }, (_, index) => <div key={index} className="flex h-14 items-center gap-3 px-4"><Skeleton className="h-4 w-16" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/5" /><Skeleton className="h-3 w-1/2" /></div><Skeleton className="size-4" /></div>)}</div></WorkspacePanel>
 }
 
 export function DeadlinesSkeleton() {
-  return <WorkspacePanel className="overflow-hidden" aria-label="Loading deadlines" aria-busy="true"><HeaderSkeleton /><div className="divide-y">{Array.from({ length: 5 }, (_, index) => <div key={index} className="flex h-16 items-center gap-3 px-4"><Skeleton className="size-8" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-4/5" /></div><Skeleton className="h-5 w-16" /></div>)}</div></WorkspacePanel>
+  return <WorkspacePanel className="overflow-hidden" aria-label="Loading deadlines" aria-busy="true"><HeaderSkeleton /><div className="divide-y">{Array.from({ length: 3 }, (_, index) => <div key={index} className="flex h-16 items-center gap-3 px-4"><Skeleton className="size-8" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-4/5" /></div><Skeleton className="h-5 w-16" /></div>)}</div></WorkspacePanel>
 }

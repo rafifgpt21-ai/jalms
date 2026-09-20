@@ -69,7 +69,7 @@ export function SocialsTable({ conversations }: SocialsTableProps) {
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" asChild>
+                                    <Button variant="ghost" size="icon" asChild className="size-11 sm:h-7 sm:w-auto sm:px-3">
                                         <Link href={`/admin/socials/${conv.id}`}>
                                             <Eye className="size-4" />
                                             <span className="max-sm:sr-only">View history</span>

@@ -76,3 +76,11 @@ test("dedicated rail contexts stay out of multi-role home navigation", () => {
   assert.equal(groups.some((group) => group.sections.some((section) => section.href.startsWith("/homeroom"))), false)
   assert.equal(groups.some((group) => group.sections.some((section) => section.href === "/home")), false)
 })
+
+test("teacher home navigation exposes distinct attendance and weekly schedule destinations", () => {
+  const sections = groupsForContext({ kind: "home" }, ["SUBJECT_TEACHER"])
+    .flatMap((group) => group.sections)
+
+  assert.equal(sections.some((section) => section.href === "/teacher/attendance"), true)
+  assert.equal(sections.some((section) => section.href === "/teacher/schedule"), true)
+})

@@ -45,6 +45,7 @@ interface MaterialCardProps {
 
 export function MaterialCard({ material, folders = [], isTeacher = false, courseId, variant = "course" }: MaterialCardProps) {
     const router = useRouter()
+    const isLibrary = variant === "library"
     const [isDeleting, setIsDeleting] = useState(false)
     const [isMoving, startMoving] = useTransition()
     const hasFile = !!material.fileUrl
@@ -86,9 +87,18 @@ export function MaterialCard({ material, folders = [], isTeacher = false, course
     const isExternalPrimary = !hasFile && hasLink
 
     return (
-        <article className="group flex min-h-48 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md">
-            <div className="flex items-start gap-3 p-4 pb-3">
-                <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", hasFile ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" : "bg-sky-500/10 text-sky-600 dark:text-sky-400")}>
+        <article className={cn(
+            "group flex min-h-48 flex-col overflow-hidden rounded-2xl border bg-card",
+            isLibrary
+                ? "border-border/60 shadow-none transition-colors hover:border-border hover:bg-card/80"
+                : "border-border/70 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md",
+        )}>
+            <div className={cn("flex items-start gap-3 p-4", isLibrary ? "pb-2" : "pb-3")}>
+                <div className={cn(
+                    "flex shrink-0 items-center justify-center",
+                    isLibrary ? "size-9 rounded-lg" : "size-11 rounded-xl",
+                    hasFile ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" : "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+                )}>
                     {hasFile ? <FileText className="size-5" /> : <Link2 className="size-5" />}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -143,26 +153,29 @@ export function MaterialCard({ material, folders = [], isTeacher = false, course
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">Added {format(new Date(material.uploadedAt), "MMM d, yyyy")}</p>
+                    <p className={cn("mt-1 text-xs text-muted-foreground", isLibrary && "text-muted-foreground/80")}>Added {format(new Date(material.uploadedAt), "MMM d, yyyy")}</p>
                 </div>
             </div>
 
             <div className="flex-1 px-4">
                 <p className="line-clamp-2 text-sm leading-5 text-muted-foreground">{material.description || "No description provided."}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                    {hasFile && <Badge variant="secondary"><FileText className="size-3" />PDF</Badge>}
-                    {hasLink && <Badge variant="secondary"><Link2 className="size-3" />Link</Badge>}
-                    {variant === "library" && material.folder && <Badge variant="outline">{material.folder.name}</Badge>}
-                    {variant === "library" && assignmentCount > 0 && <Badge variant="outline">{assignmentCount} {assignmentCount === 1 ? "course" : "courses"}</Badge>}
+                <div className={cn("flex flex-wrap gap-1.5", isLibrary ? "mt-2" : "mt-3")}>
+                    {hasFile && <Badge variant="secondary" className={isLibrary ? "bg-muted/50 text-muted-foreground" : undefined}><FileText className="size-3" />PDF</Badge>}
+                    {hasLink && <Badge variant="secondary" className={isLibrary ? "bg-muted/50 text-muted-foreground" : undefined}><Link2 className="size-3" />Link</Badge>}
+                    {isLibrary && material.folder && <Badge variant="outline" className="border-border/60 bg-transparent text-muted-foreground">{material.folder.name}</Badge>}
+                    {isLibrary && assignmentCount > 0 && <Badge variant="outline" className="border-border/60 bg-transparent text-muted-foreground">{assignmentCount} {assignmentCount === 1 ? "course" : "courses"}</Badge>}
                 </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-2 border-t bg-muted/20 px-4 py-3">
+            <div className={cn(
+                "mt-4 flex items-center justify-between gap-2 border-t px-4",
+                isLibrary ? "mt-3 border-border/60 bg-transparent py-2.5" : "bg-muted/20 py-3",
+            )}>
                 {isTeacher && variant === "library" ? (
                     <ManageMaterialDialog materialId={material.id} materialTitle={material.title} assignments={material.assignments || []} />
                 ) : <span className="text-xs text-muted-foreground">{hasFile && hasLink ? "File + link" : hasFile ? "File resource" : "Web resource"}</span>}
                 <div className="ml-auto flex gap-2">
-                    {hasLink && <Button variant="outline" size="sm" asChild><a href={material.linkUrl!} target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4" /><span className="hidden sm:inline">Open</span></a></Button>}
+                    {hasLink && <Button variant="outline" size="sm" asChild className="h-11 w-11 p-0 sm:h-7 sm:w-auto sm:px-3" aria-label={`Open ${material.title}`}><a href={material.linkUrl!} target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4" /><span className="hidden sm:inline">Open</span></a></Button>}
                     {hasFile && <Button size="sm" asChild><Link href={fileViewUrl}><Eye className="size-4" />View</Link></Button>}
                 </div>
             </div>

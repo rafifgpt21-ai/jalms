@@ -183,7 +183,7 @@ export function MaterialList({ materials, folders = [], isTeacher = false, cours
         <div className="space-y-4">
             <div className={cn("grid min-h-[30rem] gap-4", isLibrary && "lg:grid-cols-[minmax(0,1fr)_15rem]")}>
                 {isLibrary && (
-                    <aside className="order-2 hidden h-fit rounded-2xl border border-border/70 bg-card p-3 shadow-sm lg:sticky lg:top-0 lg:block">
+                    <aside className="order-2 hidden h-fit rounded-xl border border-border/60 bg-card/50 p-2 shadow-none lg:sticky lg:top-0 lg:block">
                         <div className="mb-2 flex items-center justify-between px-2 py-1">
                             <div>
                                 <p className="text-sm font-semibold">Folders</p>
@@ -235,7 +235,10 @@ export function MaterialList({ materials, folders = [], isTeacher = false, cours
                 )}
 
                 <section className="order-1 min-w-0 space-y-4">
-                    <div className="rounded-2xl border border-border/70 bg-card p-3 shadow-sm">
+                    <div className={cn(
+                        "rounded-2xl border border-border/70 bg-card p-3 shadow-sm",
+                        isLibrary && "rounded-xl border-border/60 bg-transparent p-0 shadow-none",
+                    )}>
                         {isLibrary && (
                             <div className="mb-3 flex gap-2 lg:hidden">
                                 <Select value={selectedFolder} onValueChange={setSelectedFolder}>
@@ -293,7 +296,7 @@ export function MaterialList({ materials, folders = [], isTeacher = false, cours
                                 </SelectContent>
                             </Select>
                             <Select value={sort} onValueChange={setSort}>
-                                <SelectTrigger className="h-10 w-full xl:w-36"><ArrowDownAZ className="size-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-10 w-full xl:w-44 xl:min-w-44 xl:shrink-0"><ArrowDownAZ className="size-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="newest">Newest first</SelectItem>
                                     <SelectItem value="oldest">Oldest first</SelectItem>
@@ -310,7 +313,10 @@ export function MaterialList({ materials, folders = [], isTeacher = false, cours
                     </div>
 
                     {filteredMaterials.length === 0 ? (
-                        <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed bg-muted/20 px-6 text-center">
+                        <div className={cn(
+                            "flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed bg-muted/20 px-6 text-center",
+                            isLibrary && "rounded-xl border-border/60 bg-transparent",
+                        )}>
                             <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                 {query || type !== "all" ? <Search className="size-5" /> : <FolderOpen className="size-5" />}
                             </div>

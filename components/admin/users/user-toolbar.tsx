@@ -111,7 +111,7 @@ export function UserToolbar() {
                         className="border-input bg-background pl-9 focus:bg-background"
                     />
                 </div>
-                <Button onClick={handleSearch} size="sm" className="shrink-0 px-3" aria-label="Search users">
+                <Button onClick={handleSearch} size="sm" className="h-11 w-11 shrink-0 p-0 sm:h-7 sm:w-auto sm:px-3" aria-label="Search users">
                     <Search className="h-4 w-4 sm:hidden" />
                     <span className="hidden sm:inline">Search</span>
                 </Button>
@@ -204,7 +204,7 @@ export function UserToolbar() {
                         variant="ghost"
                         size="sm"
                         onClick={clearFilters}
-                        className="h-9 px-2 text-muted-foreground hover:text-foreground"
+                        className="h-11 w-11 p-0 text-muted-foreground hover:text-foreground sm:h-11 sm:w-11 md:h-9 md:w-9"
                         aria-label="Clear user filters"
                     >
                         <X className="h-4 w-4" />
@@ -212,7 +212,7 @@ export function UserToolbar() {
                 )}
 
                 <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                    <Button asChild variant="outline" size="sm" className="h-9 px-2.5" aria-label="Import users via Excel">
+                    <Button asChild variant="outline" size="sm" className="h-11 w-11 p-0 md:h-9 md:w-9 lg:w-auto lg:px-2.5" aria-label="Import users via Excel">
                         <Link href="/admin/users/import" prefetch>
                             <FileSpreadsheet className="h-4 w-4" />
                             <span className="hidden lg:inline">Import via Excel</span>
@@ -220,7 +220,7 @@ export function UserToolbar() {
                     </Button>
                     <UserModal
                         trigger={(
-                            <Button size="sm" className="h-9 px-2.5" aria-label="Create user">
+                            <Button size="sm" className="h-11 w-11 p-0 min-[400px]:h-9 min-[400px]:w-auto min-[400px]:px-2.5" aria-label="Create user">
                                 <Plus className="h-4 w-4" />
                                 <span className="hidden min-[400px]:inline">Create user</span>
                             </Button>

@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import {
-  Activity, BookOpen, Calendar, CalendarRange, Clock, FileQuestion, FileText,
+  Activity, BookOpen, Calendar, CalendarDays, CalendarRange, Clock, FileQuestion, FileText,
   GraduationCap, LayoutDashboard, Library, ListTodo, MessageSquare,
   MessagesSquare, PackageOpen, PieChart, RotateCcw, School, Settings, Table, Users,
 } from "lucide-react"
@@ -96,6 +96,7 @@ export function groupsForContext(context: BrowseContext, roles: Role[], directMe
   if (roles.includes("SUBJECT_TEACHER")) groups.push({ id: "teaching", label: "Teaching", sections: [
     { id: "teacher", label: "Dashboard", href: "/teacher", icon: LayoutDashboard },
     { id: "attendance", label: "Daily Attendance", href: "/teacher/attendance", icon: Clock },
+    { id: "schedule", label: "Weekly Schedule", href: "/teacher/schedule", icon: CalendarDays },
     { id: "quizzes", label: "Quiz Library", href: "/teacher/quiz-manager", icon: FileQuestion },
     { id: "materials", label: "Material Library", href: "/teacher/materials", icon: FileText },
   ] })

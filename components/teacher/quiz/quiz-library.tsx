@@ -208,10 +208,10 @@ export function QuizLibrary({ quizzes, folders }: QuizLibraryProps) {
                 </aside>
 
                 <section className="order-1 min-w-0 space-y-4">
-                    <div className="rounded-2xl border border-border/70 bg-card p-3 shadow-sm" aria-label="Quiz library tools">
-                        <div className="mb-3 flex gap-2 lg:hidden">
+                    <div className="rounded-xl border border-border/70 bg-card p-2 shadow-sm sm:rounded-2xl sm:p-3" aria-label="Quiz library tools">
+                        <div className="mb-2 flex gap-1.5 sm:mb-3 sm:gap-2 lg:hidden">
                             <Select value={selectedFolder} onValueChange={setSelectedFolder}>
-                                <SelectTrigger className="h-10 min-w-0 flex-1"><FolderOpen className="size-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-9 min-w-0 flex-1 sm:h-10"><FolderOpen className="size-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All quizzes ({quizzes.length})</SelectItem>
                                     <SelectItem value="unfiled">Unfiled ({unfiledCount})</SelectItem>
@@ -230,23 +230,23 @@ export function QuizLibrary({ quizzes, folders }: QuizLibraryProps) {
                             )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 2xl:flex 2xl:items-center">
-                            <div className="relative col-span-2 min-w-0 flex-1">
+                        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.25rem] gap-2 sm:grid-cols-2 sm:gap-3 2xl:flex 2xl:items-center">
+                            <div className="relative order-1 col-span-2 min-w-0 flex-1 sm:order-none">
                                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search titles, descriptions, or folders…" className="h-10 pl-9 pr-9" aria-label="Search quizzes" />
+                                <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search titles, descriptions, or folders…" className="h-9 pl-9 pr-9 sm:h-10" aria-label="Search quizzes" />
                                 {query && <Button variant="ghost" size="icon-sm" className="absolute right-1.5 top-1/2 -translate-y-1/2" onClick={() => setQuery("")} aria-label="Clear search"><X className="size-4" /></Button>}
                             </div>
                             <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="h-10 w-full 2xl:w-36"><SlidersHorizontal className="size-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="order-3 h-9 w-full sm:order-none sm:h-10 2xl:w-36"><SlidersHorizontal className="size-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
                                 <SelectContent><SelectItem value="all">All quizzes</SelectItem><SelectItem value="ready">With questions</SelectItem><SelectItem value="draft">Empty drafts</SelectItem></SelectContent>
                             </Select>
                             <Select value={sort} onValueChange={setSort}>
-                                <SelectTrigger className="h-10 w-full 2xl:w-40"><ArrowDownAZ className="size-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="order-4 col-span-2 h-9 w-full sm:order-none sm:col-span-1 sm:h-10 2xl:w-48 2xl:min-w-48 2xl:shrink-0"><ArrowDownAZ className="size-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
                                 <SelectContent><SelectItem value="newest">Recently updated</SelectItem><SelectItem value="oldest">Oldest updated</SelectItem><SelectItem value="title">Title A–Z</SelectItem><SelectItem value="questions">Most questions</SelectItem></SelectContent>
                             </Select>
                             <CreateQuizDialog />
                         </div>
-                        <div className="mt-3 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+                        <div className="mt-2 flex items-center justify-between border-t pt-2 text-xs text-muted-foreground sm:mt-3 sm:pt-3">
                             <span><span className="font-medium text-foreground">{activeFolderName}</span> · {filteredQuizzes.length} {filteredQuizzes.length === 1 ? "quiz" : "quizzes"}</span>
                             {hasFilters && <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={clearFilters}>Clear filters</Button>}
                         </div>

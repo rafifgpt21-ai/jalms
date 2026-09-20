@@ -217,6 +217,63 @@ html[data-density="comfortable"] {
 }
 
 @layer components {
+  .rich-text-content {
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .rich-text-content p:empty::before {
+    content: "\00a0";
+  }
+
+  .rich-text-content p + p,
+  .rich-text-content p + ul,
+  .rich-text-content p + ol,
+  .rich-text-content ul + p,
+  .rich-text-content ol + p,
+  .rich-text-content blockquote + p {
+    margin-top: 0.5rem;
+  }
+
+  .rich-text-content ul,
+  .rich-text-content ol {
+    margin-block: 0.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .rich-text-content ul {
+    list-style: disc;
+  }
+
+  .rich-text-content ol {
+    list-style: decimal;
+  }
+
+  .rich-text-content li + li {
+    margin-top: 0.25rem;
+  }
+
+  .rich-text-content blockquote {
+    margin-block: 0.5rem;
+    border-left: 3px solid var(--border);
+    padding-left: 0.75rem;
+    color: var(--muted-foreground);
+  }
+
+  .rich-text-content code {
+    border-radius: 0.25rem;
+    background: var(--muted);
+    padding: 0.1rem 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  .rich-text-content a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
   html:has(.workspace-shell),
   body:has(.workspace-shell) {
     height: 100%;
@@ -270,6 +327,10 @@ html[data-density="comfortable"] {
     border-radius: 0.5rem;
     background: var(--card);
     box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent);
+  }
+
+  .dashboard-secondary-text {
+    transition: color 150ms ease;
   }
 
   .workspace-content {
@@ -498,12 +559,20 @@ html[data-density="comfortable"] {
 @media (max-width: 767px) {
   :root,
   html[data-density="comfortable"] {
-    --workspace-page-padding: 0.5rem;
-    --workspace-section-gap: 0.625rem;
+    --workspace-page-padding: 0.75rem;
+    --workspace-section-gap: 0.75rem;
   }
 
   [data-slot="button"] {
     min-height: 2.75rem;
+  }
+
+  [data-slot="button"][data-size^="icon"] {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+    aspect-ratio: 1;
   }
 
   [data-slot="input"],
@@ -553,6 +622,14 @@ html[data-density="comfortable"] {
     overscroll-behavior-y: contain;
   }
 
+  .dashboard-secondary-text {
+    display: none;
+  }
+
+  .workspace-panel {
+    box-shadow: none;
+  }
+
   .workspace-content::-webkit-scrollbar,
   .workspace-content *::-webkit-scrollbar {
     display: none;
@@ -579,6 +656,14 @@ html[data-density="comfortable"] {
 
   .admin-page-frame [data-slot="table-cell"] {
     padding-inline: 0.625rem;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 767px) {
+  [data-slot="button"][data-size^="icon"].sm\:w-auto {
+    width: auto;
+    min-width: 0;
+    aspect-ratio: auto;
   }
 }
 

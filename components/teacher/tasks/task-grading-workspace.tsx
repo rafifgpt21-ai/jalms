@@ -321,7 +321,7 @@ export function TaskGradingWorkspace({ assignment }: { assignment: GradingAssign
                                 <ArrowLeft /> Back to tasks
                             </Link>
                         </Button>
-                        <Button asChild variant="outline" size="icon" className="size-8 sm:w-auto sm:px-3">
+                        <Button asChild variant="outline" size="icon" className="size-11 sm:h-8 sm:w-auto sm:px-3">
                             <Link
                                 href={`/teacher/courses/${assignment.courseId}/tasks/${assignment.id}/edit`}
                                 aria-label="Edit task"

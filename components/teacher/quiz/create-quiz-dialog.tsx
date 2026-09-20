@@ -50,9 +50,9 @@ export function CreateQuizDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="col-span-2 h-10 w-full 2xl:w-auto">
+                <Button className="order-2 size-9 px-0 sm:order-none sm:col-span-2 sm:h-10 sm:w-full sm:px-4 2xl:w-auto" title="Create quiz">
                     <Plus className="size-4" />
-                    Create quiz
+                    <span className="sr-only sm:not-sr-only">Create quiz</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">

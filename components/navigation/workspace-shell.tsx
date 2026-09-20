@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core"
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { ArrowUpDown, Home, MessageSquare, PanelLeftClose, PanelLeftOpen, RotateCcw, School, Settings2, Users } from "lucide-react"
+import { ArrowUpDown, Home, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, RotateCcw, School, Settings2, Users, X } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { CLASS_COLOR_SURFACE_STYLES, resolveCourseIdentity } from "@/lib/course-identity"
@@ -37,6 +37,7 @@ import {
   StudentScheduleRouteSkeleton,
   StudentTaskDetailRouteSkeleton,
   StudentTaskRouteSkeleton,
+  TeacherScheduleRouteSkeleton,
   TaskGradingRouteSkeleton,
   TaskRouteSkeleton,
   TableRouteSkeleton,
@@ -57,6 +58,7 @@ function PendingDestinationSkeleton({ pathname }: { pathname: string }) {
   if (/^\/student\/courses\/[^/]+\/announcements\/?$/.test(pathname)) return <AnnouncementRouteSkeleton />
   if (/^\/teacher\/attendance\/[^/]+\/?$/.test(pathname)) return <AttendanceRouteSkeleton detail />
   if (pathname === "/teacher/attendance") return <AttendanceRouteSkeleton />
+  if (pathname === "/teacher/schedule") return <TeacherScheduleRouteSkeleton />
   if (pathname === "/student/learning-profile") return <LearningProfileRouteSkeleton />
   if (pathname === "/student/grades") return <StudentGradesRouteSkeleton />
   if (pathname === "/student/attendance") return <StudentAttendanceRouteSkeleton />
@@ -425,11 +427,11 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
           {!isNavigating && mobileHeader.leftAction && <div className="md:hidden">{mobileHeader.leftAction}</div>}
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">{pageTitle}</div>
-            {!isNavigating && mobileHeader.subtitle && <div className="truncate text-xs text-muted-foreground">{mobileHeader.subtitle}</div>}
+            {!isNavigating && mobileHeader.subtitle && mobileHeader.showMobileSubtitle !== false && <div className="truncate text-xs text-muted-foreground">{mobileHeader.subtitle}</div>}
           </div>
           {!isNavigating && mobileHeader.rightAction && <div className="flex items-center gap-2">{mobileHeader.rightAction}</div>}
-          <Button variant="outline" size="sm" className="-mr-2 md:hidden" onClick={openMobileNavigator} aria-label="Open workspace navigation">
-            Menu
+          <Button variant="default" size="icon" className="-mr-2 size-11 md:hidden" onClick={openMobileNavigator} aria-label="Open workspace navigation">
+            <Menu />
           </Button>
         </header>
 
@@ -445,7 +447,16 @@ export function WorkspaceShell({ children, user, courses, channelSidebarCollapse
             <Button variant={mobileReorder ? "secondary" : "ghost"} size="sm" onClick={() => setMobileReorder((value) => !value)}>
               {mobileReorder ? <RotateCcw className="size-4" /> : <ArrowUpDown className="size-4" />}{mobileReorder ? "Done" : "Reorder"}
             </Button>
-            <Button variant="ghost" size="sm" className="-mr-2" onClick={closeMobileNavigator}>Close</Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="-mr-2 size-11 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive focus-visible:ring-destructive/30"
+              onClick={closeMobileNavigator}
+              aria-label="Close workspace navigation"
+            >
+              <X className="size-5" />
+              <span className="sr-only">Close</span>
+            </Button>
           </div>
           <SectionSidebar
             context={browseContext}

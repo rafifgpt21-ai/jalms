@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, ReactNode, useCallback } fr
 interface MobileHeaderState {
     title: ReactNode | string
     subtitle?: ReactNode | string
+    showMobileSubtitle?: boolean
     image?: string | null
     leftAction?: ReactNode
     rightAction?: ReactNode
@@ -21,6 +22,7 @@ export function MobileHeaderProvider({ children }: { children: ReactNode }) {
     const [state, setState] = useState<MobileHeaderState>({
         title: null,
         subtitle: null,
+        showMobileSubtitle: true,
         image: null,
         leftAction: null,
         rightAction: null,
@@ -34,6 +36,7 @@ export function MobileHeaderProvider({ children }: { children: ReactNode }) {
         setState({
             title: null,
             subtitle: null,
+            showMobileSubtitle: true,
             image: null,
             leftAction: null,
             rightAction: null,

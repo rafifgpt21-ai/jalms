@@ -98,7 +98,7 @@ export function TaskManagementList({ assignments, courseId, dueSoon, overdue }: 
                         </div>
                     ))}
                     <div className="flex items-center justify-center p-1 sm:px-2 lg:hidden">
-                        <Button asChild size="icon" className="size-8 sm:w-auto sm:px-3">
+                        <Button asChild size="icon" className="size-11 sm:h-8 sm:w-auto sm:px-3">
                             <Link href={`/teacher/courses/${courseId}/tasks/new`} aria-label="Create task">
                                 <Plus className="size-4" />
                                 <span className="hidden sm:inline">Create task</span>

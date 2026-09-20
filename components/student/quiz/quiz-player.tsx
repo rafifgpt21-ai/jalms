@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { RichTextContent } from "@/components/ui/editor"
 import { cn } from "@/lib/utils"
 
 interface QuizPlayerProps {
@@ -279,7 +280,11 @@ function QuestionPanel({ question, index, totalQuestions, quizId, selected, onAn
             </header>
 
             <div className="space-y-4 p-3 sm:p-4">
-                <h3 className="text-base font-semibold leading-6">{question.text}</h3>
+                <RichTextContent
+                    value={question.text}
+                    ariaLabel={`Question ${index + 1}`}
+                    className="text-base font-semibold leading-6"
+                />
 
                 {question.imageUrl && (
                     <div className="relative aspect-video w-full max-w-2xl overflow-hidden rounded-md border bg-muted">

@@ -17,7 +17,7 @@ async function HomeroomContent() {
 export default function HomeroomDashboard() {
   return (
     <WorkspacePage>
-      <MobileHeaderSetter title="Homeroom dashboard" subtitle={format(new Date(), "EEEE, MMMM d")} />
+      <MobileHeaderSetter title="Homeroom dashboard" subtitle={format(new Date(), "EEEE, MMMM d")} showMobileSubtitle={false} />
       <Suspense fallback={<DashboardRouteSkeleton variant="homeroom" nested />}><HomeroomContent /></Suspense>
     </WorkspacePage>
   )

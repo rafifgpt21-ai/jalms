@@ -88,7 +88,7 @@ export function StudentList({ classId, students }: StudentListProps) {
                                 <TableCell className="text-right">
                                     <Button
                                         variant="ghost"
-                                        size="sm"
+                                        size="icon"
                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                         onClick={() => setStudentToDelete(student.id)}
                                     >
